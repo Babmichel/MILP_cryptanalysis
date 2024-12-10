@@ -96,7 +96,7 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                 for key in range(key_space_size+1):
                     for color in range(2):
                         for binary in range(2):
-                            binary_bound_for_key_knowledge[row, col, key, color, binary] = model.addVar(vtype = GRB.BINARY, name = f'binary_bound_for_key_knowledge {row} {col} {color} {binary}' )
+                            binary_bound_for_key_knowledge[row, col, key, color, binary] = model.addVar(vtype = GRB.BINARY, name = f'binary_bound_for_key_knowledge {row} {col} {color} {binary}')
         
         for round in range(structure_round):
             for step in range(3):
@@ -745,7 +745,7 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                     model.addConstr((differential_up_state[round, 0, row, col, 1] == 1) >> (MITM_up_state[round, 0, row, col, 0] == 0))
         
         ###TRUNCATED FORWARD constraint
-        #"""
+        """
         model.addConstr(differential_state[0, 0, 0, 0, 1] == 0)
         model.addConstr(differential_state[0, 0, 0, 1, 1] == 0)
         model.addConstr(differential_state[0, 0, 0, 2, 1] == 0)
@@ -785,7 +785,7 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         model.addConstr(differential_state[differential_round-1, 0, 3, 1, 1] == 0)
         model.addConstr(differential_state[differential_round-1, 0, 3, 2, 1] == 0)
         model.addConstr(differential_state[differential_round-1, 0, 3, 3, 1] == 0)
-        #"""
+        """
         
         #Color constraints
         for round in range(differential_round):

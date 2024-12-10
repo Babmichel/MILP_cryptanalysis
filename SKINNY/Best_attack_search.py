@@ -11,7 +11,7 @@ complexity_max = int(sys.argv[4])
 word_size = int(sys.argv[4])
 
 
-def recherche_attaque(mim_round, max_round, complexity):
+def recherche_attaque(mim_round, max_round, complexity, word_size):
     z = word_size
     Valid_matrix = np.zeros([9,12,13,11])
     Complexite_matrix = np.zeros([9,12,13,11])
@@ -41,4 +41,4 @@ def recherche_attaque(mim_round, max_round, complexity):
                         print("valid attack on ",structure_round + MITM_up_round+ diff_round+ MITM_down_round, " round, with complexity ", Complexite_matrix[structure_round, MITM_up_round, diff_round, MITM_down_round] )
                         print("parameters: ", structure_round, MITM_up_round, diff_round, MITM_down_round)
 
-recherche_attaque(attack_size_min, attack_size_max, complexity_max)
+recherche_attaque(attack_size_min, attack_size_max, complexity_max, word_size)

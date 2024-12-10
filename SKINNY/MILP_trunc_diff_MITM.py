@@ -82,7 +82,8 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         if structure_round>0:
             MC_structure_branch = np.zeros((structure_round - 1, 4, 4, 5, 4), dtype = object) #[round, row, column, color, number of fix in the state]
 
-        binary_bound_for_key_knowledge = np.zeros((4, 4,key_space_size+1, 2, 2), dtype = object) #binary variable to constraint the key knowledge following the key schedule(if three or more word of the same key element are guess, all the corresponding element are guessed)
+        binary_bound_for_key_knowledge = np.zeros((4, 4,key_space_size+1, 2, 2), dtype = object) #binary variable to constraint the key knowledge following 
+        #the key schedule(if three or more word of the same key element are guess, all the corresponding element are guessed)
 
         binary_key_XOR = np.zeros((total_round, 4, 4, 4), dtype = object) #Binary discriminator to know if the XOR of the key is purple, red blue or unknow
 

@@ -8,7 +8,7 @@ type_of_attack = int(sys.argv[1])
 attack_size_min = int(sys.argv[2])
 attack_size_max = int(sys.argv[3])
 complexity_max = int(sys.argv[4])
-word_size = int(sys.argv[4])
+word_size = int(sys.argv[5])
 
 
 def recherche_attaque(mim_round, max_round, complexity, word_size):
@@ -33,9 +33,9 @@ def recherche_attaque(mim_round, max_round, complexity, word_size):
                             Valid_matrix[structure_round, MITM_up_round, diff_round, MITM_down_round] = 1
                             Complexite_matrix[structure_round, MITM_up_round, diff_round, MITM_down_round] = z*np.max([complexite_bleu, complexite_rouge, complexite_MATCH])
     for structure_round in range(9):
-        for MITM_up_round in range(2,12):
-            for diff_round in range(3,11):
-                for MITM_down_round in range(1,9):
+        for MITM_up_round in range(12):
+            for diff_round in range(11):
+                for MITM_down_round in range(9):
                     if Valid_matrix[structure_round, MITM_up_round, diff_round, MITM_down_round] == 1 and Complexite_matrix[structure_round, MITM_up_round, diff_round, MITM_down_round] <= complexity :
                         print("-------------------------------------------")
                         print("valid attack on ",structure_round + MITM_up_round+ diff_round+ MITM_down_round, " round, with complexity ", Complexite_matrix[structure_round, MITM_up_round, diff_round, MITM_down_round] )

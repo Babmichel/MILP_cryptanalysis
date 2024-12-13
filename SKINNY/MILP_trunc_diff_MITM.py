@@ -48,7 +48,7 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         model.Params.MIRcuts = 2 #o for no cuts, 1 for classic cuts, 2 for agressive cuts
         #model.Params.Presolve = 2 
         model.Params.MIPFocus = 3 #1 for focusing feasible solution, 2 for optimality, 3 to focus on the bous (if best bound is not mooving)
-        model.Params.TimeLimit = 10000
+        model.Params.TimeLimit = 3600*2
 
         #ATTACK PARAMETERS
         total_round = structure_round + MITM_up_round + MITM_down_round + differential_round

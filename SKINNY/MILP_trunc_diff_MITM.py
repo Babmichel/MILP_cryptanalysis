@@ -220,11 +220,11 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         blue_complexity = count_blue + cost_differential + state_test_up + MITM_up_guess + fix_quantity_structure - end_structure_active
         red_complexity = count_red + cost_differential + state_test_down + end_differential - start_differential + MITM_down_guess + fix_quantity_structure - start_structure_active
         MATCH_complexity = blue_complexity + red_complexity + (fix_quantity_structure - end_structure_active - start_structure_active)- 2*(16-fix_quantity_structure) - count_equation - ((cost_differential - start_differential) - (16-start_structure_active))
-        model.addConstr(blue_complexity <= complexite + complexite_bleu)
-        model.addConstr(red_complexity <= complexite + complexite_rouge)
-        model.addConstr(MATCH_complexity <= complexite + complexite_match)
+        model.addConstr(blue_complexity <=  complexite_bleu)
+        model.addConstr(red_complexity <=  complexite_rouge)
+        model.addConstr(MATCH_complexity <=  complexite_match)
         #Objective : Minimize the attack complexity
-        model.setObjectiveN(complexite + complexite_rouge + complexite_bleu + complexite_match, 0, 10)
+        model.setObjectiveN( complexite_rouge + complexite_bleu + complexite_match, 0, 10)
         #model.setObjective(complexite_bleu+complexite_rouge)
         
         model.ModelSense = GRB.MINIMIZE

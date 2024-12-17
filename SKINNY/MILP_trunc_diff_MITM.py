@@ -224,7 +224,8 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         model.addConstr(red_complexity <=  complexite + complexite_rouge)
         model.addConstr(MATCH_complexity <=  complexite + complexite_match)
         #Objective : Minimize the attack complexity
-        model.setObjectiveN(complexite + complexite_rouge + complexite_bleu + complexite_match, 0, 10)
+        model.setObjectiveN(blue_complexity + red_complexity + MATCH_complexity, 0, 10)
+        #model.setObjectiveN(complexite + complexite_rouge + complexite_bleu + complexite_match, 0, 10)
 
         
         model.ModelSense = GRB.MINIMIZE
@@ -729,7 +730,6 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                 model.addConstr(differential_up_state[round, 1, 1, col, 3] == gp.and_(differential_up_state[round, 1, 2, col, 2],differential_up_state[round +1, 0, 2, col, 0]))
                 model.addConstr(differential_up_state[round, 1, 2, col, 3] == 0)
                 model.addConstr(differential_up_state[round, 1, 3, col, 3] == 0)
-    
     
         #permutation-1
         for round in range(MITM_up_round):

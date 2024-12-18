@@ -990,6 +990,8 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                     #model.addConstr(MITM_down_state[round, 0, row, col, 0] == gp.or_(MITM_down_state[round, 1, row, col, 0], full_key[round + structure_round + MITM_up_round, 0, row, col, 0], full_key[round + structure_round + MITM_up_round, 0, row, col, 2]))
                     model.addConstr((full_key[round + structure_round + MITM_up_round + differential_round, 0, row, col, 2] == 1) >> (MITM_down_state[round, 0, row, col, 1] == 0))
                     model.addConstr((full_key[round + structure_round + MITM_up_round + differential_round, 0, row, col, 0] == 1) >> (MITM_down_state[round, 0, row, col, 1] == 0))
+                    model.addConstr((full_key[round + structure_round + MITM_up_round + differential_round, 0, row, col, 1] + MITM_down_state[round, 1, row, col, 1] == 2) >> (MITM_down_state[round, 0, row, col, 1] == 1))
+                    model.addConstr((full_key[round + structure_round + MITM_up_round + differential_round, 0, row, col, ] + MITM_down_state[round, 1, row, col, 1] == 2) >> (MITM_down_state[round, 0, row, col, 1] == 1))
                     model.addConstr((MITM_down_state[round, 1, row, col, 0] == 1) >> (MITM_down_state[round, 0, row, col, 1] == 0))
             for row in range(2,4):
                 for col in range(4):

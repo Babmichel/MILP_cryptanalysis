@@ -1014,6 +1014,8 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
             Cblue= blue_complexity.getValue()
             Cred = red_complexity.getValue()
             Cmatch = MATCH_complexity.getValue()
+            start_diff = 0
+            end_diff = 0
 
             liste_X = [np.zeros((4, 4)) for i in range(total_round)]
             liste_Y = [np.zeros((4, 4)) for i in range(total_round)]
@@ -1331,7 +1333,14 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                             if full_key[tour + structure_round + MITM_up_round+ differential_round, 3, row, col, 3].X == 1.0:
                                 key_2[tour + structure_round + MITM_up_round + differential_round, row, col] = 5
 
-            return(True, key_M, key_0, key_1, key_2, liste_X, liste_Y, liste_Z,Liste_X_diff, Liste_Y_diff, compteur_bleu, compteur_rouge, compteur_differentielle, compteur_fix, compteur_violet, compteur_statetest_haut, compteur_statetest_bas, compteur_proba_up, compteur_proba_down, Cblue, Cred, Cmatch)
+            return(True, 
+                   key_M, key_0, key_1, key_2, liste_X, liste_Y, liste_Z, 
+                   Liste_X_diff, Liste_Y_diff, 
+                   compteur_bleu, compteur_rouge, compteur_differentielle, 
+                   start_diff, end_diff, compteur_fix, compteur_violet, 
+                   compteur_statetest_haut, compteur_statetest_bas, 
+                   compteur_proba_up, compteur_proba_down, 
+                   Cblue, Cred, Cmatch)
         else :
             return([False])
 

@@ -36,7 +36,7 @@ def search_attack(MITM_up_max2):
                         attaque.append([structure_round, MITM_up_round, diff_round, MITM_down_round])
                         
 with Pool(multiprocessing.cpu_count()) as pool:
-        attaque = (pool.map(search_attack, range(MITM_up_min, MITM_down_max+1)))                        
+        attaque = (pool.map(search_attack, range(MITM_up_min, MITM_up_max+1)))                        
         if attaque[0]:
             complexite_bleu = attaque[21]
             complexite_rouge = attaque[22]

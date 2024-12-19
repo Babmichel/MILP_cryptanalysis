@@ -10,6 +10,7 @@ MITM_up_size = int(sys.argv[3])
 distinguisher_size = int(sys.argv[4])
 MITM_down_size = int(sys.argv[5])
 key_space_size = int(sys.argv[6])
+figure = int(sys)
 
 def affichage_grille(key, key_0, key_1, key_2, x_list, y_list, z_list, Liste_X_diff, Liste_Y_diff):
     """Display function of a structure, NO RETURN.
@@ -175,7 +176,7 @@ def affichage_grille(key, key_0, key_1, key_2, x_list, y_list, z_list, Liste_X_d
 
 def display_attack(structure, MITM_up, diff, MITM_down, key_space,z=4):
     if type_of_attack == 0 :
-        resultat = MILP_trunc_diff_MITM.attack(structure, MITM_up, diff+1, MITM_down-1, key_space)
+        resultat = MILP_trunc_diff_MITM.attack(structure, MITM_up, diff, MITM_down, key_space)
     elif type_of_attack == 1 :
         resultat = Differential_MITM_MILP.attack(structure, MITM_up, diff, MITM_down, key_space)
     if resultat[0] :
@@ -222,5 +223,7 @@ def display_attack(structure, MITM_up, diff, MITM_down, key_space,z=4):
         print("nombre de tours de la MITM down: ")
         print(MITM_down)
         print("INFEASABLE")
-
+    
 display_attack(structure_size, MITM_up_size, distinguisher_size, MITM_down_size, key_space_size)
+
+

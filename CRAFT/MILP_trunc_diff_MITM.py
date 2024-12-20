@@ -5,9 +5,9 @@ import numpy as np
 
 def attack(structure_size, MITM_up_size, distinguisher_size, MITM_down_size):
     options = {
-    "WLSACCESSID" : "bb41a17b-b3b2-40d7-8c1c-01d90a2e2170",
-    "WLSSECRET" : "4db1c96a-1e47-4fc9-83eb-28a57d08879f",
-    "LICENSEID" : 2534357
+    "WLSACCESSID" : "11f688cc-42d0-4f22-861f-3126b776b700",
+    "WLSSECRET" : "017dd5f9-e815-4929-9036-3d33abb3103c",
+    "LICENSEID" : 2602460
     }
     with gp.Env(params=options) as env, gp.Model(env=env) as model:
         

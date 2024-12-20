@@ -19,7 +19,7 @@ Valid_matrix = np.zeros([structure_max+1,MITM_up_max+1,disitnguisher_max+1,MITM_
 Complexite_matrix = np.zeros([structure_max+1,MITM_up_max+1,disitnguisher_max+1,MITM_down_max+1])
 
 def search_attack(distinguisher_max2):
-    for structure_round in range(structure_max,structure_max+1):
+    for structure_round in range(structure_min,structure_max+1):
         for MITM_up_round in range(MITM_up_min,MITM_up_max+1):
                 for MITM_down_round in range(MITM_down_min,MITM_down_max+1):
                     if (structure_round+MITM_up_round+distinguisher_max2+MITM_down_round >= p.parameters["attack_size_min"]) and (structure_round+MITM_up_round+distinguisher_max2+MITM_down_round <= p.parameters["attack_size_max"]):
@@ -33,8 +33,7 @@ def search_attack(distinguisher_max2):
                         return(attaque)
                         
 with Pool(multiprocessing.cpu_count()) as pool:
-        attaque = (pool.map(search_attack, range(distinguisher_min, disitnguisher_max+1)))   
-        print(attaque)                    
+        attaque = (pool.map(search_attack, range(distinguisher_min, disitnguisher_max+1)))                     
         if attaque[-1][0]:
             complexite_bleu = attaque[-1][13]
             complexite_rouge = attaque[-1][12]

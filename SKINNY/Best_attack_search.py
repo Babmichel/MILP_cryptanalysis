@@ -39,8 +39,7 @@ def search_attack(MITM_up_max2):
                         return attaque
                         
 with Pool(multiprocessing.cpu_count()) as pool:
-        attaque = (pool.map(search_attack, range(MITM_up_min, MITM_up_max+1)))    
-        print(attaque)                  
+        attaque = (pool.map(search_attack, range(MITM_up_min, MITM_up_max+1)))                     
         if attaque[-1][0]:
             complexite_bleu = attaque[-1][21]
             complexite_rouge = attaque[-1][22]
@@ -58,3 +57,4 @@ for structure_round in range(p.parameters["structure_max"]+1):
                     print("-------------------------------------------")
                     print("valid attack on ",structure_round + MITM_up_round+ diff_round+ MITM_down_round, " round, with complexity ", Complexite_matrix[structure_round, MITM_up_round, diff_round, MITM_down_round] )
                     print("parameters: ", structure_round, MITM_up_round, diff_round, MITM_down_round)
+print("FIN RECHERCHE")

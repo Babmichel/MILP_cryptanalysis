@@ -10,7 +10,6 @@ MITM_up_size = int(sys.argv[3])
 distinguisher_size = int(sys.argv[4])
 MITM_down_size = int(sys.argv[5])
 key_space_size = int(sys.argv[6])
-figure = int(sys.argv[7])
 
 def affichage_grille(key, key_0, key_1, key_2, x_list, y_list, z_list, Liste_X_diff, Liste_Y_diff):
     """Display function of a structure, NO RETURN.

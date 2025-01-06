@@ -217,7 +217,7 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         
         blue_complexity = count_blue + cost_differential + state_test_up + MITM_down_guess + fix_quantity_structure - end_structure_active
         red_complexity = count_red + cost_differential + state_test_down + end_differential - start_differential +  MITM_up_guess + fix_quantity_structure - start_structure_active
-        MATCH_complexity = blue_complexity + red_complexity + (fix_quantity_structure - end_structure_active - start_structure_active)- 2*(16-fix_quantity_structure) - count_equation - ((cost_differential - start_differential) - (16-start_structure_active))
+        MATCH_complexity = blue_complexity + red_complexity + (fix_quantity_structure - end_structure_active - start_structure_active)- 2*(16-fix_quantity_structure) - count_equation - ((cost_differential - start_differential) - (16-start_structure_active)) - MITM_down_guess - MITM_up_guess
         model.addConstr(blue_complexity <= complexite +  complexite_bleu)
         model.addConstr(red_complexity <=  complexite + complexite_rouge)
         model.addConstr(MATCH_complexity <=  complexite + complexite_match)
@@ -701,13 +701,14 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
             for step in range(2):
                 for row in range(4):
                     for col in range(4):
-                        model.addConstr(gp.quicksum(differential_up_state[round, step, row, col, color] for color in range(3)) == 1) #state can only be unknown, blue or guess
+                        model.addConstr(gp.quicksum(differential_up_state[round, step, row, col, color] for color in range(4)) == 1) #state can only be unknown, blue, guess or cancel by guessing
         
         #probabilist key recovery only made through MC
         for round in range(MITM_up_round):
             for row in range(4):
                 for col in range(4):
                     model.addConstr(differential_up_state[round, 0, row, col, 2] == 0)
+                    model.addConstr(differential_up_state[round, 0, row, col, 3] == 0)
 
         #MC-1
         for round in range(MITM_up_round-1):
@@ -724,8 +725,9 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
 
                 model.addConstr(differential_up_state[round, 1, 0, col, 3] == 0)
                 model.addConstr(differential_up_state[round, 1, 1, col, 3] == gp.and_(differential_up_state[round, 1, 2, col, 2],differential_up_state[round +1, 0, 2, col, 0]))
-                model.addConstr(differential_up_state[round, 1, 2, col, 3] == 0)
+                model.addConstr(differential_up_state[round, 1, 2, col, 3] == gp.and_(differential_up_state[round, 1, 1, col, 2],differential_up_state[round +1, 0, 2, col, 0]))
                 model.addConstr(differential_up_state[round, 1, 3, col, 3] == 0)
+
     
         #permutation-1
         for round in range(MITM_up_round):
@@ -742,7 +744,7 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                     model.addConstr((differential_up_state[round, 0, row, col, 1] == 1) >> (MITM_up_state[round, 0, row, col, 0] == 0))
         
         ###TRUNCATED FORWARD constraint
-        """
+        
         model.addConstr(differential_state[0, 0, 0, 0, 1] == 0)
         model.addConstr(differential_state[0, 0, 0, 1, 1] == 0)
         model.addConstr(differential_state[0, 0, 0, 2, 1] == 0)
@@ -782,7 +784,7 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         model.addConstr(differential_state[differential_round-1, 0, 3, 1, 1] == 0)
         model.addConstr(differential_state[differential_round-1, 0, 3, 2, 1] == 0)
         model.addConstr(differential_state[differential_round-1, 0, 3, 3, 1] == 0)
-        """
+        
         
         #Color constraints
         for round in range(differential_round):
@@ -876,19 +878,19 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         #Validity condition of truncated
         model.addConstr(objective_differential_end >= cost_differential+1)
         
-        #model.addConstr(cost_differential == )
         ###DIFFERENTIAL DOWN constraints
         for round in range(MITM_down_round):
             for step in range(2):
                 for row in range(4):
                     for col in range(4):
-                        model.addConstr(gp.quicksum(differential_down_state[round, step, row, col, color] for color in range(3)) == 1) 
+                        model.addConstr(gp.quicksum(differential_down_state[round, step, row, col, color] for color in range(4)) == 1) 
         
         #probabilist key recovery only through MC
         for round in range(MITM_down_round):
             for row in range(4):
                 for col in range(4):
                     model.addConstr(differential_down_state[round, 1, row, col, 2] == 0)
+                    model.addConstr(differential_down_state[round, 1, row, col, 3] == 0)
 
         #MC
         for round in range(MITM_down_round-1):
@@ -901,7 +903,7 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                 model.addConstr(differential_down_state[round + 1, 0, 0, col, 3] == gp.and_(differential_down_state[round + 1, 0, 3, col, 2], differential_down_state[round, 1, 3, col, 0]))
                 model.addConstr(differential_down_state[round + 1, 0, 1, col, 3] == 0)
                 model.addConstr(differential_down_state[round + 1, 0, 2, col, 3] == 0)
-                model.addConstr(differential_down_state[round + 1, 0, 3, col, 3] == 0)
+                model.addConstr(differential_down_state[round + 1, 0, 3, col, 3] == gp.and_(differential_down_state[round + 1, 0, 0, col, 2], differential_down_state[round, 1, 3, col, 0]))
                                                                 
                 model.addConstr((differential_down_state[round + 1, 0, 3, col, 2] == 1) >> (differential_down_state[round, 1, 0, col, 1] + differential_down_state[round, 1, 3, col, 1] == 2 ))
                 model.addConstr((differential_down_state[round + 1, 0, 2, col, 2] == 1) >> (differential_down_state[round, 1, 1, col, 1] + differential_down_state[round, 1, 3, col, 1] == 2 ))

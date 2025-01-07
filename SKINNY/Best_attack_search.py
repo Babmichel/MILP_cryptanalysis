@@ -51,7 +51,7 @@ with Pool(multiprocessing.cpu_count()) as pool:
 
 for structure_round in range(p.parameters["structure_max"]+1):
     for MITM_up_round in range(p.parameters["MITM_up_max"]+1):
-        for diff_round in range(p.parameters["disitnguisher_max"]+1):
+        for diff_round in range(p.parameters["distinguisher_max"]+1):
             for MITM_down_round in range(p.parameters["MITM_down_max"]+1):
                 if Valid_matrix[structure_round, MITM_up_round, diff_round, MITM_down_round] == 1 and Complexite_matrix[structure_round, MITM_up_round, diff_round, MITM_down_round] <= p.parameters["complexity_max"] :
                     print("-------------------------------------------")

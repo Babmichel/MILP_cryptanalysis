@@ -9,7 +9,7 @@ from multiprocessing import Pool
 structure_max = p.parameters["structure_max"]
 structure_min = p.parameters["structure_min"]
 MITM_up_max = p.parameters["MITM_up_max"]
-disitnguisher_max = p.parameters["disitnguisher_max"]
+disitnguisher_max = p.parameters["disitnguisher_max"]+1
 MITM_down_max = p.parameters["MITM_down_max"]
 MITM_up_min = p.parameters["MITM_up_min"]
 distinguisher_min = p.parameters["distinguisher_min"]

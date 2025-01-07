@@ -490,7 +490,7 @@ def attack(structure_size, MITM_up_size, distinguisher_size, MITM_down_size):
         #------------------------------------------------------------------------------------------------------------------------------------------
         ### TRUNCATED DIFFERENTIAL DISTINGUISHER
         #------------------------------------------------------------------------------------------------------------------------------------------
-        """
+        
         model.addConstr(distinguisher_differential[0, 0, 0, 0, 1] == 0)
         model.addConstr(distinguisher_differential[0, 0, 0, 1, 1] == 1)
         model.addConstr(distinguisher_differential[0, 0, 0, 2, 1] == 0)
@@ -530,7 +530,7 @@ def attack(structure_size, MITM_up_size, distinguisher_size, MITM_down_size):
         model.addConstr(distinguisher_differential[distinguisher_size-1, 3, 3, 1, 1] == 0)
         model.addConstr(distinguisher_differential[distinguisher_size-1, 3, 3, 2, 1] == 0)
         model.addConstr(distinguisher_differential[distinguisher_size-1, 3, 3, 3, 1] == 0)
-        """
+        
         #Distinguisher can never be fully know or unknow
         for round in range(distinguisher_size):
             for step in range(4):

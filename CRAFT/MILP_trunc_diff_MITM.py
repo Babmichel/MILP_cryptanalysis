@@ -101,7 +101,7 @@ def attack(structure_size, MITM_up_size, distinguisher_size, MITM_down_size):
         red_complexity = propa_distinguisher + red_key_guess + state_test_down + end_distinguisher_active - start_distinguisher_active + proba_diff_up
         blue_complexity = propa_distinguisher + blue_key_guess + state_test_up + proba_diff_down
         if structure_size <= 1 :
-            match_complexity = red_complexity + blue_complexity - purple_key_guess - 16 - fix_number - ((propa_distinguisher - start_distinguisher_active) - (16 - fix_number)) - proba_diff_down - proba_diff_up
+            match_complexity = red_complexity + blue_complexity - purple_key_guess - 16 - ((propa_distinguisher - start_distinguisher_active) - (16 - fix_number)) - proba_diff_down - proba_diff_up
         if structure_size >= 2 :
             match_complexity = red_complexity + blue_complexity - purple_key_guess - fix_number - ((propa_distinguisher - start_distinguisher_active) - (16 - fix_number)) - proba_diff_down - proba_diff_up
         

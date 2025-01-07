@@ -15,9 +15,9 @@ MITM_up_min = p.parameters["MITM_up_min"]
 distinguisher_min = p.parameters["distinguisher_min"]
 MITM_down_min = p.parameters["MITM_down_min"]
 z = p.parameters["word_size"]
-#Valid_matrix = np.zeros([structure_max+1,MITM_up_max+1,disitnguisher_max+1,MITM_down_max+1])
-#Complexite_matrix = np.zeros([structure_max+1,MITM_up_max+1,disitnguisher_max+1,MITM_down_max+1])
-Solution = []
+Valid_matrix = np.zeros([structure_max+1,MITM_up_max+1,disitnguisher_max+1,MITM_down_max+1])
+Complexite_matrix = np.zeros([structure_max+1,MITM_up_max+1,disitnguisher_max+1,MITM_down_max+1])
+#Solution = []
 
 def search_attack(distinguisher_max2):
     for structure_round in range(structure_min, structure_max+1):
@@ -39,12 +39,12 @@ with Pool(multiprocessing.cpu_count()) as pool:
             complexite_bleu = attaque[-1][13]
             complexite_rouge = attaque[-1][12]
             complexite_MATCH = attaque[-1][14]
-            if z*np.max([complexite_bleu, complexite_rouge, complexite_MATCH]) <= p.parameters["complexity_max"]:
-                Solution.append([attaque[-1][18], attaque[-1][19], attaque[-1][20], attaque[-1][21], z*np.max([complexite_bleu, complexite_rouge, complexite_MATCH]) ])
+            #if z*np.max([complexite_bleu, complexite_rouge, complexite_MATCH]) <= p.parameters["complexity_max"]:
+                #Solution.append([attaque[-1][18], attaque[-1][19], attaque[-1][20], attaque[-1][21], z*np.max([complexite_bleu, complexite_rouge, complexite_MATCH]) ])
             
-            #Valid_matrix[attaque[-1][18], attaque[-1][19], attaque[-1][20], attaque[-1][21]] = 1
-            #Complexite_matrix[attaque[-1][18], attaque[-1][19], attaque[-1][20], attaque[-1][21]] = z*np.max([complexite_bleu, complexite_rouge, complexite_MATCH])
-
+            Valid_matrix[attaque[-1][18], attaque[-1][19], attaque[-1][20], attaque[-1][21]] = 1
+            Complexite_matrix[attaque[-1][18], attaque[-1][19], attaque[-1][20], attaque[-1][21]] = z*np.max([complexite_bleu, complexite_rouge, complexite_MATCH])
+"""
 for element in Solution :
     structure_round = Solution[0]
     MITM_up_round = Solution[1]
@@ -62,5 +62,5 @@ for structure_round in range(p.parameters["structure_max"]+1):
                     print("-------------------------------------------")
                     print("valid attack on ",structure_round + MITM_up_round+ diff_round+ MITM_down_round, " round, with complexity ", Complexite_matrix[structure_round, MITM_up_round, diff_round, MITM_down_round] )
                     print("parameters: ", structure_round, MITM_up_round, diff_round, MITM_down_round)
-"""
+#"""
 print ("fin de recherche")

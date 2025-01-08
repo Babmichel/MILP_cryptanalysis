@@ -4,7 +4,7 @@ import numpy as np
 import MILP_trunc_diff_MITM
 import parameters as p
 import multiprocessing
-from multiprocessing import Pool
+from multiprocessing.dummy import Pool
 
 structure_max = p.parameters["structure_max"]
 structure_min = p.parameters["structure_min"]

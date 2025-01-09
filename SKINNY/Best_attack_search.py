@@ -24,7 +24,7 @@ def search_attack(MITM_up_max2):
     for structure_round in range(structure_min, structure_max + 1):
             for diff_round in range(distinguisher_min, distinguisher_max + 1):
                 for MITM_down_round in range(MITM_down_min, MITM_down_max + 1):
-                    if (structure_round + MITM_up_max2 + diff_round + MITM_down_round >= p.parameters["attack_size_min"]) and (structure_round+MITM_up_max2+diff_round+MITM_down_round <= p.parameters["attack_size_max"]):
+                    if (structure_round + MITM_up_max2 + diff_round + MITM_down_round >= p.parameters["attack_size_min"]) and (structure_round+MITM_up_max2+diff_round+MITM_down_round <= p.parameters["attack_size_max"]) and MITM_down_round==MITM_up_max2:
                         print("###########################################")
                         print("tentative :", structure_round, MITM_up_max2, diff_round, MITM_down_round )
                         if p.parameters["type_of_attack"] == 0:

@@ -205,6 +205,8 @@ def display_attack(structure, MITM_up, diff, MITM_down, key_space,z=4):
         print(compteur_statetest_haut, compteur_statetest_bas)
         print("Probabilist key recovery haut et bas")
         print(compteur_probaup, compteur_probadown)
+        print("nombre de bouts de cles manquant")
+        print(resultat[24])
         print("complexite")
         print("generation des bleus :", z*Cblue)
         print("generation des rouges :", z*Cred)

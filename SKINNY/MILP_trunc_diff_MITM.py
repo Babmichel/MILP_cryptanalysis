@@ -212,12 +212,13 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         
         #nombre de violet guess
         count_equation = gp.quicksum(binary_count_for_match[row,col,1]*(key_sum_count[row,col]-3) for row in range(4) for col in range(4))
+        count_missing_equation = gp.quicksum(binary_count_for_match[row,col,0]*(3-key_sum_count[row,col]) for row in range(4) for col in range(4))
         
         #complexity constraints
         
         blue_complexity = count_blue + cost_differential + state_test_up + MITM_down_guess + fix_quantity_structure - end_structure_active
         red_complexity = count_red + cost_differential + state_test_down + end_differential - start_differential +  MITM_up_guess + fix_quantity_structure - start_structure_active
-        MATCH_complexity = blue_complexity + red_complexity + (fix_quantity_structure - end_structure_active - start_structure_active)- 2*(16-fix_quantity_structure) - count_equation - ((cost_differential - start_differential) - (16-start_structure_active)) - MITM_down_guess - MITM_up_guess
+        MATCH_complexity = blue_complexity + red_complexity + (fix_quantity_structure - end_structure_active - start_structure_active)- 2*(16-fix_quantity_structure) + count_missing_equation - count_equation - ((cost_differential - start_differential) - (16-start_structure_active)) - MITM_down_guess - MITM_up_guess
         model.addConstr(blue_complexity <= complexite +  complexite_bleu)
         model.addConstr(red_complexity <=  complexite + complexite_rouge)
         model.addConstr(MATCH_complexity <=  complexite + complexite_match)
@@ -1010,7 +1011,7 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
             compteur_rouge = count_red.getValue()
             compteur_bleu = count_blue.getValue()
             compteur_violet = count_equation.getValue()
-            #compteur_differentielle = cost_differential
+            missing_equation = count_missing_equation.getValue()
             compteur_differentielle = cost_differential.getValue()
             compteur_statetest_haut = state_test_up.getValue()
             compteur_statetest_bas = state_test_down.getValue()
@@ -1339,7 +1340,7 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                             if full_key[tour + structure_round + MITM_up_round+ differential_round, 3, row, col, 3].X == 1.0:
                                 key_2[tour + structure_round + MITM_up_round + differential_round, row, col] = 5
 
-            return([True, key_M, key_0, key_1, key_2, liste_X, liste_Y, liste_Z,Liste_X_diff, Liste_Y_diff, compteur_bleu, compteur_rouge, compteur_differentielle, start_diff, end_diff, compteur_fix, compteur_violet, compteur_statetest_haut, compteur_statetest_bas, compteur_proba_up, compteur_proba_down, Cblue, Cred, Cmatch])
+            return([True, key_M, key_0, key_1, key_2, liste_X, liste_Y, liste_Z,Liste_X_diff, Liste_Y_diff, compteur_bleu, compteur_rouge, compteur_differentielle, start_diff, end_diff, compteur_fix, compteur_violet, compteur_statetest_haut, compteur_statetest_bas, compteur_proba_up, compteur_proba_down, Cblue, Cred, Cmatch, missing_equation])
         else :
             return([False])
 

@@ -175,7 +175,7 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         complexite_rouge = model.addVar(lb = 0.0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
         complexite_bleu = model.addVar(lb = 0.0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
         complexite_match = model.addVar(lb = 0.0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
-        complexite = model.addVar(lb = 0.0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
+        complexity = model.addVar(lb = 0.0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
 
         #Optimization function
 
@@ -222,14 +222,14 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         red_complexity = cost_differential + count_red + MITM_up_guess + state_test_down + end_differential - start_differential
         MATCH_complexity = cost_differential + count_blue + count_red - count_equation + state_test_down + state_test_up + end_differential + 16-2*fix_quantity_structure - 2*(16-fix_quantity_structure) + count_missing_equation
         #MATCH_complexity = blue_complexity + red_complexity + (fix_quantity_structure - end_structure_active - start_structure_active)- 2*(16-fix_quantity_structure) + count_missing_equation - count_equation - ((cost_differential - start_differential) - (16-start_structure_active)) - MITM_down_guess - MITM_up_guess
-        model.addConstr(blue_complexity <= complexite_bleu)
-        model.addConstr(red_complexity <= complexite_rouge)
-        model.addConstr(MATCH_complexity <= complexite_match)
+        model.addConstr(blue_complexity <= complexity + complexite_bleu)
+        model.addConstr(red_complexity <= complexity + complexite_rouge)
+        model.addConstr(MATCH_complexity <= complexity + complexite_match)
         model.addConstr(MATCH_complexity <= 48)
-        model.addConstr(blue_complexity <= 48)
-        model.addConstr(red_complexity <= 48)
+        model.addConstr(blue_complexity <= 47)
+        model.addConstr(red_complexity <= 47)
         #Objective : Minimize the attack complexity
-        model.setObjectiveN(complexite_rouge + complexite_bleu + complexite_match, 0, 10)
+        model.setObjectiveN(complexity + complexite_rouge + complexite_bleu + complexite_match, 0, 10)
         model.setObjectiveN(-1*gp.quicksum(binary_bound_for_key_knowledge[row, col, 0, color, 0] for row in range(4) for col in range(4) for color in range(2)), 0, 8)
 
         

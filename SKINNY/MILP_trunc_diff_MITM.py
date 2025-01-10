@@ -230,8 +230,8 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         model.addConstr(red_complexity <= 47)
         #Objective : Minimize the attack complexity
         model.setObjectiveN(complexity + complexite_rouge + complexite_bleu + complexite_match, 0, 10)
-        model.setObjectiveN(-1*gp.quicksum(binary_bound_for_key_knowledge[row, col, 0, color, 0] for row in range(4) for col in range(4) for color in range(2)), 0, 8)
-
+        model.setObjectiveN(-1*gp.quicksum(binary_bound_for_key_knowledge[row, col, 0, color, 0] for row in range(4) for col in range(4) for color in range(2)), 1, 8)
+        model.setObjectiveN(-1*(state_test_down + state_test_up), 2, 8)
         
         model.ModelSense = GRB.MINIMIZE
 

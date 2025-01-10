@@ -46,8 +46,8 @@ with Pool(multiprocessing.cpu_count()) as pool:
                 complexite_bleu = resultat[i][j][21]
                 complexite_rouge = resultat[i][j][22]
                 complexite_MATCH = resultat[i][j][23]
-                Valid_matrix[resultat[i][j][24], resultat[i][j][25], resultat[i][j][26], resultat[i][j][27]] = 1
-                Complexite_matrix[resultat[i][j][24], resultat[i][j][25], resultat[i][j][26], resultat[i][j][27]] = z*np.max([complexite_bleu, complexite_rouge, complexite_MATCH])
+                Valid_matrix[resultat[i][j][25], resultat[i][j][26], resultat[i][j][27], resultat[i][j][28]] = 1
+                Complexite_matrix[resultat[i][j][25], resultat[i][j][26], resultat[i][j][27], resultat[i][j][28]] = z*np.max([complexite_bleu, complexite_rouge, complexite_MATCH])
 
 for structure_round in range(structure_max+1):
     for MITM_up_round in range(MITM_up_max+1):

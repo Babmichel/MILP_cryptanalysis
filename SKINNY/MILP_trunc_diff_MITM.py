@@ -37,11 +37,11 @@ def tweakey(key):
     new_key[3, 3] = key[1, 3]
     return new_key
 
-def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, key_space_size):
+def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, key_space_size, opti = 1):
     options = {
-    "WLSACCESSID" : "11f688cc-42d0-4f22-861f-3126b776b700",
-    "WLSSECRET" : "017dd5f9-e815-4929-9036-3d33abb3103c",
-    "LICENSEID" : 2602460
+    "WLSACCESSID" : "105deaf2-be7c-48e6-8994-7ada7350ab7a",
+    "WLSSECRET" : "6eb5112f-6d6c-471f-9931-c633dc77c9b4",
+    "LICENSEID" : 2534357
     }
     with gp.Env(params=options) as env, gp.Model(env=env) as model:
         
@@ -172,16 +172,21 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                 for binary in range(2):
                     binary_count_for_match[row, col, binary] = model.addVar(vtype= GRB.BINARY, name = f"binarymatch{row}{col}")
 
-        complexite_rouge = model.addVar(lb = 0.0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
-        complexite_bleu = model.addVar(lb = 0.0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
-        complexite_match = model.addVar(lb = 0.0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
+        complexite_rouge = model.addVar(lb = 0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
+        complexite_bleu = model.addVar(lb = 0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
+        complexite_match = model.addVar(lb = -0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
+        
+        complexite_rouge2 = model.addVar(lb = 0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
+        complexite_bleu2 = model.addVar(lb = 0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
+        complexite_match2 = model.addVar(lb = 0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
+        
         complexity = model.addVar(lb = 0.0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
 
         #Optimization function
 
         #count of the state test
-        state_test_up = gp.quicksum(MITM_up_state[round, step, row, col, 2] for round in range(MITM_up_round) for step in range(3) for row in range(4) for col in range(4))
-        state_test_down = gp.quicksum(MITM_down_state[round, step, row, col, 2] for round in range(MITM_down_round) for step in range(3) for row in range(4) for col in range(4))
+        state_test_up = gp.quicksum(MITM_up_state[round, 0, row, col, 2] for round in range(MITM_up_round) for row in range(4) for col in range(4))
+        state_test_down = gp.quicksum(MITM_down_state[round, 0, row, col, 2] for round in range(MITM_down_round) for row in range(4) for col in range(4))
         
         #Probabilistic key recovery 
         MITM_up_guess = gp.quicksum(differential_up_state[round, 1, row, col, 2] for round in range(MITM_up_round) for row in range(4) for col in range(4))
@@ -189,14 +194,10 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
        
         #count of the fix in structure
          #count of the fix in structure
-        if structure_round>0:
+        if structure_round > 0:
             fix_quantity_structure = gp.quicksum(structure_state[round, step, row, col, 4] for round in range(structure_round) for step in range(3) for row in range(4) for col in range(4))
-            end_structure_active = gp.quicksum(structure_state[structure_round-1, 2, row, col, color] for row in range(4) for col in range(4) for color in [2,3,4])
-            start_structure_active = gp.quicksum(structure_state[0, 0, row, col, color] for row in range(4) for col in range(4) for color in [1,3,4])
         else : 
             fix_quantity_structure = 16
-            end_structure_active = 16
-            start_structure_active = 16
 
         #count of the cost of the differential
         cost_differential = gp.quicksum(differential_state[round, 0, row, col, 2] for round in range(differential_round) for row in range(4) for col in range(4))
@@ -223,31 +224,41 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         MATCH_complexity = cost_differential + count_blue + count_red - count_equation + state_test_down + state_test_up + end_differential + 16-2*fix_quantity_structure - 2*(16-fix_quantity_structure) + count_missing_equation - state_test_down - state_test_up
         
         #MATCH_complexity = blue_complexity + red_complexity + (fix_quantity_structure - end_structure_active - start_structure_active)- 2*(16-fix_quantity_structure) + count_missing_equation - count_equation - ((cost_differential - start_differential) - (16-start_structure_active)) - MITM_down_guess - MITM_up_guess
-        model.addConstr(blue_complexity <= complexity + complexite_bleu)
-        model.addConstr(red_complexity <= complexity + complexite_rouge)
-        model.addConstr(MATCH_complexity <= complexity + complexite_match)
-        #model.addConstr(MATCH_complexity <= 46)
-        #model.addConstr(blue_complexity <= 47)
-        #model.addConstr(red_complexity <= 47)
+        model.addConstr(blue_complexity <= complexity)
+        model.addConstr(red_complexity <= complexity)
+        model.addConstr(MATCH_complexity <= complexity )
+
+        model.addConstr(blue_complexity <= complexity - complexite_bleu)
+        model.addConstr(red_complexity <=  complexity - complexite_rouge)
+        model.addConstr(MATCH_complexity <= complexity - complexite_match)
         
+        model.addConstr(blue_complexity <= complexity - complexite_bleu - complexite_bleu2)
+        model.addConstr(red_complexity <=  complexity - complexite_rouge - complexite_rouge2)
+        model.addConstr(MATCH_complexity <= complexity - complexite_match - complexite_match2)
+
         #Objective : Minimize the attack complexity
-        model.setObjectiveN(complexity + complexite_rouge + complexite_bleu + complexite_match, 0, 10)
-        #model.setObjectiveN(-1*gp.quicksum(binary_bound_for_key_knowledge[row, col, 0, color, 0] for row in range(4) for col in range(4) for color in range(2)), 1, 8)
-        #model.setObjectiveN(-1*(state_test_down + state_test_up), 2, 6)
+        
+        model.setObjectiveN(complexity, 0, 10)
+        model.setObjectiveN(state_test_down+state_test_down, 1, 1)
+        """
+        if opti :
+            model.setObjectiveN(-1*(complexite_rouge + complexite_bleu + complexite_match), 0, 5)
+            model.setObjectiveN(-1*(complexite_rouge2 + complexite_bleu2 + complexite_match2), 0, 3)
+        """
         
         model.ModelSense = GRB.MINIMIZE
 
         ### CONSTRAINTS ###
         #without state test
-        #model.addConstr(state_test_up == 0)
-        #model.addConstr(state_test_down == 0)
+        #model.addConstr(state_test_up == 1)
+        #model.addConstr(state_test_down == 1)
 
         #without probabilistic key recovery
         #model.addConstr(MITM_up_guess == 0)
-        #model.addConstr(MITM_down_guess == 0)
+        #model.addConstr(MITM_down_guess >= 1)
 
         #We need less text generated by the structure than the one needed at the start of the distinguisher
-        model.addConstr(16 - end_structure_active <= cost_differential - start_differential + MITM_up_guess + MITM_down_guess)
+        model.addConstr(16 - fix_quantity_structure <= cost_differential - start_differential + MITM_up_guess + MITM_down_guess)
 
         #Count for the match:
         for row in range(4):
@@ -262,7 +273,6 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                 model.addConstr(key_sum_count[row,col] == gp.quicksum((binary_bound_for_key_knowledge[row, col, 0, color, 1]*key_knowledge[row, col, 0, color] + (key_space_size)*(binary_bound_for_key_knowledge[row, col, 0, color, 0])) for color in range(2)))            
 
         ### KEY Constraints
-
         for round in range (total_round):
             for key in range(key_space_size + 1):
                 for row in range(4):
@@ -281,7 +291,6 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                         model.addConstr(full_key[round, key, row, col, 0] == 1)
 
         #Key schedule :  if we guess more than two time a key word of the full key, we guessed it for all the others
-
         for row in range(4):
             for col in range(4):
                 for key in range(key_space_size+1):
@@ -738,7 +747,6 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                 model.addConstr(differential_up_state[round, 1, 2, col, 3] == gp.and_(differential_up_state[round, 1, 1, col, 2],differential_up_state[round +1, 0, 2, col, 0]))
                 model.addConstr(differential_up_state[round, 1, 3, col, 3] == 0)
 
-    
         #permutation-1
         for round in range(MITM_up_round):
             for col in range(4):
@@ -915,9 +923,9 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                 model.addConstr(differential_down_state[round + 1, 0, 2, col, 3] == 0)
                 model.addConstr(differential_down_state[round + 1, 0, 3, col, 3] == gp.and_(differential_down_state[round + 1, 0, 0, col, 2], differential_down_state[round, 1, 3, col, 0]))
                                                                 
-                model.addConstr((differential_down_state[round + 1, 0, 3, col, 2] == 1) >> (differential_down_state[round, 1, 0, col, 1] + differential_down_state[round, 1, 3, col, 1] == 2 ))
-                model.addConstr((differential_down_state[round + 1, 0, 2, col, 2] == 1) >> (differential_down_state[round, 1, 1, col, 1] + differential_down_state[round, 1, 3, col, 1] == 2 ))
-                model.addConstr((differential_down_state[round + 1, 0, 0, col, 2] == 1) >> (differential_down_state[round, 1, 1, col, 1] + differential_down_state[round, 1, 2, col, 1] + differential_down_state[round, 1, 3, col, 1] >= 2 ))
+                model.addConstr((differential_down_state[round + 1, 0, 3, col, 2] == 1) >> (differential_down_state[round, 1, 0, col, 1] + differential_down_state[round, 1, 2, col, 1] == 2 ))
+                model.addConstr((differential_down_state[round + 1, 0, 2, col, 2] == 1) >> (differential_down_state[round, 1, 1, col, 1] + differential_down_state[round, 1, 2, col, 1] == 2 ))
+                model.addConstr((differential_down_state[round + 1, 0, 0, col, 2] == 1) >> (differential_down_state[round, 1, 0, col, 1] + differential_down_state[round, 1, 2, col, 1] + differential_down_state[round, 1, 3, col, 1] >= 2 ))
                 model.addConstr((differential_down_state[round + 1, 0, 1, col, 2]) == 0)
 
         #permutation
@@ -1165,20 +1173,23 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                             liste_Y[structure_round + MITM_up_round + differential_round + i][row, col] = -1
                         if MITM_down_state[i, 2, row, col, 2].X == 1.0:
                             liste_Z[structure_round + MITM_up_round + differential_round + i][row, col] = -1
+                        
                         if differential_down_state[i, 0, row, col, 0].X == 1.0:
                             Liste_X_diff[structure_round + MITM_up_round + differential_round + i][row, col] = 1
-                        
                         if differential_down_state[i, 0, row, col, 1].X == 1.0:
                             Liste_X_diff[structure_round + MITM_up_round + differential_round + i][row, col] = 2
-                        
                         if differential_down_state[i, 0, row, col, 2].X == 1.0:
                             Liste_X_diff[structure_round + MITM_up_round + differential_round + i][row, col] = -1
-
+                        if differential_down_state[i, 0, row, col, 3].X == 1.0:
+                            Liste_X_diff[structure_round + MITM_up_round + differential_round + i][row, col] = 0
+                        
+                        
                         if differential_down_state[i, 1, row, col, 0].X == 1.0:
                             Liste_Y_diff[structure_round + MITM_up_round + differential_round + i][row, col] = 1
-                        
                         if differential_down_state[i, 1, row, col, 1].X == 1.0:
                             Liste_Y_diff[structure_round + MITM_up_round + differential_round + i][row, col] = 2
+
+
 
             key_M=np.zeros((total_round, 4, 4))
             for tour in range(structure_round):
@@ -1219,7 +1230,7 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                             key_M[tour + structure_round + MITM_up_round + differential_round, row, col] = 2
                         if full_key[tour + structure_round + MITM_up_round+ differential_round, 0, row, col, 2].X == 1.0:
                             key_M[tour + structure_round + MITM_up_round + differential_round, row, col] = 3
-                        if full_key[tour + structure_round + MITM_up_round+ differential_round, 0, row, col, 3].X == 1.0:
+                        if full_key[tour + structure_round + MITM_up_round + differential_round, 0, row, col, 3].X == 1.0:
                             key_M[tour + structure_round + MITM_up_round + differential_round, row, col] = 5
 
 

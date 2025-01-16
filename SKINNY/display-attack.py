@@ -155,7 +155,7 @@ def affichage_grille(key, key_0, key_1, key_2, x_list, y_list, z_list, Liste_X_d
                 elif Liste_X_diff[i][ligne, colonne] == -1:
                     print("\033[95m F", end="")
                 else:
-                    print("\033[90m ■", end="")
+                    print("\033[99m X", end="")
             print("\033[90m| |", end="")
             for colonne in range(4):
                 if Liste_Y_diff[i][ligne, colonne] == 2:
@@ -175,7 +175,7 @@ def affichage_grille(key, key_0, key_1, key_2, x_list, y_list, z_list, Liste_X_d
 
 def display_attack(structure, MITM_up, diff, MITM_down, key_space,z=4):
     if type_of_attack == 0 :
-        resultat = MILP_trunc_diff_MITM.attack(structure, MITM_up, diff+1, MITM_down-1, key_space)
+        resultat = MILP_trunc_diff_MITM.attack(structure, MITM_up, diff+1, MITM_down-1, key_space, 1)
     elif type_of_attack == 1 :
         resultat = Differential_MITM_MILP.attack(structure, MITM_up, diff, MITM_down, key_space)
     if resultat[0] :

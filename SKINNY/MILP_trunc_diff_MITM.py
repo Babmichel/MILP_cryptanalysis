@@ -46,7 +46,7 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
     with gp.Env(params=options) as env, gp.Model(env=env) as model:
         
         model.Params.MIRcuts = 2 #o for no cuts, 1 for classic cuts, 2 for agressive cuts
-        model.Params.TimeLimit = 10000
+        model.Params.TimeLimit = 30000
 
         #ATTACK PARAMETERS
         total_round = structure_round + MITM_up_round + MITM_down_round + differential_round
@@ -240,11 +240,11 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         
         model.setObjectiveN(complexity, 0, 10)
         
-        """
+        
         if opti :
             model.setObjectiveN(-1*(complexite_rouge + complexite_bleu + complexite_match), 0, 5)
             model.setObjectiveN(-1*(complexite_rouge2 + complexite_bleu2 + complexite_match2), 0, 3)
-        """
+        
         
         model.ModelSense = GRB.MINIMIZE
 

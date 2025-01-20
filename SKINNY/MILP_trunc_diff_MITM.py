@@ -37,12 +37,20 @@ def tweakey(key):
     new_key[3, 3] = key[1, 3]
     return new_key
 
-def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, key_space_size, opti = 1):
-    options = {
-    "WLSACCESSID" : "11f688cc-42d0-4f22-861f-3126b776b700",
-    "WLSSECRET" : "017dd5f9-e815-4929-9036-3d33abb3103c",
-    "LICENSEID" : 2602460
-    }
+def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, key_space_size, licence = 0):
+    if licence :
+        options = {
+        "WLSACCESSID" : "11f688cc-42d0-4f22-861f-3126b776b700",
+        "WLSSECRET" : "017dd5f9-e815-4929-9036-3d33abb3103c",
+        "LICENSEID" : 2602460
+        }
+    else : 
+        options = {
+        "WLSACCESSID" : "105deaf2-be7c-48e6-8994-7ada7350ab7a",
+	    "WLSSECRET" : "6eb5112f-6d6c-471f-9931-c633dc77c9b4",
+	    "LICENSEID" : 2534357
+        }
+
     with gp.Env(params=options) as env, gp.Model(env=env) as model:
         
         model.Params.MIRcuts = 2 #o for no cuts, 1 for classic cuts, 2 for agressive cuts

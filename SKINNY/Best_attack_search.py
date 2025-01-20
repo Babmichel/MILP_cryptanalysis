@@ -5,6 +5,9 @@ import Differential_MITM_MILP
 import parameters as p
 import multiprocessing
 from multiprocessing.dummy import Pool
+import sys
+
+licence = int(sys.argv[1])
 
 structure_max = p.parameters["structure_max"]
 structure_min = p.parameters["structure_min"]
@@ -28,7 +31,7 @@ def search_attack(MITM_up_max2):
                         print("###########################################")
                         print("tentative :", structure_round, MITM_up_max2, diff_round, MITM_down_round )
                         if p.parameters["type_of_attack"] == 0:
-                            attaque = MILP_trunc_diff_MITM.attack(structure_round, MITM_up_max2, diff_round+1, MITM_down_round-1,3,0)
+                            attaque = MILP_trunc_diff_MITM.attack(structure_round, MITM_up_max2, diff_round+1, MITM_down_round-1,3,licence)
                         elif p.parameters["type_of_attack"] == 1:
                             attaque = Differential_MITM_MILP.attack(structure_round, MITM_up_max2, diff_round, MITM_down_round,3)
                         attaque.append(structure_round)

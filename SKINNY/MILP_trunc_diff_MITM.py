@@ -246,8 +246,8 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
 
         #Objective : Minimize the attack complexity
         
-        model.setObjectiveN(complexity, 0, 10)
-        
+        model.setObjectiveN(complexity, 0, 100)
+        model.setObjectiveN(state_test_down + state_test_up, 1, 10)
         """
         if opti :
             model.setObjectiveN(-1*(complexite_rouge + complexite_bleu + complexite_match), 0, 5)

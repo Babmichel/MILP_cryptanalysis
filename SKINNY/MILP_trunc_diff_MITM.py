@@ -201,7 +201,7 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         MITM_down_guess = gp.quicksum(differential_down_state[round, 0, row, col, 2] for round in range(MITM_down_round) for row in range(4) for col in range(4))
        
         #count of the fix in structure
-         #count of the fix in structure
+        #count of the fix in structure
         if structure_round > 0:
             fix_quantity_structure = gp.quicksum(structure_state[round, step, row, col, 4] for round in range(structure_round) for step in range(3) for row in range(4) for col in range(4))
         else : 
@@ -225,11 +225,14 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         #equation manquante pour les equations lineaires dans la structure
         count_missing_equation = gp.quicksum(binary_count_for_match[row,col,0]*(3-key_sum_count[row,col]) for row in range(4) for col in range(4))
         
+        #count of unknow key bit in the structure
+        zero_key_structure = gp.quicksum(full_key[round, 0, row, col, 0] for round in range(structure_round) for row in range(2) for col in range(2))
+
         #complexity constraints
         
         blue_complexity = cost_differential + count_blue + MITM_down_guess + state_test_up
         red_complexity = cost_differential + count_red + MITM_up_guess + state_test_down + end_differential - start_differential
-        MATCH_complexity = cost_differential + count_blue + count_red - count_equation + state_test_down + state_test_up + end_differential + 16-2*fix_quantity_structure - 2*(16-fix_quantity_structure) + count_missing_equation - state_test_down - state_test_up
+        MATCH_complexity = cost_differential + count_blue + count_red - count_equation + end_differential + 16-3*fix_quantity_structure + count_missing_equation + zero_key_structure
         
         #MATCH_complexity = blue_complexity + red_complexity + (fix_quantity_structure - end_structure_active - start_structure_active)- 2*(16-fix_quantity_structure) + count_missing_equation - count_equation - ((cost_differential - start_differential) - (16-start_structure_active)) - MITM_down_guess - MITM_up_guess
         model.addConstr(blue_complexity <= complexity)

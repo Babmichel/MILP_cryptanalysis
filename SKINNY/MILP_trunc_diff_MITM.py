@@ -1,5 +1,5 @@
 #Differential_MITM_MILP
-
+pip install gurobipy
 import gurobipy as gp
 from gurobipy import GRB
 import numpy as np
@@ -229,13 +229,13 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         
         blue_complexity = cost_differential + count_blue + MITM_down_guess + state_test_up
         red_complexity = cost_differential + count_red + MITM_up_guess + state_test_down + end_differential - start_differential
-        MATCH_complexity = 32 + cost_differential+ end_differential
+        MATCH_complexity = 32 + cost_differential + end_differential
   
         model.addConstr(blue_complexity <= complexity)
         model.addConstr(red_complexity <= complexity)
         model.addConstr(MATCH_complexity <= complexity)
 
-        model.addConstr(complexity <= 192)
+        model.addConstr(complexity <= 48)
         #model.addConstr(blue_complexity <= complexity - complexite_bleu)
         #model.addConstr(red_complexity <=  complexity - complexite_rouge)
         #model.addConstr(MATCH_complexity <= complexity - complexite_match)

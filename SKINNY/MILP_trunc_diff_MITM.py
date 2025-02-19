@@ -222,34 +222,33 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         #nombre de violet guess
         count_equation = gp.quicksum(binary_count_for_match[row,col,1]*(key_sum_count[row,col]-3) for row in range(4) for col in range(4))
         
-        #equation manquante pour les equations lineaires dans la structure
+        #equation manquante pour les equations dans la structure
         count_missing_equation = gp.quicksum(binary_count_for_match[row,col,0]*(3-key_sum_count[row,col]) for row in range(4) for col in range(4))
         
-        #count of unknow key bit in the structure
-        zero_key_structure = gp.quicksum(full_key[round, 0, row, col, 0] for round in range(structure_round) for row in range(2) for col in range(2))
-
         #complexity constraints
         
         blue_complexity = cost_differential + count_blue + MITM_down_guess + state_test_up
         red_complexity = cost_differential + count_red + MITM_up_guess + state_test_down + end_differential - start_differential
-        MATCH_complexity = cost_differential + count_blue + count_red - count_equation + end_differential + 16-3*fix_quantity_structure + count_missing_equation + zero_key_structure
-        
-        #MATCH_complexity = blue_complexity + red_complexity + (fix_quantity_structure - end_structure_active - start_structure_active)- 2*(16-fix_quantity_structure) + count_missing_equation - count_equation - ((cost_differential - start_differential) - (16-start_structure_active)) - MITM_down_guess - MITM_up_guess
+        MATCH_complexity = 32 + cost_differential+ end_differential
+  
         model.addConstr(blue_complexity <= complexity)
         model.addConstr(red_complexity <= complexity)
-        model.addConstr(MATCH_complexity <= complexity )
+        model.addConstr(MATCH_complexity <= complexity)
 
-        model.addConstr(blue_complexity <= complexity - complexite_bleu)
-        model.addConstr(red_complexity <=  complexity - complexite_rouge)
-        model.addConstr(MATCH_complexity <= complexity - complexite_match)
+        model.addConstr(complexity <= 192)
+        #model.addConstr(blue_complexity <= complexity - complexite_bleu)
+        #model.addConstr(red_complexity <=  complexity - complexite_rouge)
+        #model.addConstr(MATCH_complexity <= complexity - complexite_match)
         
-        model.addConstr(blue_complexity <= complexity - complexite_bleu - complexite_bleu2)
-        model.addConstr(red_complexity <=  complexity - complexite_rouge - complexite_rouge2)
-        model.addConstr(MATCH_complexity <= complexity - complexite_match - complexite_match2)
+        #model.addConstr(blue_complexity <= complexity - complexite_bleu - complexite_bleu2)
+        #model.addConstr(red_complexity <=  complexity - complexite_rouge - complexite_rouge2)
+        #model.addConstr(MATCH_complexity <= complexity - complexite_match - complexite_match2)
 
         #Objective : Minimize the attack complexity
         
+        #model.setObjective(count_red + state_test_down + MITM_down_guess)
         model.setObjectiveN(complexity, 0, 100)
+
         #model.setObjectiveN(state_test_down + state_test_up, 1, 10)
         """
         if opti :

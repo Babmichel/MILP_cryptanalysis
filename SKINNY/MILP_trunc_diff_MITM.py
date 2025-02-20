@@ -179,14 +179,6 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                 key_sum_count[row, col] = model.addVar(vtype = GRB.INTEGER)
                 for binary in range(2):
                     binary_count_for_match[row, col, binary] = model.addVar(vtype= GRB.BINARY, name = f"binarymatch{row}{col}")
-
-        complexite_rouge = model.addVar(lb = 0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
-        complexite_bleu = model.addVar(lb = 0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
-        complexite_match = model.addVar(lb = -0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
-        
-        complexite_rouge2 = model.addVar(lb = 0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
-        complexite_bleu2 = model.addVar(lb = 0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
-        complexite_match2 = model.addVar(lb = 0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
         
         complexity = model.addVar(lb = 0.0, ub = 60.0,vtype= GRB.INTEGER, name = "complexite")
 
@@ -235,14 +227,27 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
         model.addConstr(red_complexity <= complexity)
         model.addConstr(MATCH_complexity <= complexity)
 
-        model.addConstr(complexity <= 48)
-        #model.addConstr(blue_complexity <= complexity - complexite_bleu)
-        #model.addConstr(red_complexity <=  complexity - complexite_rouge)
-        #model.addConstr(MATCH_complexity <= complexity - complexite_match)
-        
-        #model.addConstr(blue_complexity <= complexity - complexite_bleu - complexite_bleu2)
-        #model.addConstr(red_complexity <=  complexity - complexite_rouge - complexite_rouge2)
-        #model.addConstr(MATCH_complexity <= complexity - complexite_match - complexite_match2)
+        model.addConstr(complexity <= 47)
+        match differential_round :
+            case 10 :
+                model.addConstr(end_differential + cost_differential >= 14)
+            case 9 :
+                model.addConstr(end_differential + cost_differential >= 13)
+            case 8 :
+                model.addConstr(end_differential + cost_differential >= 12)
+            case 7 :
+                model.addConstr(end_differential + cost_differential >= 8)
+            case 6 :
+                model.addConstr(end_differential + cost_differential >= 6)
+            case 5 :
+                model.addConstr(end_differential + cost_differential >= 4)
+            case 4 :
+                model.addConstr(end_differential + cost_differential >= 3)
+            case 3 :
+                model.addConstr(end_differential + cost_differential >= 1)
+            case 2 :
+                model.addConstr(end_differential + cost_differential >= 1)
+                                                
 
         #Objective : Minimize the attack complexity
         

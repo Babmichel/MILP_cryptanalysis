@@ -247,6 +247,8 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
                 model.addConstr(end_differential + cost_differential >= 1)
             case 2 :
                 model.addConstr(end_differential + cost_differential >= 1)
+            case 1 :
+                model.addConstr(end_differential + cost_differential >= 0)
 
         #Objective : Minimize the attack complexity
         

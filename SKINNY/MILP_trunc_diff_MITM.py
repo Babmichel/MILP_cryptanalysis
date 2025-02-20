@@ -225,7 +225,7 @@ def attack(structure_round, MITM_up_round, differential_round, MITM_down_round, 
   
         model.addConstr(blue_complexity <= complexity)
         model.addConstr(red_complexity <= complexity)
-        model.addConstr(MATCH_complexity <= complexity)
+        #model.addConstr(MATCH_complexity <= complexity)
 
         model.addConstr(complexity <= 47)
         match differential_round :

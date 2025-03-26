@@ -5,9 +5,9 @@ import numpy as np
 
 def attack(structure_size, MITM_up_size, distinguisher_size, MITM_down_size):
     options = {
-    "WLSACCESSID" : "11f688cc-42d0-4f22-861f-3126b776b700",
-    "WLSSECRET" : "017dd5f9-e815-4929-9036-3d33abb3103c",
-    "LICENSEID" : 2602460
+    "WLSACCESSID" : "fe07de76-f419-4bc2-9f73-971663a6af4b",
+	"WLSSECRET" : "4f4f60d5-b59d-4db3-925e-00517792930e",
+	"LICENSEID" : 2602460
     }
     with gp.Env(params=options) as env, gp.Model(env=env) as model:
         
@@ -100,6 +100,7 @@ def attack(structure_size, MITM_up_size, distinguisher_size, MITM_down_size):
 
         red_complexity = propa_distinguisher + red_key_guess + state_test_down + end_distinguisher_active - start_distinguisher_active + proba_diff_up
         blue_complexity = propa_distinguisher + blue_key_guess + state_test_up + proba_diff_down
+        
         if structure_size <= 1 :
             match_complexity = red_complexity + blue_complexity - purple_key_guess - 16 - ((propa_distinguisher - start_distinguisher_active) - (16 - fix_number)) - proba_diff_down - proba_diff_up
         if structure_size >= 2 :
@@ -325,7 +326,7 @@ def attack(structure_size, MITM_up_size, distinguisher_size, MITM_down_size):
                         for color in range(4):
                             model.addConstr(structure_state[round, 3, row, col, color] == structure_state[round + 1, 0, row, col, color])
 
-            #fix only in '1' and '2
+            #fix only in '1' and '2'
             for round in range(structure_size):
                 for step in [0,3]:
                     for row in range(4):
@@ -565,7 +566,7 @@ def attack(structure_size, MITM_up_size, distinguisher_size, MITM_down_size):
                         model.addConstr((distinguisher_differential[round, 1, row, col, color] == 1) >> (distinguisher_differential[round, 2, row, col, color] == 1))
                     model.addConstr((distinguisher_differential[round, 1, row, col, 2] == 1) >> (distinguisher_differential[round, 2, row, col, 0] == 1))
         
-        #Permutation
+        #Permutationfor
         for round in range(distinguisher_size):
             for color in range(2):
                 model.addConstr(distinguisher_differential[round, 3, 0, 0, color] == distinguisher_differential[round, 2, 3, 3, color])

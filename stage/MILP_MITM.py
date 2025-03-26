@@ -172,9 +172,9 @@ def affichage_grille(key, key_0, key_1, key_2, x_list, y_list, z_list):
         print("  ‾ ‾ ‾ ‾    ‾ ‾ ‾ ‾    ‾ ‾ ‾ ‾      ‾ ‾ ‾ ‾      ‾ ‾ ‾ ‾    ‾ ‾ ‾ ‾    ‾ ‾ ‾ ‾\n \n")
 
 options = {
-"WLSACCESSID" : "bb41a17b-b3b2-40d7-8c1c-01d90a2e2170",
-"WLSSECRET" : "4db1c96a-1e47-4fc9-83eb-28a57d08879f",
-"LICENSEID" : 2534357
+"WLSACCESSID" : "105deaf2-be7c-48e6-8994-7ada7350ab7a",
+	"WLSSECRET" : "6eb5112f-6d6c-471f-9931-c633dc77c9b4",
+	"LICENSEID" : 2534357
 }
 
 with gp.Env(params=options) as env, gp.Model(env=env) as model:
@@ -182,7 +182,7 @@ with gp.Env(params=options) as env, gp.Model(env=env) as model:
     
     #ATTACK PARAMETERS
     structure_round = 6
-    MITM_round = 3
+    MITM_round = 8
     total_round = structure_round + MITM_round
 
     key_space_size = 3  
@@ -707,13 +707,13 @@ with gp.Env(params=options) as env, gp.Model(env=env) as model:
             model.addConstr(red_MITM_state[round, 2, 1, col, 0] == gp.or_(red_MITM_state[round + 1, 0, 1, col, 0], red_MITM_state[round + 1, 0, 2, col, 0], red_MITM_state[round + 1, 0, 3, col, 0]))
             model.addConstr(red_MITM_state[round, 2, 2, col, 0] == gp.or_(red_MITM_state[round + 1, 0, 1, col, 0], red_MITM_state[round + 1, 0, 3, col, 0]))
             model.addConstr(red_MITM_state[round, 2, 3, col, 0] == gp.or_(red_MITM_state[round + 1, 0, 0, col, 0], red_MITM_state[round + 1, 0, 3, col, 0]))
-     #MITM match
+    #MITM match
     for round in range(MITM_round-1):
         for side in range(2):
             for col in range(4):
                 model.addConstr(binary_match[round, 0, 0, col] == gp.and_([blue_MITM_state[round, 2, 0, col, 1], red_MITM_state[round + 1, 0, 1, col, 1]])) #list of matching nibbles
                 model.addConstr(binary_match[round, 0, 1, col] == gp.and_([blue_MITM_state[round, 2, 1, col, 1], red_MITM_state[round + 1, 0, 1, col, 1], red_MITM_state[round + 1, 0, 2, col, 1],red_MITM_state[round + 1, 0, 3, col , 1], blue_MITM_state[round + 1, 0, 3, col, 1]]))
-                model.addConstr(binary_match[round,0,2,col] == gp.and_([blue_MITM_state[round, 2, 2, col, 1], red_MITM_state[round + 1, 0, 1, col, 1], red_MITM_state[round + 1, 0, 3, col, 1]]))
+                model.addConstr(binary_match[round, 0,2,col] == gp.and_([blue_MITM_state[round, 2, 2, col, 1], red_MITM_state[round + 1, 0, 1, col, 1], red_MITM_state[round + 1, 0, 3, col, 1]]))
                 model.addConstr(binary_match[round,0,3,col] == gp.and_([blue_MITM_state[round, 2, 3, col, 1], red_MITM_state[round + 1, 0, 0, col, 1], red_MITM_state[round + 1, 0, 3, col, 1]]))
 
                 model.addConstr(binary_match[round, 1, 0, col] == gp.and_([red_MITM_state[round + 1, 0, 0, col, 1], blue_MITM_state[round, 2, 0, col, 1], blue_MITM_state[round, 2, 2, col, 1] ,blue_MITM_state[round, 2, 3, col, 1]])) #list of matching nibbles
@@ -721,7 +721,7 @@ with gp.Env(params=options) as env, gp.Model(env=env) as model:
                 model.addConstr(binary_match[round, 1, 2, col] == gp.and_([red_MITM_state[round + 1, 0, 2, col, 1], blue_MITM_state[round, 2, 1, col, 1], blue_MITM_state[round, 2, 2, col, 1]]))
                 model.addConstr(binary_match[round, 1, 3, col] == gp.and_([red_MITM_state[round + 1, 0, 3, col, 1], blue_MITM_state[round, 2, 0, col, 1], blue_MITM_state[round, 2, 2, col, 1]]))
 
-    model.addConstr(gp.quicksum(binary_match[round, side, row, col] for round in range(MITM_round - 1) for side in range(2) for row in range(4) for col in range(4)), GRB.GREATER_EQUAL, 1)
+    model.addConstr(gp.quicksum(binary_match[round, side, row, col] for round in range(MITM_round - 1) for side in range(2) for row in range(4) for col in range(4))>= 1)
 
     model.optimize()
 

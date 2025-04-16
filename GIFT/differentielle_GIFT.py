@@ -1,10 +1,15 @@
 import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
-from tqdm import tqdm
 from itertools import product
 import os
 import shutil
+import sys
+
+round_number = int(sys.argv[1])
+multi_search = int(sys.argv[2])
+number_of_solution = int(sys.argv[3])
+
 
 def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000):
     options = {
@@ -237,9 +242,6 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
             model.write("model_infeasible.ilp")
             return([False])
 
-round_number = 19
-multi_search = True
-number_of_solution = 2000
 attaque = diff_gift(round_number, multi_search, number_of_solution)
 
 if attaque[0] and not multi_search:

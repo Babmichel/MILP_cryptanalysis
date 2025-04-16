@@ -1,0 +1,22 @@
+READ ME : 
+This program search for the best differential distinguisher on GIFT-128 given a number of round.
+It's a search with MILP, the package needed are :
+- numpy
+- gurobipy
+- itertools
+- os
+- shutil
+- sys
+
+Parameters :
+- round_number(default=10) : the number of round of the distinguisher you need + 1 (! for 10 round distinguisher, ask for 11!)
+- multi_search(default=0) : 0/1. If False the code will return the best trail details in the console
+		             If True the code will create a folder "Distinguisher" and inside a folder (name after the number of round of the trails) containing a file of the details of the input and output of each sbox (hex format) for the x best trail he found where x is the next parameters. The name of the files are : trail rank - probability of the trail.
+- number_of_solution(default=1000) : number of trails saved.
+
+Exemple :
+To display the best trail on 9 rounds :
+python3 differentielle_GIFT.py 9 0 0
+
+To save the 2000 best trails on 11 rounds :
+python3 differentielle_GIFT.py 11 1 2000

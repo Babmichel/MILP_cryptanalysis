@@ -238,8 +238,8 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
             return([False])
 
 round_number = 19
-multi_search = False
-number_of_solution = 12
+multi_search = True
+number_of_solution = 2000
 attaque = diff_gift(round_number, multi_search, number_of_solution)
 
 if attaque[0] and not multi_search:

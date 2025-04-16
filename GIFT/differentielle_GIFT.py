@@ -307,7 +307,7 @@ if attaque[0] and not multi_search:
 if attaque[0] and multi_search :
     base_dir = os.path.dirname(os.path.abspath(__file__)) 
     distingueur_dir = os.path.join(base_dir, "Distingueur")
-    tour_dir = os.path.join(distingueur_dir, str(round_number))
+    tour_dir = os.path.join(distingueur_dir, str(round_number-1))
     os.makedirs(distingueur_dir, exist_ok=True)
     if os.path.exists(tour_dir):
         shutil.rmtree(tour_dir)

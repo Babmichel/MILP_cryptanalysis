@@ -58,7 +58,7 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
             state_not[round, step, bit] = model.addVar(vtype = GRB.BINARY, name = f'state not {round} {step} {bit}')
         
         for k, index in product(range(8), range(16)):
-            key[k, index] = model.addVar(vtype = GRB.BINARY, name = f'key {bit}')
+            key[k, index] = model.addVar(vtype = GRB.BINARY, name = f'key {k} {index}')
 
         for round, sbox, proba in product(range(round_number-1), range(16), range(4)):
             sbox_layer[round, sbox, proba] = model.addVar(vtype = GRB.BINARY, name = f'sbox_layer {round} {sbox} {bit}')
@@ -73,13 +73,16 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
 
         #state_not = NOT(STATE)
         for round, step, bit in product(range(round_number), range(3), range(64)):
-            model.addConstr(state[round, step, bit] == 1 - state_not[round, step, bit])
+            model.addConstr(state[round, step, bit] == 1 - state_not[round, step, bit], name = f"NOT(state) {round} {step} {bit}")
+
         
         
         #Permutation (we model the state form 0->63, the permutation is givem for a model form 63->0)
         P=[0, 17, 34, 51, 48, 1, 18, 35, 32, 49, 2, 19, 16, 33, 50, 3, 4, 21, 38, 55, 52, 5, 22, 39, 36, 53, 6, 23, 20, 37, 54, 7, 8, 25, 42, 59, 56, 9, 26, 43, 40, 57, 10, 27, 24, 41, 58, 11, 12, 29, 46, 63, 60, 13, 30, 47, 44, 61, 14, 31, 28, 45, 62, 15]
-        for round, bit in product(range(1,round_number), range(63)):
-            model.addConstr(state[round, 0, 63-bit] == state[round, 1, 63-P[bit]])
+        P.reverse()
+        print(P)
+        for round, bit in product(range(1,round_number), range(64)):
+            model.addConstr(state[round, 0, bit] == state[round, 1, 63-P[bit]], name=f"perm {round} {bit}" )
 
         #Key addition
         AK_bit_list_0 = [2,3, 6,7, 10,11, 14,15, 18,19, 22,23, 26,27, 30,31]
@@ -88,13 +91,13 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
 
         for round in range(1,round_number):
             for bit in AK_bit_list_0: #first key elements 
-                model.addConstr((state[round, 2, bit] == 1) >> (state[round, 1, bit] + key[2*(round % 4), ((bit//2 - 1+bit%2) + 12*(round//4))%16] == 1)) #if state is 1 >> key+previous_state = 1
-                model.addConstr((state[round, 2, bit] == 0) >> (state[round, 1, bit] == key[2*(round % 4), ((bit//2 - 1+bit%2) + 12*(round//4))%16])) #if state is 0 >> key=previous_state
-                model.addConstr((key[2*(round % 4), ((bit//2 - 1+bit%2) + 12*(round//4))%16] == 0) >> (state[round, 2, bit] == state[round, 1, bit])) #if key = 0 >> state=previous_state (REDONDANCE ?)
+                model.addConstr((state[round, 2, bit] == 1) >> (state[round, 1, bit] + key[2*(round % 4), ((bit//2 - 1+bit%2) - 12*(round//4))%16] == 1), name=f"AK0_0 : {round} {bit}") #if state is 1 >> key+previous_state = 1
+                model.addConstr((state[round, 2, bit] == 0) >> (state[round, 1, bit] == key[2*(round % 4), ((bit//2 - 1+bit%2) - 12*(round//4))%16]), name=f"AK0_1 : {round} {bit}" ) #if state is 0 >> key=previous_state
+                model.addConstr((key[2*(round % 4), ((bit//2 - 1+bit%2) - 12*(round//4))%16] == 0) >> (state[round, 2, bit] == state[round, 1, bit]), name=f"AK0_2 : {round} {bit}" ) #if key = 0 >> state=previous_state (REDONDANCE ?)
             for bit in AK_bit_list_1: #second key elements
-                model.addConstr((state[round, 2, bit] == 1) >> (state[round, 1, bit] + key[2*(round % 4) + 1, ((bit//2 - 1+bit%2) + 2*(round//4))%16] == 1))
-                model.addConstr((state[round, 2, bit] == 0) >> (state[round, 1, bit] == key[2*(round % 4) + 1, ((bit//2 - 1+bit%2) + 2*(round//4))%16]))
-                model.addConstr((key[2*(round % 4) + 1, ((bit//2 - 1+bit%2) + 2*(round//4))%16] == 0) >> (state[round, 2, bit] == state[round, 1, bit]))
+                model.addConstr((state[round, 2, bit] == 1) >> (state[round, 1, bit] + key[2*(round % 4) + 1, ((bit//2 - 1+bit%2) - 2*(round//4))%16] == 1), name=f"AK1_0 : {round} {bit}")
+                model.addConstr((state[round, 2, bit] == 0) >> (state[round, 1, bit] == key[2*(round % 4) + 1, ((bit//2 - 1+bit%2) - 2*(round//4))%16]), name=f"AK1_1 : {round} {bit}")
+                model.addConstr((key[2*(round % 4) + 1, ((bit//2 - 1+bit%2) - 2*(round//4))%16] == 0) >> (state[round, 2, bit] == state[round, 1, bit]), name=f"AK1_2 : {round} {bit}")
 
             for bit in AK_bit_list_2:
                 model.addConstr((state[round, 2, bit] == state[round, 1, bit]))
@@ -104,7 +107,7 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
         for round, sbox in product(range(round_number-1), range(16)):
             
             #sbox may have only one specific probability (0, 1/8, 1/4, 3/8)
-            model.addConstr(gp.quicksum(sbox_layer[round, sbox, proba] for proba in range(4)) == 1)
+            model.addConstr(gp.quicksum(sbox_layer[round, sbox, proba] for proba in range(4)) == 1, name = f"sbox have one proba {round} {sbox}")
 
             #save the values of the input and output states for lisibility 
             bit_0_in, bit_1_in, bit_2_in, bit_3_in = state[round, 2, 4*sbox], state[round, 2, 4*sbox+1], state[round, 2, 4*sbox+2], state[round, 2, 4*sbox+3]
@@ -146,7 +149,7 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
 
             #if one bit is not null in the input or output of the sbox, the proba cannot be 1 (0 value)
             for bit in all_bit :
-                model.addConstr((bit == 1) >> (sbox_layer[round, sbox, 0] == 0))
+                model.addConstr((bit == 1) >> (sbox_layer[round, sbox, 0] == 0), name = f"active bit {bit} around sbox >> sbox is active {round} {sbox}")
             for bit in input_bit:
                 model.addConstr((bit == 1) >> (gp.quicksum(bits for bits in output_bit) >= 1))
             for bit in output_bit:
@@ -154,63 +157,66 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
 
             #for proba 3/8 (6 value in the DDT), one of the and equations in and_sbox_6 need to be verify
                 #2 possibility according to DDT :
-            model.addGenConstrAnd(and_sbox_6[round, sbox, 0], [not_bit_0_in, bit_1_in, not_bit_2_in, not_bit_3_in,   not_bit_0_out, bit_1_out, bit_2_out, bit_3_out]) #0100 -> 0111
-            model.addGenConstrAnd(and_sbox_6[round, sbox, 1], [not_bit_0_in, bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, bit_2_out, bit_3_out]) #0110 -> 0011
+            model.addGenConstrAnd(and_sbox_6[round, sbox, 0], [not_bit_0_in, bit_1_in, not_bit_2_in, not_bit_3_in,   not_bit_0_out, bit_1_out, bit_2_out, bit_3_out], name = f'transition 0100 -> 0111 as proba 3/8 in {round} {sbox}') #0100 -> 0111
+            model.addGenConstrAnd(and_sbox_6[round, sbox, 1], [not_bit_0_in, bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, bit_2_out, bit_3_out], name = f'transition 0110 -> 0011 as proba 3/8 in {round} {sbox}') #0110 -> 0011
 
                 #Or Constr : one of the possibility need to be verify
-            model.addGenConstrOr(sbox_layer[round, sbox,  3], [and_sbox_6[round, sbox, constr] for constr in range(2)])
+            model.addGenConstrOr(sbox_layer[round, sbox,  3], [and_sbox_6[round, sbox, constr] for constr in range(2)], name = f'at least one condtion needed for proba 3/8 on sbox {round} {sbox}')
             
             #for proba 1/4 (4 value in the DDT), one of the and equations in and_sbox_6 need to be verify
                 #18 possibility according to DDT :
-            model.addGenConstrAnd(and_sbox_4[round, sbox, 0], [not_bit_0_in, not_bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, bit_1_out, not_bit_2_out, bit_3_out]) #0010 -> 0101
-            model.addGenConstrAnd(and_sbox_4[round, sbox, 1], [not_bit_0_in, not_bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, bit_1_out, bit_2_out, not_bit_3_out]) #0010 -> 0110
-            model.addGenConstrAnd(and_sbox_4[round, sbox, 2], [not_bit_0_in, bit_1_in, not_bit_2_in, bit_3_in,   bit_0_out, bit_1_out, bit_2_out, bit_3_out]) #0101 -> 1111
-            model.addGenConstrAnd(and_sbox_4[round, sbox, 3], [not_bit_0_in, bit_1_in, not_bit_2_in, not_bit_3_in,   not_bit_0_out, bit_1_out, not_bit_2_out, bit_3_out]) #0100 - > 0101
+            model.addGenConstrAnd(and_sbox_4[round, sbox, 0], [not_bit_0_in, not_bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, bit_1_out, not_bit_2_out, bit_3_out], name = f'transition 0010 -> 0101 as proba 1/4 in {round} {sbox}') #0010 -> 0101
+            model.addGenConstrAnd(and_sbox_4[round, sbox, 1], [not_bit_0_in, not_bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, bit_1_out, bit_2_out, not_bit_3_out], name = f'transition 0010 -> 0110 as proba 1/4 in {round} {sbox}') #0010 -> 0110
+            model.addGenConstrAnd(and_sbox_4[round, sbox, 2], [not_bit_0_in, bit_1_in, not_bit_2_in, bit_3_in,   bit_0_out, bit_1_out, bit_2_out, bit_3_out], name = f'transition 0101 -> 1111 as proba 1/4 in {round} {sbox}') #0101 -> 1111
+            model.addGenConstrAnd(and_sbox_4[round, sbox, 3], [not_bit_0_in, bit_1_in, not_bit_2_in, not_bit_3_in,   not_bit_0_out, bit_1_out, not_bit_2_out, bit_3_out], name = f'transition 0100 -> 0101 as proba 1/4 in {round} {sbox}') #0100 - > 0101
 
-            model.addGenConstrAnd(and_sbox_4[round, sbox, 4], [not_bit_0_in, bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, bit_2_out, not_bit_3_out]) #0110 -> 0010
-            model.addGenConstrAnd(and_sbox_4[round, sbox, 5], [bit_0_in, not_bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, not_bit_2_out, bit_3_out]) #1010 -> 0001
-            model.addGenConstrAnd(and_sbox_4[round, sbox, 6], [bit_0_in, not_bit_1_in, not_bit_2_in, not_bit_3_in,   bit_0_out, not_bit_1_out, bit_2_out, bit_3_out]) #0111 -> 0011
+            model.addGenConstrAnd(and_sbox_4[round, sbox, 4], [not_bit_0_in, bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, bit_2_out, not_bit_3_out], name = f'transition 0110 -> 0010 as proba 1/4 in {round} {sbox}') #0110 -> 0010
+            model.addGenConstrAnd(and_sbox_4[round, sbox, 5], [bit_0_in, not_bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, not_bit_2_out, bit_3_out], name = f'transition 1010 -> 0001 as proba 1/4 in {round} {sbox}') #1010 -> 0001
+            model.addGenConstrAnd(and_sbox_4[round, sbox, 6], [bit_0_in, not_bit_1_in, not_bit_2_in, not_bit_3_in,   bit_0_out, not_bit_1_out, bit_2_out, bit_3_out], name = f'transition 0111 -> 0011 as proba 1/4 in {round} {sbox}') #0111 -> 0011
 
-            model.addGenConstrAnd(and_sbox_4[round, sbox, 7], [bit_0_in, not_bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, bit_1_out, bit_2_out, not_bit_3_out]) #1010 -> 0110
-            model.addGenConstrAnd(and_sbox_4[round, sbox, 8], [bit_0_in, bit_1_in, not_bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, bit_2_out, not_bit_3_out]) #1100 -> 0010
-            model.addGenConstrAnd(and_sbox_4[round, sbox, 9], [bit_0_in, bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, not_bit_2_out, bit_3_out]) #1110 -> 0001
+            model.addGenConstrAnd(and_sbox_4[round, sbox, 7], [bit_0_in, not_bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, bit_1_out, bit_2_out, not_bit_3_out], name = f'transition 1010 -> 0110 as proba 1/4 in {round} {sbox}') #1010 -> 0110
+            model.addGenConstrAnd(and_sbox_4[round, sbox, 8], [bit_0_in, bit_1_in, not_bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, bit_2_out, not_bit_3_out], name = f'transition 1100 -> 0010 as proba 1/4 in {round} {sbox}') #1100 -> 0010
+            model.addGenConstrAnd(and_sbox_4[round, sbox, 9], [bit_0_in, bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, not_bit_2_out, bit_3_out], name = f'transition 1110 -> 0001 as proba 1/4 in {round} {sbox}') #1110 -> 0001
 
-            model.addGenConstrAnd(and_sbox_4[round, sbox, 10], [bit_0_in, not_bit_1_in, not_bit_2_in, not_bit_3_in]) #input = 1000 
-            model.addGenConstrAnd(and_sbox_4[round, sbox, 11], [not_bit_0_out, bit_1_out, not_bit_2_out, not_bit_3_out]) #output = 0100
+            model.addGenConstrAnd(and_sbox_4[round, sbox, 10], [bit_0_in, not_bit_1_in, not_bit_2_in, not_bit_3_in], name = f'input 1000 as proba 1/4 in {round} {sbox}') #input = 1000 
+            model.addGenConstrAnd(and_sbox_4[round, sbox, 11], [not_bit_0_out, bit_1_out, not_bit_2_out, not_bit_3_out], name = f'output 0100 as proba 1/4 in {round} {sbox}') #output = 0100
 
                 #Or Constr : one of the possibility need to be verify
-            model.addGenConstrOr(sbox_layer[round, sbox,  2], [and_sbox_4[round, sbox, constr] for constr in range(12)])
+            model.addGenConstrOr(sbox_layer[round, sbox,  2], [and_sbox_4[round, sbox, constr] for constr in range(12)], name = f'at least one condtion needed for proba 1/4 on sbox {round} {sbox}')
             
 
         #fixing some bits at the start of the distinguisher 
         
-        start = [9, 10, 12, 28, 29, 40, 45, 46, 56, 57]
+        #start = [9, 10, 12, 28, 29, 40, 45, 46, 56, 57]
+        start = [9, 10, 45, 46]
         for bit in range(64) :
             model.addConstr(state[0, 0, bit] == 0)
             model.addConstr(state[0, 1, bit] == 0)
             if bit not in start :
-                model.addConstr(state[0, 2, bit] == 0)
-        model.addConstr(gp.quicksum(state[0, 2, bit] for bit in range(64)) >= 1)
+                model.addConstr(state[0, 2, bit] == 0, name = f'fix the difference to 0 in bit_{bit} in the start of distinguisher')
+        model.addConstr(gp.quicksum(state[0, 2, bit] for bit in range(64)) >= 4, name = f'at least one active difference at the start')
                 
         
         #fixing some bits at the end of the distinguisher 
-        end = [0, 1, 2, 3, 4, 5, 6, 7, 32, 33, 34, 35, 36, 37, 38, 39]
+        #end = [0, 1, 2, 3, 4, 5, 6, 7, 32, 33, 34, 35, 36, 37, 38, 39]
+        end = [3, 5, 33, 39]
         for bit in range(64) :
             if bit not in end:
-               model.addConstr(state[round_number - 1, 2, bit] == 0)
-        model.addConstr(gp.quicksum(state[round_number-1, 2, bit] for bit in range(64)) >= 1)
-                
-        #Fixing the differences of the key 
+               model.addConstr(state[round_number - 1, 2, bit] == 0, name = f'fix the difference to 0 in bit_{bit} in the end of distinguisher')
+        model.addConstr(gp.quicksum(state[round_number-1, 2, bit] for bit in range(64)) >= 4, name = f'at least one active difference at the end')
+        
+
+        #Fixing the differences of the key
         
         for key_elem in [0, 1, 2, 4, 5, 6, 7]:
             for bit in range(16):
-                model.addConstr(key[key_elem, bit] == 0)
+                model.addConstr(key[key_elem, bit] == 0, name = f"fixing the key element to 0 : {key_elem}-{bit}")
 
         for bit in range(16):
             if bit in [4, 8]:
-                model.addConstr(key[3, bit] == 1)
+                model.addConstr(key[3, bit] == 1, name = f"fixing the key element to 1 : 3-{bit}")
             else :
-              model.addConstr(key[3, bit] == 0)
+              model.addConstr(key[3, bit] == 0, name = f"fixing the key element to 0 : 3-{bit}")
         
 
         #Counting information
@@ -298,22 +304,22 @@ if attaque[0] and not multi_search:
                 print("")
                 for index in range(8):
                     print("      ", end="")
-                    if attaque[2][2*(r%4)][(2*index+12*(r//4))%16] == 1:
+                    if attaque[2][2*(r%4)][(2*index-12*(r//4))%16] == 1:
                         print("\033[91m 1 ", end="")
                     else :
                         print("\033[90m 0 ", end="")
-                    if attaque[2][2*(r%4)][(2*index+1+12*(r//4))%16] == 1:
+                    if attaque[2][2*(r%4)][(2*index+1-12*(r//4))%16] == 1:
                         print("\033[91m 1 ", end="")
                     else :
                         print("\033[90m 0 ", end="")
                     print("|", end="")
                 for index in range(8):
                     print("      ", end="")
-                    if attaque[2][2*(r%4)+1][(2*index+2*(r//4))%16] == 1:
+                    if attaque[2][2*(r%4)+1][(2*index-2*(r//4))%16] == 1:
                         print("\033[91m 1 ", end="")
                     else :
                             print("\033[90m 0 ", end="")
-                    if attaque[2][2*(r%4)+1][(2*index+1+2*(r//4))%16] == 1:
+                    if attaque[2][2*(r%4)+1][(2*index+1-2*(r//4))%16] == 1:
                             print("\033[91m 1 ", end="")
                     else :
                         print("\033[90m 0 ", end="")

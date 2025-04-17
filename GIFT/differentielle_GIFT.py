@@ -168,8 +168,8 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
             model.addGenConstrAnd(and_sbox_4[round, sbox, 3], [not_bit_0_in, bit_1_in, not_bit_2_in, not_bit_3_in,   not_bit_0_out, bit_1_out, not_bit_2_out, bit_3_out], name = f'transition 0100 -> 0101 as proba 1/4 in {round} {sbox}') #0100 - > 0101
 
             model.addGenConstrAnd(and_sbox_4[round, sbox, 4], [not_bit_0_in, bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, bit_2_out, not_bit_3_out], name = f'transition 0110 -> 0010 as proba 1/4 in {round} {sbox}') #0110 -> 0010
-            model.addGenConstrAnd(and_sbox_4[round, sbox, 5], [bit_0_in, not_bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, not_bit_2_out, bit_3_out], name = f'transition 1010 -> 0001 as proba 1/4 in {round} {sbox}') #1010 -> 0001
-            model.addGenConstrAnd(and_sbox_4[round, sbox, 6], [bit_0_in, not_bit_1_in, not_bit_2_in, not_bit_3_in,   bit_0_out, not_bit_1_out, bit_2_out, bit_3_out], name = f'transition 0111 -> 0011 as proba 1/4 in {round} {sbox}') #0111 -> 0011
+            model.addGenConstrAnd(and_sbox_4[round, sbox, 5], [bit_0_in, not_bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, bit_2_out, not_bit_3_out], name = f'transition 1010 -> 0010 as proba 1/4 in {round} {sbox}') #1010 -> 0010
+            model.addGenConstrAnd(and_sbox_4[round, sbox, 6], [not_bit_0_in, bit_1_in, bit_2_in, bit_3_in,   bit_0_out, not_bit_1_out, bit_2_out, bit_3_out], name = f'transition 0111 -> 1011 as proba 1/4 in {round} {sbox}') #0111 -> 1011
 
             model.addGenConstrAnd(and_sbox_4[round, sbox, 7], [bit_0_in, not_bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, bit_1_out, bit_2_out, not_bit_3_out], name = f'transition 1010 -> 0110 as proba 1/4 in {round} {sbox}') #1010 -> 0110
             model.addGenConstrAnd(and_sbox_4[round, sbox, 8], [bit_0_in, bit_1_in, not_bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, bit_2_out, not_bit_3_out], name = f'transition 1100 -> 0010 as proba 1/4 in {round} {sbox}') #1100 -> 0010
@@ -184,29 +184,30 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
 
         #fixing some bits at the start of the distinguisher 
         
-        #start = [9, 10, 12, 28, 29, 40, 45, 46, 56, 57]
-        start = [9, 10, 45, 46]
+        start = [9, 10, 12, 28, 29, 40, 45, 46, 56, 57]
+        #start = [9, 10, 45, 46]
         for bit in range(64) :
             model.addConstr(state[0, 0, bit] == 0)
             model.addConstr(state[0, 1, bit] == 0)
             if bit not in start :
                 model.addConstr(state[0, 2, bit] == 0, name = f'fix the difference to 0 in bit_{bit} in the start of distinguisher')
-        model.addConstr(gp.quicksum(state[0, 2, bit] for bit in range(64)) >= 4, name = f'at least one active difference at the start')
+        model.addConstr(gp.quicksum(state[0, 2, bit] for bit in range(64)) >= 1, name = f'at least one active difference at the start')
                 
         
         #fixing some bits at the end of the distinguisher 
         
         
-        #end = [0, 1, 2, 3, 4, 5, 6, 7, 32, 33, 34, 35, 36, 37, 38, 39]
+        end = [0, 1, 2, 3, 4, 5, 6, 7, 32, 33, 34, 35, 36, 37, 38, 39]
         #end = [3, 5, 33, 39]
-        end =[]
+        #end =[]
         for bit in range(64) :
             if bit not in end:
                model.addConstr(state[round_number - 1, 2, bit] == 0, name = f'fix the difference to 0 in bit_{bit} in the end of distinguisher')
-        #model.addConstr(gp.quicksum(state[round_number-1, 2, bit] for bit in range(64)) >= 4, name = f'at least one active difference at the end')
+        model.addConstr(gp.quicksum(state[round_number-1, 2, bit] for bit in range(64)) >= 1, name = f'at least one active difference at the end')
         
 
         #Fixing the differences of the key
+        """
         for key_elem in [0, 1, 3, 4, 5, 6, 7]:
             for bit in range(16):
                 model.addConstr(key[key_elem, bit] == 0, name = f"fixing the key element to 0 : {key_elem}-{bit}")
@@ -216,7 +217,7 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
                 model.addConstr(key[2, bit] == 1, name = f"fixing the key element to 1 : 3-{bit}")
             else :
               model.addConstr(key[2, bit] == 0, name = f"fixing the key element to 0 : 3-{bit}")
-        
+        """
 
         #Counting information
         key_diff_count = gp.quicksum(key[k, index] for k in range(8) for index in range(16)) #quantity of differences in the key 

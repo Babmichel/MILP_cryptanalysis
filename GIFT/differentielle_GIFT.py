@@ -223,7 +223,8 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
         distinguisher_probability = 3*active_sbox_2 + 2*active_sbox_4 + 1.415*active_sbox_6 #approximate probability of the distinguisher 
         #distinguisher_probability = active_sbox_2 + active_sbox_4 + active_sbox_6
 
-        model.setObjective(distinguisher_probability + key_diff_count, GRB.MINIMIZE)
+        model.setObjectiveN(distinguisher_probability, 0, 100)
+        model.setObjectiveN(key_diff_count, 1, 25)
 
         model.optimize()
 

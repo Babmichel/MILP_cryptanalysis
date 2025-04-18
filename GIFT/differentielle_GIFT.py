@@ -97,7 +97,7 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
                 model.addConstr((state[round, 2, bit] == 0) >> (state[round, 1, bit] == key[2*(round % 4), ((bit//4) - 2*(round//4))%16]), name=f"AKU_1 : {round} {bit}")
 
             for bit in AK_bit_list_2:
-                model.addConstr((state[round, 2, bit] == state[round, 1, bit]))
+                model.addConstr((state[round, 2, bit] == state[round, 1, bit]), name = f"key round no addition {bit}")
 
         #SBox
 
@@ -117,31 +117,25 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
             output_bit = [bit_0_out, bit_1_out, bit_2_out, bit_3_out]
             all_bit = input_bit + output_bit
             
-            #sbox equations
-            model.addConstr(4*bit_0_in + 6*bit_0_out + 1*bit_1_in + -5*bit_1_out - 5*bit_2_in + 6*bit_2_out + 3*bit_3_in - 2*bit_3_out >= -6, name = f'equation1 {round} {sbox}')
-        
-            model.addConstr(5*bit_0_in + 6*bit_0_out + 2*bit_1_in + 4*bit_1_out + 3*bit_2_in - 3*bit_2_out - 1*bit_3_in - 3*bit_3_out >= -1, name = f'equation2 {round} {sbox}')
-            model.addConstr(6*bit_0_in - 3*bit_0_out - 3*bit_1_in - 4*bit_1_out - 3*bit_2_in - 6*bit_2_out + 1*bit_3_in - 2*bit_3_out >= -15, name = f'equation3 {round} {sbox}')
-            model.addConstr(3*bit_0_in - 6*bit_0_out + 3*bit_1_in + 1*bit_1_out + 5*bit_2_in + 4*bit_2_out + 2*bit_3_in + 3*bit_3_out >= 0, name = f'equation4 {round} {sbox}')
-        
-            model.addConstr(3*bit_0_in - 2*bit_0_out + 6*bit_1_in + 4*bit_1_out - 6*bit_2_in - 6*bit_2_out - 1*bit_3_in + 3*bit_3_out >= -9, name = f'equation5 {round} {sbox}')
-            model.addConstr(2*bit_0_in + 1*bit_0_out - 6*bit_1_in + 3*bit_1_out + 3*bit_2_in + 5*bit_2_out + 3*bit_3_in + 4*bit_3_out >= 0, name = f'equation6 {round} {sbox}')
-            model.addConstr(-6*bit_0_in + 2*bit_0_out - 6*bit_1_in - 6*bit_1_out + 6*bit_2_in + 5*bit_2_out - 1*bit_3_in - 6*bit_3_out >= -19, name = f'equation7 {round} {sbox}')
-            model.addConstr(5*bit_0_in + 6*bit_0_out + 6*bit_1_in + 3*bit_1_out - 3*bit_2_in + 3*bit_2_out - 2*bit_3_in - 1*bit_3_out >= 0, name = f'equation8 {round} {sbox}')
-
-            model.addConstr(4*bit_0_in - 6*bit_0_out - 6*bit_1_in + 6*bit_1_out - 5*bit_2_in + 1*bit_2_out - 2*bit_3_in - 5*bit_3_out >= -18, name = f'equation9 {round} {sbox}')
-            model.addConstr(-3*bit_0_in + 1*bit_0_out - 6*bit_1_in - 3*bit_1_out - 2*bit_2_in - 4*bit_2_out - 4*bit_3_in + 6*bit_3_out >= -16, name = f'equation10 {round} {sbox}')
-            model.addConstr(-3*bit_0_in - 2*bit_0_out - 1*bit_1_in - 6*bit_1_out - 6*bit_2_in + 5*bit_2_out - 6*bit_3_in + 4*bit_3_out >= -18, name = f'equation11 {round} {sbox}')
-            model.addConstr(-2*bit_0_in - 3*bit_0_out + 6*bit_1_in - 1*bit_1_out + 6*bit_2_in - 3*bit_2_out + 6*bit_3_in + 4*bit_3_out >= -3, name = f'equation12 {round} {sbox}')
-
-            model.addConstr(2*bit_0_in + 1*bit_0_out + 6*bit_1_in - 3*bit_1_out + 3*bit_2_in + 5*bit_2_out - 3*bit_3_in + 4*bit_3_out >= -0, name = f'equation13 {round} {sbox}')
-            model.addConstr(-3*bit_0_in - 3*bit_0_out + 3*bit_1_in + 6*bit_1_out - 2*bit_2_in + 1*bit_2_out + 6*bit_3_in + 5*bit_3_out >= -2, name = f'equation14 {round} {sbox}')
-            model.addConstr(-6*bit_0_in - 1*bit_0_out - 6*bit_1_in - 6*bit_1_out + 6*bit_2_in + 5*bit_2_out + 4*bit_3_in - 2*bit_3_out >= -15, name = f'equation15 {round} {sbox}')
-            model.addConstr(-3*bit_0_in - 1*bit_0_out - 6*bit_1_in + 2*bit_1_out + 3*bit_2_in - 4*bit_2_out - 6*bit_3_in + 5*bit_3_out >= -14, name = f'equation16 {round} {sbox}')
-
-            model.addConstr(-6*bit_0_in + 2*bit_0_out + 6*bit_1_in - 6*bit_1_out - 5*bit_2_in - 6*bit_2_out - 1*bit_3_in - 6*bit_3_out >= -24, name = f'equation17 {round} {sbox}')
-            model.addConstr(-5*bit_0_in + 6*bit_0_out - 6*bit_1_in + 6*bit_1_out - 5*bit_2_in - 2*bit_2_out + 6*bit_3_in - 1*bit_3_out >= -13, name = f'equation18 {round} {sbox}')
-
+            #sbox equation
+            model.addConstr( 4*bit_3_in + 6*bit_2_in + 1*bit_1_in  -5*bit_0_in - 5*bit_3_out + 6*bit_2_out + 3*bit_1_out - 2*bit_0_out >= -6, name = f'equation1 {round} {sbox}')
+            model.addConstr( 5*bit_3_in + 6*bit_2_in + 2*bit_1_in + 4*bit_0_in + 3*bit_3_out - 3*bit_2_out - 1*bit_1_out - 3*bit_0_out >= -1, name = f'equation2 {round} {sbox}')
+            model.addConstr( 6*bit_3_in - 3*bit_2_in - 3*bit_1_in - 4*bit_0_in - 3*bit_3_out - 6*bit_2_out + 1*bit_1_out - 2*bit_0_out >= -15, name = f'equation3 {round} {sbox}')
+            model.addConstr( 3*bit_3_in - 6*bit_2_in + 3*bit_1_in + 1*bit_0_in + 5*bit_3_out + 4*bit_2_out + 2*bit_1_out + 3*bit_0_out >= 0, name = f'equation4 {round} {sbox}')
+            model.addConstr( 3*bit_3_in - 2*bit_2_in + 6*bit_1_in + 4*bit_0_in - 6*bit_3_out - 6*bit_2_out - 1*bit_1_out + 3*bit_0_out >= -9, name = f'equation5 {round} {sbox}')
+            model.addConstr( 2*bit_3_in + 1*bit_2_in - 6*bit_1_in + 3*bit_0_in + 3*bit_3_out + 5*bit_2_out + 3*bit_1_out + 4*bit_0_out >= 0, name = f'equation6 {round} {sbox}')
+            model.addConstr(-6*bit_3_in + 2*bit_2_in - 6*bit_1_in - 6*bit_0_in + 6*bit_3_out + 5*bit_2_out - 1*bit_1_out - 6*bit_0_out >= -19, name = f'equation7 {round} {sbox}')
+            model.addConstr( 5*bit_3_in + 6*bit_2_in + 6*bit_1_in + 3*bit_0_in - 3*bit_3_out + 3*bit_2_out - 2*bit_1_out - 1*bit_0_out >= 0, name = f'equation8 {round} {sbox}')
+            model.addConstr( 4*bit_3_in - 6*bit_2_in - 6*bit_1_in + 6*bit_0_in - 5*bit_3_out + 1*bit_2_out - 2*bit_1_out - 5*bit_0_out >= -18, name = f'equation9 {round} {sbox}')
+            model.addConstr(-3*bit_3_in + 1*bit_2_in - 6*bit_1_in - 3*bit_0_in - 2*bit_3_out - 4*bit_2_out - 4*bit_1_out + 6*bit_0_out >= -16, name = f'equation10 {round} {sbox}')
+            model.addConstr(-3*bit_3_in - 2*bit_2_in - 1*bit_1_in - 6*bit_0_in - 6*bit_3_out + 5*bit_2_out - 6*bit_1_out + 4*bit_0_out >= -18, name = f'equation11 {round} {sbox}')
+            model.addConstr(-2*bit_3_in - 3*bit_2_in + 6*bit_1_in - 1*bit_0_in + 6*bit_3_out - 3*bit_2_out + 6*bit_1_out + 4*bit_0_out >= -3, name = f'equation12 {round} {sbox}')
+            model.addConstr( 2*bit_3_in + 1*bit_2_in + 6*bit_1_in - 3*bit_0_in + 3*bit_3_out + 5*bit_2_out - 3*bit_1_out + 4*bit_0_out >= 0, name = f'equation13 {round} {sbox}')
+            model.addConstr(-3*bit_3_in - 3*bit_2_in + 3*bit_1_in + 6*bit_0_in - 2*bit_3_out + 1*bit_2_out + 6*bit_1_out + 5*bit_0_out >= -2, name = f'equation14 {round} {sbox}')
+            model.addConstr(-6*bit_3_in - 1*bit_2_in - 6*bit_1_in - 6*bit_0_in + 6*bit_3_out + 5*bit_2_out + 4*bit_1_out - 2*bit_0_out >= -15, name = f'equation15 {round} {sbox}')
+            model.addConstr(-3*bit_3_in - 1*bit_2_in - 6*bit_1_in + 2*bit_0_in + 3*bit_3_out - 4*bit_2_out - 6*bit_1_out + 5*bit_0_out >= -14, name = f'equation16 {round} {sbox}')
+            model.addConstr(-6*bit_3_in + 2*bit_2_in + 6*bit_1_in - 6*bit_0_in - 5*bit_3_out - 6*bit_2_out - 1*bit_1_out - 6*bit_0_out >= -24, name = f'equation17 {round} {sbox}')
+            model.addConstr(-5*bit_3_in + 6*bit_2_in - 6*bit_1_in + 6*bit_0_in - 5*bit_3_out - 2*bit_2_out + 6*bit_1_out - 1*bit_0_out >= -13, name = f'equation18 {round} {sbox}')
             #type sbox : in order to optimize on the probability of the distinguisher we need to to know the probability of each sbox transition
 
             #if one bit is not null in the input or output of the sbox, the proba cannot be 1 (0 value)
@@ -168,7 +162,7 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
             model.addGenConstrAnd(and_sbox_4[round, sbox, 3], [not_bit_0_in, bit_1_in, not_bit_2_in, not_bit_3_in,   not_bit_0_out, bit_1_out, not_bit_2_out, bit_3_out], name = f'transition 0100 -> 0101 as proba 1/4 in {round} {sbox}') #0100 - > 0101
 
             model.addGenConstrAnd(and_sbox_4[round, sbox, 4], [not_bit_0_in, bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, bit_2_out, not_bit_3_out], name = f'transition 0110 -> 0010 as proba 1/4 in {round} {sbox}') #0110 -> 0010
-            model.addGenConstrAnd(and_sbox_4[round, sbox, 5], [bit_0_in, not_bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, bit_2_out, not_bit_3_out], name = f'transition 1010 -> 0010 as proba 1/4 in {round} {sbox}') #1010 -> 0010
+            model.addGenConstrAnd(and_sbox_4[round, sbox, 5], [bit_0_in, not_bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, not_bit_1_out, not_bit_2_out, bit_3_out], name = f'transition 1010 -> 0001 as proba 1/4 in {round} {sbox}') #1010 -> 0001
             model.addGenConstrAnd(and_sbox_4[round, sbox, 6], [not_bit_0_in, bit_1_in, bit_2_in, bit_3_in,   bit_0_out, not_bit_1_out, bit_2_out, bit_3_out], name = f'transition 0111 -> 1011 as proba 1/4 in {round} {sbox}') #0111 -> 1011
 
             model.addGenConstrAnd(and_sbox_4[round, sbox, 7], [bit_0_in, not_bit_1_in, bit_2_in, not_bit_3_in,   not_bit_0_out, bit_1_out, bit_2_out, not_bit_3_out], name = f'transition 1010 -> 0110 as proba 1/4 in {round} {sbox}') #1010 -> 0110
@@ -184,6 +178,7 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
 
         #fixing some bits at the start of the distinguisher 
         
+        #start = [i for i in range(64)]
         start = [9, 10, 12, 28, 29, 40, 45, 46, 56, 57]
         #start = [9, 10, 45, 46]
         for bit in range(64) :
@@ -196,7 +191,7 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
         
         #fixing some bits at the end of the distinguisher 
         
-        
+        #end = [i for i in range(64)]
         end = [0, 1, 2, 3, 4, 5, 6, 7, 32, 33, 34, 35, 36, 37, 38, 39]
         #end = [3, 5, 33, 39]
         #end =[]
@@ -218,7 +213,7 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
             else :
               model.addConstr(key[2, bit] == 0, name = f"fixing the key element to 0 : 3-{bit}")
         """
-
+        
         #Counting information
         key_diff_count = gp.quicksum(key[k, index] for k in range(8) for index in range(16)) #quantity of differences in the key 
 

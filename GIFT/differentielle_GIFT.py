@@ -74,8 +74,6 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
         #state_not = NOT(STATE)
         for round, step, bit in product(range(round_number), range(3), range(64)):
             model.addConstr(state[round, step, bit] == 1 - state_not[round, step, bit], name = f"NOT(state) {round} {step} {bit}")
-
-        
         
         #Permutation (we model the state form 0->63, the permutation is givem for a model form 63->0)
         P=[0, 17, 34, 51, 48, 1, 18, 35, 32, 49, 2, 19, 16, 33, 50, 3, 4, 21, 38, 55, 52, 5, 22, 39, 36, 53, 6, 23, 20, 37, 54, 7, 8, 25, 42, 59, 56, 9, 26, 43, 40, 57, 10, 27, 24, 41, 58, 11, 12, 29, 46, 63, 60, 13, 30, 47, 44, 61, 14, 31, 28, 45, 62, 15]
@@ -225,8 +223,7 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
         distinguisher_probability = 3*active_sbox_2 + 2*active_sbox_4 + 1.415*active_sbox_6 #approximate probability of the distinguisher 
         #distinguisher_probability = active_sbox_2 + active_sbox_4 + active_sbox_6
 
-        model.setObjectiveN(distinguisher_probability, 0, 100)
-        model.setObjectiveN(key_diff_count, 1, 25)
+        model.setObjective(distinguisher_probability + 0.1*key_diff_count)
 
         model.optimize()
 

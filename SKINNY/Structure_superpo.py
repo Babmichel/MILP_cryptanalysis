@@ -5,6 +5,16 @@ import gurobipy as gp
 from gurobipy import GRB
 from tqdm import tqdm
 from itertools import product
+import sys
+
+structure_size = int(sys.argv[1])
+MITM_up_size = int(sys.argv[2])
+distinguisher_size = int(sys.argv[3])
+MITM_down_size = int(sys.argv[4])
+key_space_size = int(sys.argv[5])
+
+
+
 def tweakey(key):
     """Skinny tweaky.
 
@@ -737,7 +747,7 @@ def affichage(B,R,K):
             print("")
         print("")
 
-attaque = structure(6, 8, 2, 8, 3)
+attaque = structure(structure_size, MITM_up_size, distinguisher_size, MITM_down_size, key_space_size)
 if attaque[0]:
     affichage(attaque[1], attaque[2], attaque[3])      
 

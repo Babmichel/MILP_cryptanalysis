@@ -29,10 +29,10 @@ def diff_mitm_SIMON():
         for input_value in range(distinguisher_input_quantity) :
                 print("Enter the index of an active bit you didn't enter before :")
                 active_bit= int(input())
-                if active_bit < 24:
+                if active_bit < int(state_size/2):
                         left_active_input.append(active_bit)
                 else :
-                        right_active_input.append(active_bit-24)
+                        right_active_input.append(active_bit-int(state_size/2))
 
         print('Enter the quantity of active bits at the end of the distinguisher :')
         distinguisher_output_quantity = int(input())
@@ -41,10 +41,10 @@ def diff_mitm_SIMON():
         for input_value in range(distinguisher_output_quantity) :
                 print("Enter the index of an active bit you didn't enter before :")
                 active_bit= int(input())
-                if active_bit < 24:
+                if active_bit < int(state_size/2):
                         left_active_output.append(active_bit)
                 else :
-                        right_active_output.append(active_bit-24)
+                        right_active_output.append(active_bit-int(state_size/2))
         print('Enter the size of the structure :')
         structure_size = int(input())
         print('Enter the size of the upper part :')

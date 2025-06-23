@@ -67,15 +67,15 @@ def diff_mitm_SIMON():
         key = np.zeros([total_round, subkey_size, 2], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know]
 
         #up_state
-        up_left_state = np.zeros([MITM_down_size, state_size, 2], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know, 2 = state tested]
+        up_left_state = np.zeros([MITM_up_size, state_size, 2], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know, 2 = state tested]
 
-        up_right_state = np.zeros([MITM_down_size, state_size, 2], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know]
+        up_right_state = np.zeros([MITM_up_size, state_size, 2], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know]
 
-        up_left_state_1 = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know, 2 = state tested]
+        up_left_state_1 = np.zeros([MITM_up_size, state_size, 3], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know, 2 = state tested]
 
-        up_left_state_8 = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know, 2 = state tested]
+        up_left_state_8 = np.zeros([MITM_up_size, state_size, 3], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know, 2 = state tested]
 
-        up_left_state_2 = np.zeros([MITM_down_size, state_size, 2], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know, 2 = state tested]
+        up_left_state_2 = np.zeros([MITM_up_size, state_size, 2], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know, 2 = state tested]
 
         #up_differences
         up_left_difference = np.zeros([MITM_up_size, state_size, 3], dtype = object) #[round index, bit index, value : 0 = no difference, 1 = difference, 2 = unknown difference]
@@ -88,8 +88,8 @@ def diff_mitm_SIMON():
 
         up_right_difference_XOR = np.zeros([MITM_up_size, state_size, 3], dtype = object) #[round index, bit index, value : 0 = no difference, 1 = difference, 2 = unknown difference]
 
-        up_var_for_right_XOR_1 = np.zeros([MITM_down_size, state_size, 2], dtype = object) #[round index, bit index, value: 1 if 1+1]
-        up_var_for_right_XOR_0 = np.zeros([MITM_down_size, state_size, 2], dtype = object) #[round index, bit index, value: 0 if 0+0]
+        up_var_for_right_XOR_1 = np.zeros([MITM_up_size, state_size, 2], dtype = object) #[round index, bit index, value: 1 if 1+1]
+        up_var_for_right_XOR_0 = np.zeros([MITM_up_size, state_size, 2], dtype = object) #[round index, bit index, value: 0 if 0+0]
 
         #down_state
         down_left_state = np.zeros([MITM_down_size, state_size, 2], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know, 2 = state tested]
@@ -183,22 +183,47 @@ def diff_mitm_SIMON():
                 model.addConstr(probabilistic_key_recovery_up == 0, name = "probabilisitc key recovery limit")
                 model.addConstr(probabilistic_key_recovery_down == 0, name = "probabilisitc key recovery limit")
 
-        model.addConstr(subkey_size + key_quantity_up + key_quantity_down >= key_size)
+        
+        if structure_size == 0:
+                model.addConstr(state_test_down_quantity + key_quantity_up + key_quantity_down + state_test_up_quantity >= key_size)
+                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
+                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity_up)
 
+                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity)
+                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity_down)
+        
+                model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - 2*state_size <= complexity)
+                model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - 2*state_size <= complexity_match)
+        
+        if structure_size == 1:
+                model.addConstr(state_size + key_quantity_up + key_quantity_down + state_test_down_quantity + state_test_up_quantity >= key_size)
+                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
+                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity_up)
+
+                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity)
+                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity_down)
+        
+                model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - state_size <= complexity)
+                model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - state_size <= complexity_match)
+
+        if structure_size == 2:
+                model.addConstr(2*state_size + key_quantity_up + key_quantity_down + state_test_down_quantity + state_test_up_quantity >= key_size)
+                model.addConstr(state_size + key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
+                model.addConstr(state_size + key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity_up)
+
+                model.addConstr(state_size + key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity)
+                model.addConstr(state_size + key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity_down)
+        
+                model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity <= complexity)
+                model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity <= complexity_match)
+        
         model.addConstr(distinguisher_probability + probabilistic_key_recovery_down + probabilistic_key_recovery_up <= 2*state_size)
 
-        model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
-        model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity)
-        model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - state_size <= complexity)
-
-        model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity_up)
-        model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity_down)
-        model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - state_size <= complexity_match)
-        
         model.setObjectiveN(complexity, 0, 100)
         model.setObjectiveN(complexity_up + complexity_down + complexity_match, 1, 75)
         model.setObjectiveN(state_test_down_quantity, 2, 25)
         model.setObjectiveN(state_test_up_quantity, 3, 25)
+        
         #Constraints 
         
 
@@ -572,17 +597,15 @@ def diff_mitm_SIMON():
                 print("key : ", key_quantity_up.getValue())
                 print("state test: ", state_test_up_quantity.getValue())
                 print("proba key rec : ", probabilistic_key_recovery_up.getValue())
-                print('complexity = ', distinguisher_probability + key_quantity_up.getValue() + state_test_up_quantity.getValue() + probabilistic_key_recovery_down.getValue())
+                print('complexity = ', distinguisher_probability + complexity_up.X)
                 print("")
                 print("DOWN values")
                 print("key : ", key_quantity_down.getValue())
                 print("state test : ", state_test_down_quantity.getValue())
                 print("proba key rec : ", probabilistic_key_recovery_down.getValue())
-                print('complexity = ', distinguisher_probability + key_quantity_down.getValue() + state_test_down_quantity.getValue() + probabilistic_key_recovery_up.getValue())
+                print('complexity = ', distinguisher_probability + complexity_down.X)
                 print("")
-                print("MATHC complexity = ", distinguisher_probability + key_quantity_down.getValue() + state_test_down_quantity.getValue() + key_quantity_up.getValue() + state_test_up_quantity.getValue() - state_size)
-                print("")
-                print("Key recovery bottle neck = ", key_size - 2*state_size + distinguisher_probability)
+                print("MATHC complexity = ", distinguisher_probability + complexity_match.X)
                 return()
         else :
                 model.computeIIS()

@@ -172,7 +172,6 @@ def diff_mitm_SIMON():
         state_test_up_quantity = gp.quicksum(up_left_state_1[round, bit, 2] for round, bit in product(range(MITM_up_size), range(state_size))) + gp.quicksum(up_left_state_8[round, bit, 2] for round, bit in product(range(MITM_up_size), range(state_size)))
         probabilistic_key_recovery_up = gp.quicksum(up_left_difference_AND[round, bit, 2] for round, bit in product(range(MITM_up_size), range(state_size)))
 
-        model.addConstr(probabilistic_key_recovery_down + probabilistic_key_recovery_up <= 1, name="Proba key reco limit")
         
         #model.addConstr(probabilistic_key_recovery_up == 1)
         if not state_test :

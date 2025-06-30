@@ -70,7 +70,7 @@ for j in range(subkey_size):
 for i in range(2, 5):
     for j in range(subkey_size):
         K_prime_up[i][j]=K_copy_up[i][j]
-        for element in K_prime_up[i-1][(j-2)%16]:
+        for element in K_prime_up[i-1][(j+2)%16]:
             if element in K_prime_up[i][j] :
                 K_prime_up[i][j].remove(element)
             else : 
@@ -81,7 +81,7 @@ for j in range(subkey_size):
 for i in range(21, 19, -1):
     for j in range(subkey_size):
         K_prime_down[i][j]=K_copy_down[i][j]
-        for element in K_prime_down[i+1][(j-2)%16]:
+        for element in K_prime_down[i+1][(j+2)%16]:
             if element in K_prime_down[i][j] :
                 K_prime_down[i][j].remove(element)
 

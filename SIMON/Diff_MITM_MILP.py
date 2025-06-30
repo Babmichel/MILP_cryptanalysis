@@ -162,7 +162,7 @@ def diff_mitm_SIMON():
         complexity_up = model.addVar(lb = 0.0, ub = 1.2*key_size,vtype= GRB.INTEGER, name = "complexite")
         complexity_down = model.addVar(lb = 0.0, ub = 1.2*key_size,vtype= GRB.INTEGER, name = "complexite")
         complexity_match = model.addVar(lb = 0.0, ub = 1.2*key_size,vtype= GRB.INTEGER, name = "complexite")
-        
+        guess_match = model.addVar(lb = 0.0, ub = 1.2*key_size,vtype= GRB.INTEGER, name = "guess match")
 
         #Objective function
         key_quantity_up = gp.quicksum(key[round, bit, 1] for round, bit in product(range(structure_size, structure_size + MITM_up_size), range(state_size)))
@@ -172,7 +172,6 @@ def diff_mitm_SIMON():
         state_test_up_quantity = gp.quicksum(up_left_state_1[round, bit, 2] for round, bit in product(range(MITM_up_size), range(state_size))) + gp.quicksum(up_left_state_8[round, bit, 2] for round, bit in product(range(MITM_up_size), range(state_size)))
         probabilistic_key_recovery_up = gp.quicksum(up_left_difference_AND[round, bit, 2] for round, bit in product(range(MITM_up_size), range(state_size)))
 
-        
         #model.addConstr(probabilistic_key_recovery_up == 1)
         if not state_test :
                 model.addConstr(state_test_up_quantity == 0, name="State test limit")
@@ -184,38 +183,38 @@ def diff_mitm_SIMON():
 
         
         if structure_size == 0:
-                model.addConstr(state_test_down_quantity + key_quantity_up + key_quantity_down + state_test_up_quantity >= key_size)
+                model.addConstr(key_quantity_up + key_quantity_down + state_test_down_quantity + state_test_up_quantity >= key_size)
                 model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
                 model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity_up)
 
                 model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity)
                 model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity_down)
-        
-                model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - 2*state_size <= complexity)
-                model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - 2*state_size <= complexity_match)
-        
-        if structure_size == 1:
-                model.addConstr(state_size + key_quantity_up + key_quantity_down + state_test_down_quantity + state_test_up_quantity >= key_size)
-                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
-                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity_up)
-
-                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity)
-                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity_down)
-        
-                model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - state_size <= complexity)
-                model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - state_size <= complexity_match)
-
-        if structure_size == 2:
-                model.addConstr(2*state_size + key_quantity_up + key_quantity_down + state_test_down_quantity + state_test_up_quantity >= key_size)
-                model.addConstr(state_size + key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
-                model.addConstr(state_size + key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity_up)
-
-                model.addConstr(state_size + key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity)
-                model.addConstr(state_size + key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity_down)
         
                 model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity <= complexity)
                 model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity <= complexity_match)
         
+        if structure_size == 1:
+                model.addConstr(guess_match + state_size + key_quantity_up + key_quantity_down + state_test_down_quantity + state_test_up_quantity >= key_size)
+                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
+                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity_up)
+
+                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity)
+                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity_down)
+        
+                model.addConstr(guess_match + key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - state_size <= complexity)
+                model.addConstr(guess_match + key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - state_size <= complexity_match)
+
+        if structure_size == 2:
+                model.addConstr(guess_match + 2*state_size + key_quantity_up + key_quantity_down + state_test_down_quantity + state_test_up_quantity >= key_size)
+                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
+                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity_up)
+
+                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity)
+                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity_down)
+        
+                model.addConstr(guess_match + key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity + state_size <= complexity)
+                model.addConstr(guess_match + key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity + state_size <= complexity_match)
+
         model.addConstr(distinguisher_probability + probabilistic_key_recovery_down + probabilistic_key_recovery_up <= 2*state_size)
 
         model.setObjectiveN(complexity, 0, 100)
@@ -605,7 +604,8 @@ def diff_mitm_SIMON():
                 print('complexity = ', distinguisher_probability + complexity_down.X)
                 print("")
                 print("MATHC complexity = ", distinguisher_probability + complexity_match.X)
-                return()
+                print("guess match", guess_match.X)
+                print("Key Quantity :", structure_size*subkey_size + key_quantity_down.getValue() + key_quantity_up.getValue() + state_test_down_quantity.getValue() + state_test_down_quantity.getValue())
         else :
                 model.computeIIS()
                 model.write("model_infeasible.ilp")

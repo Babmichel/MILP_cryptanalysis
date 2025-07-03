@@ -119,7 +119,7 @@ def diff_mitm_SIMON():
         ### MILP Variable initialisation ###
         for round, bit, value in product(range(total_round), range(subkey_size), range(2)):
                 key[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'key {round}, {bit} value ={value}')
-     
+        
         for round, bit in product(range(MITM_down_size), range(state_size)): 
                 for value in range(3):
                         down_right_difference[round, bit ,value] = model.addVar(vtype = GRB.BINARY, name = f'down_right difference {round}, {bit} : value = {value}')
@@ -162,7 +162,6 @@ def diff_mitm_SIMON():
         complexity_up = model.addVar(lb = 0.0, ub = 2*key_size,vtype= GRB.INTEGER, name = "complexity_up")
         complexity_down = model.addVar(lb = 0.0, ub = 2*key_size,vtype= GRB.INTEGER, name = "complexity_down")
         complexity_match = model.addVar(lb = 0.0, ub = 2*key_size,vtype= GRB.INTEGER, name = "complexity_match")
-        guess_match = model.addVar(lb = 0.0, ub = key_size,vtype= GRB.INTEGER, name = "guess match")
         key_quantity = model.addVar(lb = 0.0, ub = 2*key_size,vtype= GRB.INTEGER, name = "key quantity")
         key_redundancy = model.addVar(lb = 0.0, ub = 2*key_size,vtype= GRB.INTEGER, name = "key quantity")
         
@@ -185,47 +184,47 @@ def diff_mitm_SIMON():
 
         
         if structure_size == 0:
-                model.addConstr(key_quantity_up + key_quantity_down + state_test_down_quantity + state_test_up_quantity >= key_size)
-                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
-                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity_up)
+                model.addConstr(distinguisher_probability + key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
+                model.addConstr(distinguisher_probability + key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity_up)
 
-                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity)
-                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity_down)
+                model.addConstr(distinguisher_probability + key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity)
+                model.addConstr(distinguisher_probability + key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity_down)
         
-                model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity <= complexity)
-                model.addConstr(key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity <= complexity_match)
+                model.addConstr(distinguisher_probability + key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity <= complexity)
+                model.addConstr(distinguisher_probability + key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity <= complexity_match)
         
         if structure_size == 1:
-                key_quantity = guess_match + state_size + key_quantity_up + key_quantity_down + state_test_down_quantity + state_test_up_quantity
-                model.addConstr(key_quantity >= key_size)
-                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
-                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity_up)
+                key_quantity = state_size + key_quantity_up + key_quantity_down + state_test_down_quantity + state_test_up_quantity
+                key_redundancy = state_size + key_quantity_up + key_quantity_down - key_size
+                model.addConstr(distinguisher_probability + key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
+                model.addConstr(distinguisher_probability + key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity_up)
 
-                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity)
-                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity_down)
+                model.addConstr(distinguisher_probability + key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity)
+                model.addConstr(distinguisher_probability + key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity_down)
         
-                model.addConstr(guess_match + key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - state_size <= complexity)
-                model.addConstr(guess_match + key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - state_size <= complexity_match)
+                model.addConstr(distinguisher_probability + key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - state_size <= complexity)
+                model.addConstr(distinguisher_probability + key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - state_size <= complexity_match)
 
         if structure_size == 2:
-                key_quantity = guess_match + 2*state_size + key_quantity_up + key_quantity_down + state_test_down_quantity + state_test_up_quantity
-                model.addConstr(key_quantity >= key_size)
-                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
-                model.addConstr(key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity_up)
+                key_quantity = 2*state_size + key_quantity_up + key_quantity_down + state_test_down_quantity + state_test_up_quantity
+                
+                key_redundancy = 2*state_size + key_quantity_up + key_quantity_down - key_size
 
-                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity)
-                model.addConstr(key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity_down)
+                model.addConstr(distinguisher_probability + key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
+                model.addConstr(distinguisher_probability + key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity_up)
+
+                model.addConstr(distinguisher_probability  + key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity)
+                model.addConstr(distinguisher_probability  + key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up <= complexity_down)
         
-                model.addConstr(guess_match + key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity + 2*state_size <= complexity)
-                model.addConstr(guess_match + key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity + 2*state_size <= complexity_match)
+                model.addConstr(distinguisher_probability + key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - key_redundancy  <= complexity)
+                model.addConstr(distinguisher_probability + key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity - key_redundancy  <= complexity_match)
 
+                
         model.addConstr(distinguisher_probability + probabilistic_key_recovery_down + probabilistic_key_recovery_up <= 2*state_size)
 
         model.setObjectiveN(complexity, 0, 100)
-        model.setObjectiveN(complexity_up + complexity_down + complexity_match, 1, 75)
-        model.setObjectiveN(guess_match, 5, 10)
-        model.setObjectiveN(state_test_down_quantity, 2, 25)
-        model.setObjectiveN(state_test_up_quantity, 3, 25)
+        model.setObjectiveN(complexity_up + complexity_down + complexity_match, 1, 50)
+        model.setObjectiveN(state_test_up_quantity + state_test_down_quantity, 2, 25)
 
         
         #Constraints 
@@ -597,24 +596,25 @@ def diff_mitm_SIMON():
                                         print ("||", end="")
                         print("\033[90m L_XOR")
 
+                print("complexity : ", complexity.X)
                 print("UP part parameters")
                 print("key : ", key_quantity_up.getValue())
                 print("state test: ", state_test_up_quantity.getValue())
                 print("proba key rec : ", probabilistic_key_recovery_up.getValue())
-                print('complexity = ', distinguisher_probability + complexity_up.X)
+                print('complexity = ', complexity_up.X)
                 print("")
                 print("DOWN values")
                 print("key : ", key_quantity_down.getValue())
                 print("state test : ", state_test_down_quantity.getValue())
                 print("proba key rec : ", probabilistic_key_recovery_down.getValue())
-                print('complexity = ', distinguisher_probability + complexity_down.X)
+                print('complexity = ', complexity_down.X)
                 print("")
                 if structure_size != 2 :
-                        print("MATHC complexity = ", distinguisher_probability + complexity_match.X)
+                        print("MATHC complexity = ", complexity_match.X)
                 else : 
                         print("MATHC complexity = ", complexity_match.X)
-                print("guess match", guess_match.X)
                 print("Key Quantity :", structure_size*subkey_size + key_quantity_down.getValue() + key_quantity_up.getValue() + state_test_up_quantity.getValue() + state_test_down_quantity.getValue())
+                print("key redundancy :", key_redundancy.getValue())
         else :
                 model.computeIIS()
                 model.write("model_infeasible.ilp")

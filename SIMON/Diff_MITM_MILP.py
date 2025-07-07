@@ -605,18 +605,18 @@ def diff_mitm_SIMON():
                 print("key : ", key_quantity_up.getValue())
                 print("state test: ", state_test_up_quantity.getValue())
                 print("proba key rec : ", probabilistic_key_recovery_up.getValue())
-                print('complexity = ', complexity_up.X)
+                print('complexity = ', distinguisher_probability+key_quantity_up.getValue()+state_test_up_quantity.getValue()+probabilistic_key_recovery_down.getValue())
                 print("")
                 print("DOWN values")
                 print("key : ", key_quantity_down.getValue())
                 print("state test : ", state_test_down_quantity.getValue())
                 print("proba key rec : ", probabilistic_key_recovery_down.getValue())
-                print('complexity = ', complexity_down.X)
+                print('complexity = ', distinguisher_probability+key_quantity_down.getValue()+state_test_down_quantity.getValue()+probabilistic_key_recovery_up.getValue())
                 print("")
-                if structure_size != 2 :
-                        print("MATHC complexity = ", complexity_match.X)
-                else : 
-                        print("MATHC complexity = ", complexity_match.X)
+                if structure_size == 1:
+                        print("MATHC complexity = ", distinguisher_probability+complexity_match.X-state_size)
+                if structure_size == 2:
+                        print("MATHC complexity = ", distinguisher_probability+complexity_match.X-2*state_size)
                 print("Key Quantity :", structure_size*subkey_size + key_quantity_down.getValue() + key_quantity_up.getValue() + state_test_up_quantity.getValue() + state_test_down_quantity.getValue())
                 print("key redundancy :", key_redundancy.getValue())
 
@@ -1128,17 +1128,17 @@ def diff_mitm_SIMON():
                                                                         color_left="royalblue"
                                                         if k == 1:
                                                                 if key[r+taille_distingueur+r_up_max, (j+i+8)%state_size, 1].X == 1:
-                                                                        color_left="blue"
+                                                                        color_left="dodgerblue"
                                                         if k == 2:
                                                                 if down_left_state_8[r, j+i, 1].X == 1:
                                                                         color_left="royalblue"
                                                                 if down_left_state_8[r, j+i, 2].X == 1:
                                                                         color_left="deepskyblue"
                                                                 if key[r+taille_distingueur+r_up_max, j+i, 1].X == 1:
-                                                                        color_right="blue"
+                                                                        color_right="dodgerblue"
                                                         if k == 3:
                                                                 if key[r+taille_distingueur+r_up_max, (j+i+1)%state_size, 1].X == 1:
-                                                                        color_left="blue"
+                                                                        color_left="dodgerblue"
                                                         if k == 4:
                                                                 if down_left_state_1[r, j+i, 1].X == 1:
                                                                         color_left="royalblue"
@@ -1208,8 +1208,69 @@ def diff_mitm_SIMON():
                                                                 diff_value="?"
                                                         plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
 
-                                                
 
+                #Légende
+                #upper state
+                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-6)*mult), (1)*mult, (1)*mult, facecolor="red", edgecolor = "black")
+                draw.add_patch(square)               
+                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-6)*mult, ": This key bit is guessed by the upper part of the attack", fontname="serif", fontsize=30)
+
+                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-8)*mult), (1)*mult, (1)*mult, facecolor="darkred", edgecolor = "black")
+                draw.add_patch(square)               
+                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-8)*mult, ": This state bit can be computed by the upper part of the attack", fontname="serif", fontsize=30)
+
+                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-10)*mult), (1)*mult, (1)*mult, facecolor="salmon", edgecolor = "black")
+                draw.add_patch(square)               
+                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-10)*mult, ": This state bit is guessed by the upper part of the attack", fontname="serif", fontsize=30)
+
+                #lower state
+                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-12)*mult), (1)*mult, (1)*mult, facecolor="dodgerblue", edgecolor = "black")
+                draw.add_patch(square)               
+                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-12)*mult, ": This key bit is guessed by the lower part of the attack", fontname="serif", fontsize=30)
+
+                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-14)*mult), (1)*mult, (1)*mult, facecolor="royalblue", edgecolor = "black")
+                draw.add_patch(square)               
+                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-14)*mult, ": This state bit can be computed by the lower part of the attack", fontname="serif", fontsize=30)
+
+                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-16)*mult), (1)*mult, (1)*mult, facecolor="deepskyblue", edgecolor = "black")
+                draw.add_patch(square)               
+                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-16)*mult, ": This state bit is guessed by the lower part of the attack", fontname="serif", fontsize=30)
+
+                #differences
+                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-18)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black")
+                draw.add_patch(square) 
+                plt.text((dec_d+0.2)*mult, ((1*r_down_max)*(-6*n_s-11)-18+0.2)*mult, "0", fontname="serif", fontsize=17)              
+                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-18)*mult, ": The difference on this bit is 0", fontname="serif", fontsize=30)
+
+                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-20)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black")
+                draw.add_patch(square)               
+                plt.text((dec_d+0.2)*mult, ((1*r_down_max)*(-6*n_s-11)-20+0.2)*mult, "1", fontname="serif", fontsize=17)              
+                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-20)*mult, ": The difference on this bit is 1", fontname="serif", fontsize=30)
+
+                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-22)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black")
+                draw.add_patch(square)               
+                plt.text((dec_d+0.2)*mult, ((1*r_down_max)*(-6*n_s-11)-22+0.2)*mult, "?", fontname="serif", fontsize=17)              
+                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-22)*mult, ": The difference on this bit can be 0 or 1", fontname="serif", fontsize=30)
+                
+                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-24)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black")
+                draw.add_patch(square)               
+                plt.text((dec_d+0.2)*mult, ((1*r_down_max)*(-6*n_s-11)-24+0.2)*mult, "P", fontname="serif", fontsize=17)              
+                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-24)*mult, ": The difference on this bit is considered 0 by probabilist propagation", fontname="serif", fontsize=30)
+                
+                #structure
+                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-26)*mult), (1)*mult, (1)*mult, facecolor="green", edgecolor = "black")
+                draw.add_patch(square)               
+                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-26)*mult, ": This bit takes all possible values", fontname="serif", fontsize=30)
+                
+                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-28)*mult), (1)*mult, (1)*mult, facecolor="gray", edgecolor = "black")
+                draw.add_patch(square)               
+                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-28)*mult, ": The value of this bit is fix for a specific structure", fontname="serif", fontsize=30)
+                
+
+
+
+
+                #size control                                                      
                 fig.set_size_inches(mult * 8, mult * 6)
                 draw.set_aspect('equal')
                 plt.axis("off")

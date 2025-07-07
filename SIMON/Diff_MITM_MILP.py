@@ -5,6 +5,9 @@ from itertools import product
 import os
 import shutil
 import sys
+import matplotlib.pyplot as plt
+from matplotlib.patches import *
+from matplotlib.widgets import *
 
 def diff_mitm_SIMON():
     options = {
@@ -194,6 +197,7 @@ def diff_mitm_SIMON():
                 model.addConstr(distinguisher_probability + key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity <= complexity_match)
         
         if structure_size == 1:
+                #model.addConstr(key_quantity>=key_size)
                 key_quantity = state_size + key_quantity_up + key_quantity_down + state_test_down_quantity + state_test_up_quantity
                 key_redundancy = state_size + key_quantity_up + key_quantity_down - key_size
                 model.addConstr(distinguisher_probability + key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down <= complexity)
@@ -615,9 +619,609 @@ def diff_mitm_SIMON():
                         print("MATHC complexity = ", complexity_match.X)
                 print("Key Quantity :", structure_size*subkey_size + key_quantity_down.getValue() + key_quantity_up.getValue() + state_test_up_quantity.getValue() + state_test_down_quantity.getValue())
                 print("key redundancy :", key_redundancy.getValue())
+
+                plt.rcParams['lines.linewidth'] = 0.5
+                plt.rcParams.update({'font.size': 40})
+
+                r_up_max = structure_size+MITM_up_size
+                r_up_min = structure_size
+
+                r_down_max = MITM_down_size
+                r_down_min = 0
+
+                taille_distingueur = distinguisher_size
+                proba_distingueur = distinguisher_probability
+
+                mult = 10
+                if state_size in [8, 16, 32, 64, 128]:
+                        state_draw = 16
+                elif state_size in [12, 24, 48, 96]:
+                        state_draw = 24
+                else : 
+                        print("wrong state size")
+                        state_draw = 0
+
+                n_s = int(state_size//state_draw)
+                fig = plt.figure()
+                draw = fig.add_subplot()
+
+                #Strucutre : 
+                if structure_size == 1 :
+                        dec_r=0
+                        for k in range(4):
+                                #trait haut gauche 
+                                plt.plot([(-6)*mult, (-6)*mult],[(0-n_s/2 - dec_r)*mult,(-(5.75*n_s+5)-n_s/2 - dec_r)*mult], color="black")
+                                plt.plot([(-6)*mult,( state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2)*mult],[(-(6.25*n_s+5) - dec_r)*mult,( -(6.25*n_s+5)-4 - dec_r)*mult], color="black")
+                                plt.plot([(-6)*mult,(-4)*mult], [(0-n_s/2-dec_r)*mult,(0-n_s/2-dec_r)*mult], color="black")
+                                plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2)*mult,(state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2)*mult], [( -(6.25*n_s+5)-4 - dec_r)*mult,(-6*n_s-6-5- dec_r)*mult], color="black")
+                                
+                                #trait haut droit
+                                plt.plot([(state_draw*2+0.1*(state_draw//4-1)+10+6)*mult, (state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult],[(0-n_s/2 - dec_r)*mult, (-(6.25*n_s+5) - dec_r)*mult], color="black")
+                                plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult, (-6+state_draw/2)*mult],[(-(6.25*n_s+5) - dec_r)*mult, (-(6.25*n_s+5)-4 - dec_r)*mult], color="black")
+                                plt.plot([(state_draw*2+0.1*(state_draw//4-1)+10+4)*mult, (state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult],[(0-n_s/2 - dec_r)*mult, (0-n_s/2 - dec_r)*mult], color="black")
+                                plt.plot([(-6+state_draw/2)*mult,(-6+state_draw/2)*mult], [( -(6.25*n_s+5)-4 - dec_r)*mult,(-6*n_s-6-4-1 - dec_r)*mult], color="black")
+                                
+                                #text
+                                plt.text((-5.5)*mult, (-n_s*2.4 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=20)
+                                plt.text((-5.5)*mult, (-n_s*4.4-1 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=20)
+                                plt.text((-5.5)*mult, (-n_s*5.4-2 - dec_r)*mult, "<<< 2", fontname="serif", fontsize=20)
+
+                                plt.text((state_draw+0.5-4)*mult, (-n_s/2-0.25 - dec_r)*mult, f"L{0}")
+                                plt.text((state_draw+13-1.5)*mult, (-n_s/2-0.25 - dec_r)*mult, f"R{0}", fontname="serif")
+                                plt.text((state_draw+7.5)*mult, (-3*n_s/2 - 1.5)*mult, f"K{0}", fontname="serif")
+
+
+                                #decallage des premiers etats
+                                if k==0 :
+                                        dec_start = 4
+                                else : dec_start = 0
+
+                                for j in range(state_size//state_draw):
+                                        
+                                        for i in range(state_draw):
+                                                dec = 0
+                                
+                                                #trait horizontaux millieu AND et XOR
+                                                if j%n_s ==0 and k in [1, 3]:
+                                                        plt.plot([(state_draw)*mult,(state_draw+5)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                if j%n_s ==0 and k in [3]:
+                                                        plt.plot([(state_draw+5)*mult,(state_draw+10+0.1*(state_draw//4 -1))*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                
+                                                if j%n_s ==0 and k in [2]:
+                                                        plt.plot([(state_draw)*mult,(state_draw+4.5)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                        plt.plot([(state_draw+5.5)*mult,(state_draw+10+0.1*(state_draw//4 -1))*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+
+                                                #trait verticaux
+                                                if j%n_s ==0 and k in [1]:
+                                                        plt.plot([(state_draw+5)*mult,(state_draw+5)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2-2*n_s-2+0.5 - dec_r)*mult], color="black")
+                                                
+                                                if j%n_s ==0 and k in [2]:
+                                                        plt.plot([(state_draw+5)*mult,(state_draw+5)*mult],[(-1*j-(n_s+1)*k-n_s/2-0.5 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2-n_s-1-0.5 - dec_r)*mult], color="black")
+
+                                                #cercle XOR et AND
+                                                if j%n_s ==0 and k in [2, 3]:
+                                                        circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        draw.add_patch(circle)
+                                                
+                                                if j%n_s ==0 and k in [2]:
+                                                        circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.1)*mult, color = "black")
+                                                        draw.add_patch(circle)
+                                                
+                                                if j%n_s ==0 and k in [1, 2, 3]:
+                                                        #trait horizontaux gauche
+                                                        plt.plot([(-6)*mult,(0)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                        #trait horizontaux droite
+                                                if j%n_s ==0 and k in [1, 3]:
+                                                        plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10)*mult,(state_draw*2+0.1*(state_draw//4 -1)+10+6+0.5)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                        #cercle Xor droit
+                                                        circle = plt.Circle(((state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        draw.add_patch(circle)
+
+                                                        #decalage tout les quatres etats
+                                                if i%4 == 0 and i!=0:
+                                                        dec+=0.1
+                                                #Carre état
+                                                square = Rectangle(((i+dec-dec_start)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="gray", edgecolor = "black")
+                                                draw.add_patch(square) 
+                                                if k == 0:
+                                                        square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="green", edgecolor = "black")
+                                                        draw.add_patch(square)
+                                                elif k == 2:
+                                                        square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="gray", edgecolor = "black")
+                                                        draw.add_patch(square)
+                                                else :
+                                                        square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black")
+                                                        draw.add_patch(square)
+
+                elif structure_size == 2:
+                        for r in range(2):
+                                dec_r=(-1*r)*(-6*n_s-11)
+                                for k in range(4):
+                                        #trait haut gauche 
+                                        plt.plot([(-6)*mult, (-6)*mult],[(0-n_s/2 - dec_r)*mult,(-(5.75*n_s+5)-n_s/2 - dec_r)*mult], color="black")
+                                        plt.plot([(-6)*mult,( state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2)*mult],[(-(6.25*n_s+5) - dec_r)*mult,( -(6.25*n_s+5)-4 - dec_r)*mult], color="black")
+                                        plt.plot([(-6)*mult,(-4)*mult], [(0-n_s/2-dec_r)*mult,(0-n_s/2-dec_r)*mult], color="black")
+                                        plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2)*mult,(state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2)*mult], [( -(6.25*n_s+5)-4 - dec_r)*mult,(-6*n_s-6-5- dec_r)*mult], color="black")
+                                        
+                                        #trait haut droit
+                                        plt.plot([(state_draw*2+0.1*(state_draw//4-1)+10+6)*mult, (state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult],[(0-n_s/2 - dec_r)*mult, (-(6.25*n_s+5) - dec_r)*mult], color="black")
+                                        plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult, (-6+state_draw/2)*mult],[(-(6.25*n_s+5) - dec_r)*mult, (-(6.25*n_s+5)-4 - dec_r)*mult], color="black")
+                                        plt.plot([(state_draw*2+0.1*(state_draw//4-1)+10+4)*mult, (state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult],[(0-n_s/2 - dec_r)*mult, (0-n_s/2 - dec_r)*mult], color="black")
+                                        plt.plot([(-6+state_draw/2)*mult,(-6+state_draw/2)*mult], [( -(6.25*n_s+5)-4 - dec_r)*mult,(-6*n_s-6-4-1 - dec_r)*mult], color="black")
+                                        
+                                        #text
+                                        plt.text((-5.5)*mult, (-n_s*2.4 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=20)
+                                        plt.text((-5.5)*mult, (-n_s*3.4-1 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=20)
+                                        plt.text((-5.5)*mult, (-n_s*4.4-2 - dec_r)*mult, "<<< 2", fontname="serif", fontsize=20)
+
+                                        plt.text((state_draw+0.5-4)*mult, (-n_s/2-0.25 - dec_r)*mult, f"L{r}")
+                                        plt.text((state_draw+13-1.5)*mult, (-n_s/2-0.25 - dec_r)*mult, f"R{r}", fontname="serif")
+                                        plt.text((state_draw+7.5)*mult, (-3*n_s/2 - 1.5 - dec_r)*mult, f"K{r}", fontname="serif")
+
+
+                                        #decallage des premiers etats
+                                        if k==0 :
+                                                dec_start = 4
+                                        else : dec_start = 0
+
+                                        for j in range(state_size//state_draw):
+                                        
+                                                for i in range(state_draw):
+                                                        dec = 0
+                                
+                                                        #trait horizontaux millieu AND et XOR
+                                                        if j%n_s ==0 and k in [1, 3]:
+                                                                plt.plot([(state_draw)*mult,(state_draw+5)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                        if j%n_s ==0 and k in [3]:
+                                                                plt.plot([(state_draw+5)*mult,(state_draw+10+0.1*(state_draw//4 -1))*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                        
+                                                        if j%n_s ==0 and k in [2]:
+                                                                plt.plot([(state_draw)*mult,(state_draw+4.5)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                                plt.plot([(state_draw+5.5)*mult,(state_draw+10+0.1*(state_draw//4 -1))*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+
+                                                        #trait verticaux
+                                                        if j%n_s ==0 and k in [1]:
+                                                                plt.plot([(state_draw+5)*mult,(state_draw+5)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2-2*n_s-2+0.5 - dec_r)*mult], color="black")
+                                                        
+                                                        if j%n_s ==0 and k in [2]:
+                                                                plt.plot([(state_draw+5)*mult,(state_draw+5)*mult],[(-1*j-(n_s+1)*k-n_s/2-0.5 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2-n_s-1-0.5 - dec_r)*mult], color="black")
+
+                                                        #cercle XOR et AND
+                                                        if j%n_s ==0 and k in [2, 3]:
+                                                                circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                                draw.add_patch(circle)
+                                                        
+                                                        if j%n_s ==0 and k in [2]:
+                                                                circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.1)*mult, color = "black")
+                                                                draw.add_patch(circle)
+                                                        
+                                                        if j%n_s ==0 and k in [1, 2, 3]:
+                                                                #trait horizontaux gauche
+                                                                plt.plot([(-6)*mult,(0)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                                #trait horizontaux droite
+                                                        if j%n_s ==0 and k in [1, 3]:
+                                                                plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10)*mult,(state_draw*2+0.1*(state_draw//4 -1)+10+6+0.5)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                                #cercle Xor droit
+                                                                circle = plt.Circle(((state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                                draw.add_patch(circle)
+
+                                                        #decalage tout les quatres etats
+                                                        if i%4 == 0 and i!=0:
+                                                                dec+=0.1
+                                                        #Carre état
+                                                        square = Rectangle(((i+dec-dec_start)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="green", edgecolor = "black")
+                                                        draw.add_patch(square) 
+                                                        if k!=1:
+                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="green", edgecolor = "black")
+                                                                draw.add_patch(square)
+                                                        else:
+                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black")
+                                                                draw.add_patch(square)  
+                                        
+
+                #UPPER PART
+                for r in range(r_up_min,r_up_max):
+                        dec_r = (-1*r)*(-6*n_s-11)
+                        for k in range(6):
+                                #trait haut gauche 
+                                plt.plot([(-6)*mult, (-6)*mult],[(0-n_s/2 - dec_r)*mult,(-(5.75*n_s+5)-n_s/2 - dec_r)*mult], color="black")
+                                plt.plot([(-6)*mult,( state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2)*mult],[(-(6.25*n_s+5) - dec_r)*mult,( -(6.25*n_s+5)-4 - dec_r)*mult], color="black")
+                                plt.plot([(-6)*mult,(-4)*mult], [(0-n_s/2-dec_r)*mult,(0-n_s/2-dec_r)*mult], color="black")
+                                plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2)*mult,(state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2)*mult], [( -(6.25*n_s+5)-4 - dec_r)*mult,(-6*n_s-6-5- dec_r)*mult], color="black")
+                                
+                                #trait haut droit
+                                plt.plot([(state_draw*2+0.1*(state_draw//4-1)+10+6)*mult, (state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult],[(0-n_s/2 - dec_r)*mult, (-(6.25*n_s+5) - dec_r)*mult], color="black")
+                                plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult, (-6+state_draw/2)*mult],[(-(6.25*n_s+5) - dec_r)*mult, (-(6.25*n_s+5)-4 - dec_r)*mult], color="black")
+                                plt.plot([(state_draw*2+0.1*(state_draw//4-1)+10+4)*mult, (state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult],[(0-n_s/2 - dec_r)*mult, (0-n_s/2 - dec_r)*mult], color="black")
+                                plt.plot([(-6+state_draw/2)*mult,(-6+state_draw/2)*mult], [( -(6.25*n_s+5)-4 - dec_r)*mult,(-6*n_s-6-4-1 - dec_r)*mult], color="black")
+                                
+                                #text
+                                plt.text((-5.5)*mult, (-n_s*2.4-2 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=20)
+                                plt.text((-5.5)*mult, (-n_s*4.4-4 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=20)
+                                plt.text((-5.5)*mult, (-n_s*5.4-5 - dec_r)*mult, "<<< 2", fontname="serif", fontsize=20)
+
+                                if r!=r_up_min:
+                                        plt.text((state_draw+0.5)*mult, (-n_s*1.4-1 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=20)
+                                        plt.text((state_draw+0.5)*mult, (-n_s*3.4-3 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=20)
+
+                                plt.text((state_draw+0.5-4)*mult, (-n_s/2-0.25 - dec_r)*mult, f"L{r}")
+                                plt.text((state_draw+13-1.5)*mult, (-n_s/2-0.25 - dec_r)*mult, f"R{r}", fontname="serif")
+                                if r!=r_up_min:
+                                        plt.text((2*state_draw+10.5)*mult, (-5*n_s/2 - 2 -0.25 - dec_r)*mult, f"K'{r}", fontname="serif")
+
+
+                                #decallage des premiers etats
+                                if k==0 :
+                                        dec_start = 4
+                                else : dec_start = 0
+
+                                for j in range(state_size//state_draw):
+                                
+                                        for i in range(state_draw):
+                                                dec = 0
+                                                #trait clé de gauche
+                                                if j%n_s ==0 and k in [1, 3] and r!=r_up_min:
+                                                        #trait droite
+                                                        plt.plot([(state_draw)*mult,(state_draw+8)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="gray", linestyle="dotted")
+                                                
+                                                        #traits gauche et XOR
+                                                        plt.plot([(-2)*mult,0],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                        plt.plot([(-2)*mult,(-2)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2-n_s-1.5 - dec_r)*mult], color="black")
+                                                        circle = plt.Circle(((-2)*mult, (-1*j-(n_s+1)*k-n_s/2-n_s-1 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        draw.add_patch(circle)
+
+                                                #trait millieu cle de droite
+                                                if j%n_s ==0 and k in [2] and r!=r_up_min:
+                                                        plt.plot([(state_draw+8)*mult,(state_draw+10+0.1*(state_draw//4 -1))*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="gray", linestyle="dotted")
+                                                        plt.plot([(state_draw+8)*mult,(state_draw+8)*mult],[(-1*(j-1-n_s)-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*(j+1+n_s)-(n_s+1)*k-n_s/2 - dec_r)*mult], color="gray", linestyle="dotted")
+                                                
+                                                #trait horizontaux millieu AND et XOR
+                                                if j%n_s ==0 and k in [2, 5]:
+                                                        plt.plot([(state_draw)*mult,(state_draw+5)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                if j%n_s ==0 and k in [5]:
+                                                        plt.plot([(state_draw+5)*mult,(state_draw+10+0.1*(state_draw//4 -1))*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                
+                                                if j%n_s ==0 and k in [4]:
+                                                        plt.plot([(state_draw)*mult,(state_draw+4.5)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                        plt.plot([(state_draw+5.5)*mult,(state_draw+10+0.1*(state_draw//4 -1))*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+
+                                                #trait verticaux
+                                                if j%n_s ==0 and k in [2]:
+                                                        plt.plot([(state_draw+5)*mult,(state_draw+5)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2-2*n_s-2+0.5 - dec_r)*mult], color="black")
+                                                
+                                                if j%n_s ==0 and k in [4]:
+                                                        plt.plot([(state_draw+5)*mult,(state_draw+5)*mult],[(-1*j-(n_s+1)*k-n_s/2-0.5 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2-n_s-1-0.5 - dec_r)*mult], color="black")
+
+                                                #cercle XOR et AND
+                                                if j%n_s ==0 and k in [4, 5]:
+                                                        circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        draw.add_patch(circle)
+                                                
+                                                if j%n_s ==0 and k in [4]:
+                                                        circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.1)*mult, color = "black")
+                                                        draw.add_patch(circle)
+                                                
+                                                if j%n_s ==0 and k in [2, 4, 5]:
+                                                        #trait horizontaux gauche
+                                                        plt.plot([(-6)*mult,(0)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                        #trait horizontaux droite
+                                                if j%n_s ==0 and k in [5]:
+                                                        plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10)*mult,(state_draw*2+0.1*(state_draw//4 -1)+10+6+0.5)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                        #cercle Xor droit
+                                                        circle = plt.Circle(((state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        draw.add_patch(circle)
+
+                                                #decalage tout les quatres etats
+                                                if i%4 == 0 and i!=0:
+                                                        dec+=0.1
+                                                #Carre état
+                                                color_right="white"
+                                                color_left="white"
+                                                diff_value="0"
+                                                if r==r_up_min:
+                                                        color_right="darkred"
+                                                        color_left="darkred"
+                                                else :
+                                                        if k == 0 and r!=r_up_min:
+                                                                if up_left_state[r-structure_size-1, j+i, 1].X == 1:
+                                                                        color_right="darkred"
+                                                                if up_right_state[r-structure_size-1, j+i, 1].X == 1:
+                                                                        color_left="darkred"
+                                                        if k == 1:
+                                                                if key[r, (j+i+8)%state_size, 1].X == 1:
+                                                                        color_right="red"
+                                                        if k == 2:
+                                                                if up_left_state_8[r-structure_size, j+i, 1].X == 1:
+                                                                        color_right="darkred"
+                                                                if up_left_state_8[r-structure_size, j+i, 2].X == 1:
+                                                                        color_right="salmon"
+                                                                if key[r, j+i, 1].X == 1:
+                                                                        color_left="red"
+                                                        if k == 3:
+                                                                if key[r, (j+i+1)%state_size, 1].X == 1:
+                                                                        color_right="red"
+                                                        if k == 4:
+                                                                if up_left_state_1[r-structure_size, j+i, 1].X == 1:
+                                                                        color_right="darkred"
+                                                                if up_left_state_1[r-structure_size, j+i, 2].X == 1:
+                                                                        color_right="salmon"
+                                                                if up_right_state[r-structure_size-1, j+i, 1].X == 1:
+                                                                        color_left="darkred"
+
+                                                        if k == 5:
+                                                                if up_left_state_2[r-structure_size, j+i, 1].X == 1:
+                                                                        color_right="darkred"
+                                                                if up_right_state[r-structure_size-1, j+i, 1].X == 1:
+                                                                        color_left="darkred"
+                                                if r!=r_up_min:
+                                                        square = Rectangle(((i+dec-dec_start)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_right, edgecolor = "black")
+                                                        draw.add_patch(square)
+                                                        if k not in [1,3]:  
+                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_left, edgecolor = "black")
+                                                                draw.add_patch(square)
+                                                else :
+                                                        if k not in [1,3]: 
+                                                                square = Rectangle(((i+dec-dec_start)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_right, edgecolor = "black")
+                                                                draw.add_patch(square)
+                                                        if k not in [1,2,3]:  
+                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_left, edgecolor = "black")
+                                                                draw.add_patch(square)
+                                                if k == 0:
+                                                        if up_right_difference[r-structure_size, j+i,1].X==1:
+                                                                diff_value="1"
+                                                        if up_right_difference[r-structure_size, j+i,2].X==1:
+                                                                diff_value="?"
+                                                        plt.text((i+dec-dec_start+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        diff_value="0"
+                                                        if up_right_difference_XOR[r-structure_size, j+i,1].X==1:
+                                                                diff_value="1"
+                                                        if up_right_difference_XOR[r-structure_size, j+i,2].X==1:
+                                                                diff_value="?"
+                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.25)*mult, diff_value, fontname="serif", fontsize=17)
+                                                if k == 2:
+                                                        if up_right_difference[r-structure_size, (j+i-8)%state_size,1].X==1:
+                                                                diff_value="1"
+                                                        if up_right_difference[r-structure_size, (j+i-8)%state_size,2].X==1:
+                                                                diff_value="?"
+                                                        plt.text((i+dec-dec_start+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                if k == 4:
+                                                        if up_right_difference[r-structure_size, (j+i+1)%state_size,1].X==1:
+                                                                diff_value="1"
+                                                        if up_right_difference[r-structure_size, (j+i+1)%state_size,2].X==1:
+                                                                diff_value="?"
+                                                        plt.text((i+dec-dec_start+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        diff_value="0"
+                                                        if up_left_difference_AND[r-structure_size, j+i,1].X==1:
+                                                                diff_value="?"
+                                                        if up_left_difference_AND[r-structure_size, j+i,2].X==1:
+                                                                diff_value="P"
+                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.25)*mult, diff_value, fontname="serif", fontsize=17)
+                                                if k == 5:
+                                                        if up_right_difference[r-structure_size, (j+i+2)%state_size,1].X==1:
+                                                                diff_value="1"
+                                                        if up_right_difference[r-structure_size, (j+i+2)%state_size,2].X==1:
+                                                                diff_value="?"
+                                                        plt.text((i+dec-dec_start+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        diff_value="0"
+                                                        if up_left_difference_XOR[r-structure_size, j+i,1].X==1:
+                                                                diff_value="1"
+                                                        if up_left_difference_XOR[r-structure_size, j+i,2].X==1:
+                                                                diff_value="?"
+                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+
+                #LOWER PART AND DISTINGUISHER
+                dec_d = 10+state_draw*2+12+10
+                square = Rectangle(((dec_d)*mult, 0*mult), (state_draw*2+10)*mult, (-4)*mult, facecolor="white", edgecolor = "black")
+                draw.add_patch(square)
+                plt.text((dec_d+state_draw*0.5)*mult, -3.75*mult, f"{taille_distingueur}-round differential Distinguisher \n      of probability 2^-{proba_distingueur}")
+                plt.plot([(4 + dec_d)*mult, (4 + dec_d)*mult],[(-4)*mult,(-6)*mult], color="black")
+                plt.plot([(4 + dec_d+1.5*state_draw+10+0.4)*mult, (4 + dec_d+1.5*state_draw+10+0.4)*mult],[(-4)*mult,(-6)*mult], color="black")
+                        
+                for r in range(r_down_min,r_down_max):
+                        dec_r = (-1*r)*(-6*n_s-11)+6
+                        for k in range(6):
+                                #trait haut gauche 
+                                plt.plot([(-6 + dec_d)*mult, (-6 + dec_d)*mult],[(0-n_s/2 - dec_r)*mult,(-(5.75*n_s+5)-n_s/2 - dec_r)*mult], color="black")
+                                plt.plot([(-6 + dec_d)*mult,(-4 + dec_d)*mult], [(0-n_s/2-dec_r)*mult,(0-n_s/2-dec_r)*mult], color="black")    
+                                if r!=r_down_max-1:
+                                        plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2 + dec_d)*mult,(state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2 + dec_d)*mult], [(-(6.25*n_s+5)-4 - dec_r)*mult,(-6*n_s-6-5- dec_r)*mult], color="black")
+                                        plt.plot([(-6 + dec_d)*mult,(state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2 + dec_d)*mult],[(-(6.25*n_s+5) - dec_r)*mult,( -(6.25*n_s+5)-4 - dec_r)*mult], color="black")
+                                
+                                #trait haut droit
+                                plt.plot([(state_draw*2+0.1*(state_draw//4-1)+10+6 + dec_d)*mult, (state_draw*2+0.1*(state_draw//4 -1)+10+6 + dec_d)*mult],[(0-n_s/2 - dec_r)*mult, (-(6.25*n_s+5) - dec_r)*mult], color="black")
+                                plt.plot([(state_draw*2+0.1*(state_draw//4-1)+10+4 + dec_d)*mult, (state_draw*2+0.1*(state_draw//4 -1)+10+6 + dec_d)*mult],[(0-n_s/2 - dec_r)*mult, (0-n_s/2 - dec_r)*mult], color="black")    
+                                if r!=r_down_max-1:
+                                        plt.plot([(-6+state_draw/2 + dec_d)*mult,(-6+state_draw/2 + dec_d)*mult], [(-(6.25*n_s+5)-4 - dec_r)*mult,(-6*n_s-6-5 - dec_r)*mult], color="black")
+                                        plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10+6 + dec_d)*mult, (-6+state_draw/2 + dec_d)*mult],[(-(6.25*n_s+5) - dec_r)*mult, (-(6.25*n_s+5)-4 - dec_r)*mult], color="black")
+                                
+                                #text
+                                plt.text((-5.5 + dec_d)*mult, (-n_s*2.4-2 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=20)
+                                plt.text((-5.5 + dec_d)*mult, (-n_s*4.4-4 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=20)
+                                plt.text((-5.5 + dec_d)*mult, (-n_s*5.4-5 - dec_r)*mult, "<<< 2", fontname="serif", fontsize=20)
+
+                                if r!=r_down_max-1:
+                                        plt.text((state_draw+0.5 + dec_d)*mult, (-n_s*1.4-1 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=20)
+                                        plt.text((state_draw+0.5 + dec_d)*mult, (-n_s*3.4-3 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=20)
+
+                                plt.text((state_draw+0.5-4 + dec_d)*mult, (-n_s/2-0.25 - dec_r)*mult, f"L{r+taille_distingueur+r_up_max}")
+                                plt.text((state_draw+13-2.5 + dec_d)*mult, (-n_s/2-0.25 - dec_r)*mult, f"R{r+taille_distingueur+r_up_max}", fontname="serif")
+                                if r!=r_down_max-1:
+                                        plt.text((2*state_draw+10.5 + dec_d)*mult, (-5*n_s/2 - 2 -0.25 - dec_r)*mult, f"K'{r+taille_distingueur+r_up_max}", fontname="serif")
+
+
+                                #decallage des premiers etats
+                                if k==0 :
+                                        dec_start = 4
+                                else : dec_start = 0
+
+                                for j in range(state_size//state_draw):
+                                
+                                        for i in range(state_draw):
+                                                dec = 0
+                                                #trait clé de gauche
+                                                if j%n_s ==0 and k in [1, 3] and r!=r_down_max-1:
+                                                        #trait droite
+                                                        plt.plot([(state_draw + dec_d)*mult,(state_draw+8 + dec_d)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="gray", linestyle="dotted")
+                                                        
+                                                        #traits gauche et XOR
+                                                        plt.plot([(-2 + dec_d)*mult,(0 + dec_d)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                        plt.plot([(-2 + dec_d)*mult,(-2 + dec_d)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2-n_s-1.5 - dec_r)*mult], color="black")
+                                                        circle = plt.Circle(((-2 + dec_d)*mult, (-1*j-(n_s+1)*k-n_s/2-n_s-1 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        draw.add_patch(circle)
+
+                                                #trait millieu cle de droite
+                                                if j%n_s ==0 and k in [2] and r!=r_down_max-1:
+                                                        plt.plot([(state_draw+8 + dec_d)*mult,(state_draw+10+0.1*(state_draw//4 -1) + dec_d)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="gray", linestyle="dotted")
+                                                        plt.plot([(state_draw+8 + dec_d)*mult,(state_draw+8 + dec_d)*mult],[(-1*(j-1-n_s)-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*(j+1+n_s)-(n_s+1)*k-n_s/2 - dec_r)*mult], color="gray", linestyle="dotted")
+                                                
+                                                #trait horizontaux millieu AND et XOR
+                                                if j%n_s ==0 and k in [2, 5]:
+                                                        plt.plot([(state_draw + dec_d)*mult,(state_draw+5 + dec_d)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                if j%n_s ==0 and k in [5]:
+                                                        plt.plot([(state_draw+5 + dec_d)*mult,(state_draw+10+0.1*(state_draw//4 -1) + dec_d)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                
+                                                if j%n_s ==0 and k in [4]:
+                                                        plt.plot([(state_draw + dec_d)*mult,(state_draw+4.5 + dec_d)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                        plt.plot([(state_draw+5.5 + dec_d)*mult,(state_draw+10+0.1*(state_draw//4 -1) + dec_d)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+
+                                                #trait verticaux
+                                                if j%n_s ==0 and k in [2]:
+                                                        plt.plot([(state_draw+5 + dec_d)*mult,(state_draw+5 + dec_d)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2-2*n_s-2+0.5 - dec_r)*mult], color="black")
+                                                
+                                                if j%n_s ==0 and k in [4]:
+                                                        plt.plot([(state_draw+5 + dec_d)*mult,(state_draw+5 + dec_d)*mult],[(-1*j-(n_s+1)*k-n_s/2-0.5 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2-n_s-1-0.5 - dec_r)*mult], color="black")
+
+                                                #cercle XOR et AND
+                                                if j%n_s ==0 and k in [4, 5]:
+                                                        circle = plt.Circle(((state_draw+5 + dec_d)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        draw.add_patch(circle)
+                                                
+                                                if j%n_s ==0 and k in [4]:
+                                                        circle = plt.Circle(((state_draw+5 + dec_d)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.1)*mult, color = "black")
+                                                        draw.add_patch(circle)
+                                                
+                                                if j%n_s ==0 and k in [2, 4, 5]:
+                                                #trait horizontaux gauche
+                                                        plt.plot([(-6 + dec_d)*mult,(0 + dec_d)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                #trait horizontaux droite
+                                                if j%n_s ==0 and k in [5]:
+                                                        plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10 + dec_d)*mult,(state_draw*2+0.1*(state_draw//4 -1)+10+6+0.5 + dec_d)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
+                                                        #cercle Xor droit
+                                                        circle = plt.Circle(((state_draw*2+0.1*(state_draw//4 -1)+10+6+dec_d)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        draw.add_patch(circle)
+                                                
+                                                #decalage tout les quatres etats
+                                                if i%4 == 0 and i!=0:
+                                                        dec+=0.1
+                                                #Carre état
+                                                color_right="white"
+                                                color_left="white"
+                                                diff_value="0"
+                                                if r==r_down_max-1:
+                                                        color_right="royalblue"
+                                                        color_left="royalblue"
+                                                else :
+                                                        if k == 0 and r!=r_down_max-1:
+                                                                if down_right_state[r, j+i, 1].X == 1:
+                                                                        color_right="royalblue"
+                                                                if down_left_state[r, j+i, 1].X == 1:
+                                                                        color_left="royalblue"
+                                                        if k == 1:
+                                                                if key[r+taille_distingueur+r_up_max, (j+i+8)%state_size, 1].X == 1:
+                                                                        color_left="blue"
+                                                        if k == 2:
+                                                                if down_left_state_8[r, j+i, 1].X == 1:
+                                                                        color_left="royalblue"
+                                                                if down_left_state_8[r, j+i, 2].X == 1:
+                                                                        color_left="deepskyblue"
+                                                                if key[r+taille_distingueur+r_up_max, j+i, 1].X == 1:
+                                                                        color_right="blue"
+                                                        if k == 3:
+                                                                if key[r+taille_distingueur+r_up_max, (j+i+1)%state_size, 1].X == 1:
+                                                                        color_left="blue"
+                                                        if k == 4:
+                                                                if down_left_state_1[r, j+i, 1].X == 1:
+                                                                        color_left="royalblue"
+                                                                if down_left_state_1[r, j+i, 2].X == 1:
+                                                                        color_left="deepskyblue"
+                                                                if down_right_state[r, j+i, 1].X == 1:
+                                                                        color_right="royalblue"
+
+                                                        if k == 5:
+                                                                if down_left_state_2[r, j+i, 1].X == 1:
+                                                                        color_left="royalblue"
+                                                                if down_right_state[r, j+i, 1].X == 1:
+                                                                        color_right="royalblue"
+                                                if r!=r_down_max-1:
+                                                        square = Rectangle(((i+dec-dec_start + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_left, edgecolor = "black")
+                                                        draw.add_patch(square)
+                                                        if k not in [1,3]:  
+                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_right, edgecolor = "black")
+                                                                draw.add_patch(square)
+                                                else :
+                                                        if k not in [1,3]: 
+                                                                square = Rectangle(((i+dec-dec_start + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_left, edgecolor = "black")
+                                                                draw.add_patch(square)
+                                                        if k not in [1,2,3]:  
+                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_right, edgecolor = "black")
+                                                                draw.add_patch(square)
+                                                if k == 0:
+                                                        if down_left_difference[r, j+i,1].X==1:
+                                                                diff_value="1"
+                                                        if down_left_difference[r, j+i,2].X==1:
+                                                                diff_value="?"
+                                                        plt.text((i+dec-dec_start+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        diff_value="0"
+                                                        if down_right_difference[r, j+i,1].X==1:
+                                                                diff_value="1"
+                                                        if down_right_difference[r, j+i,2].X==1:
+                                                                diff_value="?"
+                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                if k == 2:
+                                                        if down_left_difference[r, (j+i-8)%state_size,1].X==1:
+                                                                diff_value="1"
+                                                        if down_left_difference[r, (j+i-8)%state_size,2].X==1:
+                                                                diff_value="?"
+                                                        plt.text((i+dec-dec_start+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                if k == 4:
+                                                        if down_left_difference[r, (j+i+1)%state_size,1].X==1:
+                                                                diff_value="1"
+                                                        if down_left_difference[r, (j+i+1)%state_size,2].X==1:
+                                                                diff_value="?"
+                                                        plt.text((i+dec-dec_start+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        diff_value="0"
+                                                        if down_left_difference_AND[r, j+i,1].X==1:
+                                                                diff_value="?"
+                                                        if down_left_difference_AND[r, j+i,2].X==1:
+                                                                diff_value="P"
+                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                if k == 5:
+                                                        if down_left_difference[r, (j+i+2)%state_size,1].X==1:
+                                                                diff_value="1"
+                                                        if down_left_difference[r, (j+i+2)%state_size,2].X==1:
+                                                                diff_value="?"
+                                                        plt.text((i+dec-dec_start+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        diff_value="0"
+                                                        if down_left_difference_XOR[r, j+i,1].X==1:
+                                                                diff_value="1"
+                                                        if down_left_difference_XOR[r, j+i,2].X==1:
+                                                                diff_value="?"
+                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+
+                                                
+
+                fig.set_size_inches(mult * 8, mult * 6)
+                draw.set_aspect('equal')
+                plt.axis("off")
+                #plt.axis("equal")
+                
+                fig.savefig(f'{total_round}-rounds SIMON-{2*state_size}\{key_size}.svg', format='svg',  bbox_inches='tight', dpi=300)
+
+
         else :
                 model.computeIIS()
                 model.write("model_infeasible.ilp")
                 return([False])
 
 diff_mitm_SIMON()
+

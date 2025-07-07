@@ -1276,7 +1276,7 @@ def diff_mitm_SIMON():
                 plt.axis("off")
                 #plt.axis("equal")
                 
-                fig.savefig(f'{total_round}-rounds SIMON-{2*state_size}\{key_size}.svg', format='svg',  bbox_inches='tight', dpi=300)
+                fig.savefig(f'{total_round}-rounds SIMON-{2*state_size}-{key_size}.pdf', format='pdf',  bbox_inches='tight', dpi=300)
 
 
         else :

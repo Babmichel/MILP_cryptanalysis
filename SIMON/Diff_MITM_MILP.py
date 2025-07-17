@@ -8,6 +8,7 @@ import sys
 import matplotlib.pyplot as plt
 from matplotlib.patches import *
 from matplotlib.widgets import *
+import math
 
 def diff_mitm_SIMON():
     options = {
@@ -605,23 +606,47 @@ def diff_mitm_SIMON():
                 print("key : ", key_quantity_up.getValue())
                 print("state test: ", state_test_up_quantity.getValue())
                 print("proba key rec : ", probabilistic_key_recovery_up.getValue())
-                print('complexity = ', distinguisher_probability+key_quantity_up.getValue()+state_test_up_quantity.getValue()+probabilistic_key_recovery_down.getValue())
+                m_u = distinguisher_probability+key_quantity_up.getValue()+state_test_up_quantity.getValue()+probabilistic_key_recovery_down.getValue()
+                print('complexity = ', m_u)
                 print("")
                 print("DOWN values")
                 print("key : ", key_quantity_down.getValue())
                 print("state test : ", state_test_down_quantity.getValue())
                 print("proba key rec : ", probabilistic_key_recovery_down.getValue())
-                print('complexity = ', distinguisher_probability+key_quantity_down.getValue()+state_test_down_quantity.getValue()+probabilistic_key_recovery_up.getValue())
+                m_d = distinguisher_probability+key_quantity_down.getValue()+state_test_down_quantity.getValue()+probabilistic_key_recovery_up.getValue()
+                print('complexity = ', m_d)
                 print("")
                 if structure_size == 1:
-                        print("MATHC complexity = ", distinguisher_probability+complexity_match.X-state_size)
+                        m_c = distinguisher_probability+complexity_match.X-state_size
+                        print("MATHC complexity = ", m_c)
                 if structure_size == 2:
-                        print("MATHC complexity = ", distinguisher_probability+complexity_match.X-2*state_size)
+                        m_c = distinguisher_probability+complexity_match.X-2*state_size
+                        print("MATHC complexity = ", m_c)
+                print("")
+                print("complexite finale :", math.log2(pow(2,m_c) + pow(2,m_u) + pow(2,m_d)))
+                print("")
                 print("Key Quantity :", structure_size*subkey_size + key_quantity_down.getValue() + key_quantity_up.getValue() + state_test_up_quantity.getValue() + state_test_down_quantity.getValue())
                 print("key redundancy :", key_redundancy.getValue())
 
-                plt.rcParams['lines.linewidth'] = 0.5
-                plt.rcParams.update({'font.size': 40})
+                
+                mult = 1
+
+
+                font_decallage = 4
+                font_etat = 6
+                font_legende = 8
+                font_difference = 4
+                font_text = 8
+
+                if 2*state_size == 64 or 2*state_size == 96:
+                        font_decallage = 3
+                        font_etat = 5.5
+                        font_legende = 6.5
+                        font_difference = 3.5
+                        font_text = 6
+        
+                plt.rcParams['lines.linewidth'] = 0.1
+                plt.rcParams.update({'font.size': font_etat})
 
                 r_up_max = structure_size+MITM_up_size
                 r_up_min = structure_size
@@ -632,7 +657,6 @@ def diff_mitm_SIMON():
                 taille_distingueur = distinguisher_size
                 proba_distingueur = distinguisher_probability
 
-                mult = 10
                 if state_size in [8, 16, 32, 64, 128]:
                         state_draw = 16
                 elif state_size in [12, 24, 48, 96]:
@@ -642,16 +666,21 @@ def diff_mitm_SIMON():
                         state_draw = 0
 
                 n_s = int(state_size//state_draw)
+                
+                x_min, x_max = -7*mult, (state_draw*2+0.1*(state_draw//4-1)+10+7)*mult
+                y_min, y_max = min((r_up_max)*(-6*n_s-11)*mult, ((r_down_max)*(-6*n_s-11)-28)*mult), 1
+                
                 fig = plt.figure()
                 draw = fig.add_subplot()
+                draw.set_aspect('equal', adjustable='box')
 
                 #Strucutre : 
                 if structure_size == 1 :
-                        dec_r=0
+                        dec_r = 0
                         for k in range(4):
                                 #trait haut gauche 
                                 plt.plot([(-6)*mult, (-6)*mult],[(0-n_s/2 - dec_r)*mult,(-(5.75*n_s+5)-n_s/2 - dec_r)*mult], color="black")
-                                plt.plot([(-6)*mult,( state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2)*mult],[(-(6.25*n_s+5) - dec_r)*mult,( -(6.25*n_s+5)-4 - dec_r)*mult], color="black")
+                                plt.plot([(-6)*mult,( state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2)*mult],[(-(6.25*n_s+5) - dec_r)*mult,(-(6.25*n_s+5)-4 - dec_r)*mult], color="black")
                                 plt.plot([(-6)*mult,(-4)*mult], [(0-n_s/2-dec_r)*mult,(0-n_s/2-dec_r)*mult], color="black")
                                 plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2)*mult,(state_draw*2+0.1*(state_draw//4 -1)+10+6-state_draw/2)*mult], [( -(6.25*n_s+5)-4 - dec_r)*mult,(-6*n_s-6-5- dec_r)*mult], color="black")
                                 
@@ -662,9 +691,9 @@ def diff_mitm_SIMON():
                                 plt.plot([(-6+state_draw/2)*mult,(-6+state_draw/2)*mult], [( -(6.25*n_s+5)-4 - dec_r)*mult,(-6*n_s-6-4-1 - dec_r)*mult], color="black")
                                 
                                 #text
-                                plt.text((-5.5)*mult, (-n_s*2.4 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=20)
-                                plt.text((-5.5)*mult, (-n_s*4.4-1 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=20)
-                                plt.text((-5.5)*mult, (-n_s*5.4-2 - dec_r)*mult, "<<< 2", fontname="serif", fontsize=20)
+                                plt.text((-5.5)*mult, (-n_s*2.4 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=font_decallage)
+                                plt.text((-5.5)*mult, (-n_s*4.4-1 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=font_decallage)
+                                plt.text((-5.5)*mult, (-n_s*5.4-2 - dec_r)*mult, "<<< 2", fontname="serif", fontsize=font_decallage)
 
                                 plt.text((state_draw+0.5-4)*mult, (-n_s/2-0.25 - dec_r)*mult, f"L{0}")
                                 plt.text((state_draw+13-1.5)*mult, (-n_s/2-0.25 - dec_r)*mult, f"R{0}", fontname="serif")
@@ -700,11 +729,11 @@ def diff_mitm_SIMON():
 
                                                 #cercle XOR et AND
                                                 if j%n_s ==0 and k in [2, 3]:
-                                                        circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black", linewidth = 0.1)
                                                         draw.add_patch(circle)
                                                 
                                                 if j%n_s ==0 and k in [2]:
-                                                        circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.1)*mult, color = "black")
+                                                        circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.1)*mult, color = "black", linewidth = 0.1)
                                                         draw.add_patch(circle)
                                                 
                                                 if j%n_s ==0 and k in [1, 2, 3]:
@@ -714,23 +743,23 @@ def diff_mitm_SIMON():
                                                 if j%n_s ==0 and k in [1, 3]:
                                                         plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10)*mult,(state_draw*2+0.1*(state_draw//4 -1)+10+6+0.5)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
                                                         #cercle Xor droit
-                                                        circle = plt.Circle(((state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        circle = plt.Circle(((state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black", linewidth = 0.1)
                                                         draw.add_patch(circle)
 
                                                         #decalage tout les quatres etats
                                                 if i%4 == 0 and i!=0:
                                                         dec+=0.1
                                                 #Carre état
-                                                square = Rectangle(((i+dec-dec_start)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="gray", edgecolor = "black")
+                                                square = Rectangle(((i+dec-dec_start)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="gray", edgecolor = "black", linewidth=0.1)
                                                 draw.add_patch(square) 
                                                 if k == 0:
-                                                        square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="green", edgecolor = "black")
+                                                        square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="lightgreen", edgecolor = "black", linewidth=0.1)
                                                         draw.add_patch(square)
                                                 elif k == 2:
-                                                        square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="gray", edgecolor = "black")
+                                                        square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="gray", edgecolor = "black", linewidth=0.1)
                                                         draw.add_patch(square)
                                                 else :
-                                                        square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black")
+                                                        square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black", linewidth=0.1)
                                                         draw.add_patch(square)
 
                 elif structure_size == 2:
@@ -750,9 +779,9 @@ def diff_mitm_SIMON():
                                         plt.plot([(-6+state_draw/2)*mult,(-6+state_draw/2)*mult], [( -(6.25*n_s+5)-4 - dec_r)*mult,(-6*n_s-6-4-1 - dec_r)*mult], color="black")
                                         
                                         #text
-                                        plt.text((-5.5)*mult, (-n_s*2.4 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=20)
-                                        plt.text((-5.5)*mult, (-n_s*3.4-1 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=20)
-                                        plt.text((-5.5)*mult, (-n_s*4.4-2 - dec_r)*mult, "<<< 2", fontname="serif", fontsize=20)
+                                        plt.text((-5.5)*mult, (-n_s*2.4 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=font_decallage)
+                                        plt.text((-5.5)*mult, (-n_s*3.4-1 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=font_decallage)
+                                        plt.text((-5.5)*mult, (-n_s*4.4-2 - dec_r)*mult, "<<< 2", fontname="serif", fontsize=font_decallage)
 
                                         plt.text((state_draw+0.5-4)*mult, (-n_s/2-0.25 - dec_r)*mult, f"L{r}")
                                         plt.text((state_draw+13-1.5)*mult, (-n_s/2-0.25 - dec_r)*mult, f"R{r}", fontname="serif")
@@ -788,11 +817,11 @@ def diff_mitm_SIMON():
 
                                                         #cercle XOR et AND
                                                         if j%n_s ==0 and k in [2, 3]:
-                                                                circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                                circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black", linewidth = 0.1)
                                                                 draw.add_patch(circle)
                                                         
                                                         if j%n_s ==0 and k in [2]:
-                                                                circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.1)*mult, color = "black")
+                                                                circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.1)*mult, color = "black", linewidth = 0.1)
                                                                 draw.add_patch(circle)
                                                         
                                                         if j%n_s ==0 and k in [1, 2, 3]:
@@ -802,20 +831,20 @@ def diff_mitm_SIMON():
                                                         if j%n_s ==0 and k in [1, 3]:
                                                                 plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10)*mult,(state_draw*2+0.1*(state_draw//4 -1)+10+6+0.5)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
                                                                 #cercle Xor droit
-                                                                circle = plt.Circle(((state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                                circle = plt.Circle(((state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black", linewidth = 0.1)
                                                                 draw.add_patch(circle)
 
                                                         #decalage tout les quatres etats
                                                         if i%4 == 0 and i!=0:
                                                                 dec+=0.1
                                                         #Carre état
-                                                        square = Rectangle(((i+dec-dec_start)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="green", edgecolor = "black")
+                                                        square = Rectangle(((i+dec-dec_start)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="lightgreen", edgecolor = "black", linewidth=0.1)
                                                         draw.add_patch(square) 
                                                         if k!=1:
-                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="green", edgecolor = "black")
+                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="lightgreen", edgecolor = "black", linewidth=0.1)
                                                                 draw.add_patch(square)
                                                         else:
-                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black")
+                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black", linewidth=0.1)
                                                                 draw.add_patch(square)  
                                         
 
@@ -836,16 +865,16 @@ def diff_mitm_SIMON():
                                 plt.plot([(-6+state_draw/2)*mult,(-6+state_draw/2)*mult], [( -(6.25*n_s+5)-4 - dec_r)*mult,(-6*n_s-6-4-1 - dec_r)*mult], color="black")
                                 
                                 #text
-                                plt.text((-5.5)*mult, (-n_s*2.4-2 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=20)
-                                plt.text((-5.5)*mult, (-n_s*4.4-4 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=20)
-                                plt.text((-5.5)*mult, (-n_s*5.4-5 - dec_r)*mult, "<<< 2", fontname="serif", fontsize=20)
+                                plt.text((-5.5)*mult, (-n_s*2.4-2 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=font_decallage)
+                                plt.text((-5.5)*mult, (-n_s*4.4-4 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=font_decallage)
+                                plt.text((-5.5)*mult, (-n_s*5.4-5 - dec_r)*mult, "<<< 2", fontname="serif", fontsize=font_decallage)
 
                                 if r!=r_up_min:
-                                        plt.text((state_draw+0.5)*mult, (-n_s*1.4-1 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=20)
-                                        plt.text((state_draw+0.5)*mult, (-n_s*3.4-3 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=20)
+                                        plt.text((state_draw+0.5)*mult, (-n_s*1.4-1 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=font_decallage)
+                                        plt.text((state_draw+0.5)*mult, (-n_s*3.4-3 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=font_decallage)
 
                                 plt.text((state_draw+0.5-4)*mult, (-n_s/2-0.25 - dec_r)*mult, f"L{r}")
-                                plt.text((state_draw+13-1.5)*mult, (-n_s/2-0.25 - dec_r)*mult, f"R{r}", fontname="serif")
+                                plt.text((state_draw+13-1)*mult, (-n_s/2-0.25 - dec_r)*mult, f"R{r}", fontname="serif")
                                 if r!=r_up_min:
                                         plt.text((2*state_draw+10.5)*mult, (-5*n_s/2 - 2 -0.25 - dec_r)*mult, f"K'{r}", fontname="serif")
 
@@ -867,7 +896,7 @@ def diff_mitm_SIMON():
                                                         #traits gauche et XOR
                                                         plt.plot([(-2)*mult,0],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
                                                         plt.plot([(-2)*mult,(-2)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2-n_s-1.5 - dec_r)*mult], color="black")
-                                                        circle = plt.Circle(((-2)*mult, (-1*j-(n_s+1)*k-n_s/2-n_s-1 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        circle = plt.Circle(((-2)*mult, (-1*j-(n_s+1)*k-n_s/2-n_s-1 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black", linewidth = 0.1)
                                                         draw.add_patch(circle)
 
                                                 #trait millieu cle de droite
@@ -894,11 +923,11 @@ def diff_mitm_SIMON():
 
                                                 #cercle XOR et AND
                                                 if j%n_s ==0 and k in [4, 5]:
-                                                        circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black", linewidth = 0.1)
                                                         draw.add_patch(circle)
                                                 
                                                 if j%n_s ==0 and k in [4]:
-                                                        circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.1)*mult, color = "black")
+                                                        circle = plt.Circle(((state_draw+5)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.1)*mult, color = "black", linewidth = 0.1)
                                                         draw.add_patch(circle)
                                                 
                                                 if j%n_s ==0 and k in [2, 4, 5]:
@@ -908,7 +937,7 @@ def diff_mitm_SIMON():
                                                 if j%n_s ==0 and k in [5]:
                                                         plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10)*mult,(state_draw*2+0.1*(state_draw//4 -1)+10+6+0.5)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
                                                         #cercle Xor droit
-                                                        circle = plt.Circle(((state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        circle = plt.Circle(((state_draw*2+0.1*(state_draw//4 -1)+10+6)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black", linewidth = 0.1)
                                                         draw.add_patch(circle)
 
                                                 #decalage tout les quatres etats
@@ -919,22 +948,22 @@ def diff_mitm_SIMON():
                                                 color_left="white"
                                                 diff_value="0"
                                                 if r==r_up_min:
-                                                        color_right="darkred"
-                                                        color_left="darkred"
+                                                        color_right="lightcoral"
+                                                        color_left="lightcoral"
                                                 else :
                                                         if k == 0 and r!=r_up_min:
                                                                 if up_left_state[r-structure_size-1, j+i, 1].X == 1:
-                                                                        color_right="darkred"
+                                                                        color_right="lightcoral"
                                                                 if up_right_state[r-structure_size-1, j+i, 1].X == 1:
-                                                                        color_left="darkred"
+                                                                        color_left="lightcoral"
                                                         if k == 1:
                                                                 if key[r, (j+i+8)%state_size, 1].X == 1:
                                                                         color_right="red"
                                                         if k == 2:
                                                                 if up_left_state_8[r-structure_size, j+i, 1].X == 1:
-                                                                        color_right="darkred"
+                                                                        color_right="lightcoral"
                                                                 if up_left_state_8[r-structure_size, j+i, 2].X == 1:
-                                                                        color_right="salmon"
+                                                                        color_right="orangered"
                                                                 if key[r, j+i, 1].X == 1:
                                                                         color_left="red"
                                                         if k == 3:
@@ -942,80 +971,94 @@ def diff_mitm_SIMON():
                                                                         color_right="red"
                                                         if k == 4:
                                                                 if up_left_state_1[r-structure_size, j+i, 1].X == 1:
-                                                                        color_right="darkred"
+                                                                        color_right="lightcoral"
                                                                 if up_left_state_1[r-structure_size, j+i, 2].X == 1:
-                                                                        color_right="salmon"
+                                                                        color_right="orangered"
                                                                 if up_right_state[r-structure_size-1, j+i, 1].X == 1:
-                                                                        color_left="darkred"
+                                                                        color_left="lightcoral"
 
                                                         if k == 5:
                                                                 if up_left_state_2[r-structure_size, j+i, 1].X == 1:
-                                                                        color_right="darkred"
+                                                                        color_right="lightcoral"
                                                                 if up_right_state[r-structure_size-1, j+i, 1].X == 1:
-                                                                        color_left="darkred"
+                                                                        color_left="lightcoral"
                                                 if r!=r_up_min:
-                                                        square = Rectangle(((i+dec-dec_start)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_right, edgecolor = "black")
+                                                        square = Rectangle(((i+dec-dec_start)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_right, edgecolor = "black", linewidth=0.1)
                                                         draw.add_patch(square)
                                                         if k not in [1,3]:  
-                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_left, edgecolor = "black")
+                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_left, edgecolor = "black", linewidth=0.1)
                                                                 draw.add_patch(square)
                                                 else :
                                                         if k not in [1,3]: 
-                                                                square = Rectangle(((i+dec-dec_start)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_right, edgecolor = "black")
+                                                                square = Rectangle(((i+dec-dec_start)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_right, edgecolor = "black", linewidth=0.1)
                                                                 draw.add_patch(square)
                                                         if k not in [1,2,3]:  
-                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_left, edgecolor = "black")
+                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_left, edgecolor = "black", linewidth=0.1)
                                                                 draw.add_patch(square)
                                                 if k == 0:
                                                         if up_right_difference[r-structure_size, j+i,1].X==1:
                                                                 diff_value="1"
                                                         if up_right_difference[r-structure_size, j+i,2].X==1:
                                                                 diff_value="?"
-                                                        plt.text((i+dec-dec_start+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        plt.text((i+dec-dec_start+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=font_difference)
                                                         diff_value="0"
                                                         if up_right_difference_XOR[r-structure_size, j+i,1].X==1:
                                                                 diff_value="1"
                                                         if up_right_difference_XOR[r-structure_size, j+i,2].X==1:
                                                                 diff_value="?"
-                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.25)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=font_difference)
                                                 if k == 2:
                                                         if up_right_difference[r-structure_size, (j+i-8)%state_size,1].X==1:
                                                                 diff_value="1"
                                                         if up_right_difference[r-structure_size, (j+i-8)%state_size,2].X==1:
                                                                 diff_value="?"
-                                                        plt.text((i+dec-dec_start+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        plt.text((i+dec-dec_start+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=font_difference)
                                                 if k == 4:
                                                         if up_right_difference[r-structure_size, (j+i+1)%state_size,1].X==1:
                                                                 diff_value="1"
                                                         if up_right_difference[r-structure_size, (j+i+1)%state_size,2].X==1:
                                                                 diff_value="?"
-                                                        plt.text((i+dec-dec_start+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        plt.text((i+dec-dec_start+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=font_difference)
                                                         diff_value="0"
                                                         if up_left_difference_AND[r-structure_size, j+i,1].X==1:
                                                                 diff_value="?"
                                                         if up_left_difference_AND[r-structure_size, j+i,2].X==1:
                                                                 diff_value="P"
-                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.25)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=font_difference)
                                                 if k == 5:
                                                         if up_right_difference[r-structure_size, (j+i+2)%state_size,1].X==1:
                                                                 diff_value="1"
                                                         if up_right_difference[r-structure_size, (j+i+2)%state_size,2].X==1:
                                                                 diff_value="?"
-                                                        plt.text((i+dec-dec_start+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        plt.text((i+dec-dec_start+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=font_difference)
                                                         diff_value="0"
                                                         if up_left_difference_XOR[r-structure_size, j+i,1].X==1:
                                                                 diff_value="1"
                                                         if up_left_difference_XOR[r-structure_size, j+i,2].X==1:
                                                                 diff_value="?"
-                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=font_difference)
+
+
+                #size control                                                      
+                fig.set_size_inches(8.27, 11.27)
+                #draw.set_aspect('equal')
+                plt.axis("off")
+                #plt.axis("equal")
+                draw.set_xlim(x_min, x_max)
+                draw.set_ylim(y_min, y_max)      
+                fig.savefig(f'{total_round}-rounds SIMON-{2*state_size}-{key_size} up.pdf', format='pdf',  bbox_inches='tight', dpi=300)
+
+                fig = plt.figure()
+                draw = fig.add_subplot()
+                draw.set_aspect('equal', adjustable='box')
 
                 #LOWER PART AND DISTINGUISHER
-                dec_d = 10+state_draw*2+12+10
-                square = Rectangle(((dec_d)*mult, 0*mult), (state_draw*2+10)*mult, (-4)*mult, facecolor="white", edgecolor = "black")
+                dec_d = 0#10+state_draw*2+12+10
+                square = Rectangle(((dec_d)*mult, 0), (state_draw*2+10)*mult, (-4)*mult, facecolor="white", edgecolor = "black", linewidth=0.1)
                 draw.add_patch(square)
-                plt.text((dec_d+state_draw*0.5)*mult, -3.75*mult, f"{taille_distingueur}-round differential Distinguisher \n      of probability 2^-{proba_distingueur}")
-                plt.plot([(4 + dec_d)*mult, (4 + dec_d)*mult],[(-4)*mult,(-6)*mult], color="black")
-                plt.plot([(4 + dec_d+1.5*state_draw+10+0.4)*mult, (4 + dec_d+1.5*state_draw+10+0.4)*mult],[(-4)*mult,(-6)*mult], color="black")
+                plt.text((dec_d+state_draw*0.5)*mult, -3.75*mult, f"{taille_distingueur}-round differential Distinguisher \n         of probability 2^-{proba_distingueur}", fontsize=font_text)
+                plt.plot([(4 + dec_d)*mult, (4 + dec_d)*mult],[-4*mult,-6*mult], color="black")
+                plt.plot([(4 + dec_d+1.5*state_draw+10+0.4)*mult, (4 + dec_d+1.5*state_draw+10+0.4)*mult],[-4*mult,-6*mult], color="black")
                         
                 for r in range(r_down_min,r_down_max):
                         dec_r = (-1*r)*(-6*n_s-11)+6
@@ -1035,16 +1078,16 @@ def diff_mitm_SIMON():
                                         plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10+6 + dec_d)*mult, (-6+state_draw/2 + dec_d)*mult],[(-(6.25*n_s+5) - dec_r)*mult, (-(6.25*n_s+5)-4 - dec_r)*mult], color="black")
                                 
                                 #text
-                                plt.text((-5.5 + dec_d)*mult, (-n_s*2.4-2 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=20)
-                                plt.text((-5.5 + dec_d)*mult, (-n_s*4.4-4 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=20)
-                                plt.text((-5.5 + dec_d)*mult, (-n_s*5.4-5 - dec_r)*mult, "<<< 2", fontname="serif", fontsize=20)
+                                plt.text((-5.5 + dec_d)*mult, (-n_s*2.4-2 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=font_decallage)
+                                plt.text((-5.5 + dec_d)*mult, (-n_s*4.4-4 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=font_decallage)
+                                plt.text((-5.5 + dec_d)*mult, (-n_s*5.4-5 - dec_r)*mult, "<<< 2", fontname="serif", fontsize=font_decallage)
 
                                 if r!=r_down_max-1:
-                                        plt.text((state_draw+0.5 + dec_d)*mult, (-n_s*1.4-1 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=20)
-                                        plt.text((state_draw+0.5 + dec_d)*mult, (-n_s*3.4-3 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=20)
+                                        plt.text((state_draw+0.5 + dec_d)*mult, (-n_s*1.4-1 - dec_r)*mult, "<<< 8", fontname="serif", fontsize=font_decallage)
+                                        plt.text((state_draw+0.5 + dec_d)*mult, (-n_s*3.4-3 - dec_r)*mult, "<<< 1", fontname="serif", fontsize=font_decallage)
 
                                 plt.text((state_draw+0.5-4 + dec_d)*mult, (-n_s/2-0.25 - dec_r)*mult, f"L{r+taille_distingueur+r_up_max}")
-                                plt.text((state_draw+13-2.5 + dec_d)*mult, (-n_s/2-0.25 - dec_r)*mult, f"R{r+taille_distingueur+r_up_max}", fontname="serif")
+                                plt.text((state_draw+13-2 + dec_d)*mult, (-n_s/2-0.25 - dec_r)*mult, f"R{r+taille_distingueur+r_up_max}", fontname="serif")
                                 if r!=r_down_max-1:
                                         plt.text((2*state_draw+10.5 + dec_d)*mult, (-5*n_s/2 - 2 -0.25 - dec_r)*mult, f"K'{r+taille_distingueur+r_up_max}", fontname="serif")
 
@@ -1066,7 +1109,7 @@ def diff_mitm_SIMON():
                                                         #traits gauche et XOR
                                                         plt.plot([(-2 + dec_d)*mult,(0 + dec_d)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
                                                         plt.plot([(-2 + dec_d)*mult,(-2 + dec_d)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2-n_s-1.5 - dec_r)*mult], color="black")
-                                                        circle = plt.Circle(((-2 + dec_d)*mult, (-1*j-(n_s+1)*k-n_s/2-n_s-1 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        circle = plt.Circle(((-2 + dec_d)*mult, (-1*j-(n_s+1)*k-n_s/2-n_s-1 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black", linewidth = 0.1)
                                                         draw.add_patch(circle)
 
                                                 #trait millieu cle de droite
@@ -1093,11 +1136,11 @@ def diff_mitm_SIMON():
 
                                                 #cercle XOR et AND
                                                 if j%n_s ==0 and k in [4, 5]:
-                                                        circle = plt.Circle(((state_draw+5 + dec_d)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        circle = plt.Circle(((state_draw+5 + dec_d)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black", linewidth = 0.1)
                                                         draw.add_patch(circle)
                                                 
                                                 if j%n_s ==0 and k in [4]:
-                                                        circle = plt.Circle(((state_draw+5 + dec_d)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.1)*mult, color = "black")
+                                                        circle = plt.Circle(((state_draw+5 + dec_d)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.1)*mult, color = "black", linewidth = 0.1)
                                                         draw.add_patch(circle)
                                                 
                                                 if j%n_s ==0 and k in [2, 4, 5]:
@@ -1107,7 +1150,7 @@ def diff_mitm_SIMON():
                                                 if j%n_s ==0 and k in [5]:
                                                         plt.plot([(state_draw*2+0.1*(state_draw//4 -1)+10 + dec_d)*mult,(state_draw*2+0.1*(state_draw//4 -1)+10+6+0.5 + dec_d)*mult],[(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult,(-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult], color="black")
                                                         #cercle Xor droit
-                                                        circle = plt.Circle(((state_draw*2+0.1*(state_draw//4 -1)+10+6+dec_d)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black")
+                                                        circle = plt.Circle(((state_draw*2+0.1*(state_draw//4 -1)+10+6+dec_d)*mult, (-1*j-(n_s+1)*k-n_s/2 - dec_r)*mult), (0.5)*mult, facecolor="white", edgecolor = "black", linewidth = 0.1)
                                                         draw.add_patch(circle)
                                                 
                                                 #decalage tout les quatres etats
@@ -1118,20 +1161,20 @@ def diff_mitm_SIMON():
                                                 color_left="white"
                                                 diff_value="0"
                                                 if r==r_down_max-1:
-                                                        color_right="royalblue"
-                                                        color_left="royalblue"
+                                                        color_right="lightskyblue"
+                                                        color_left="lightskyblue"
                                                 else :
                                                         if k == 0 and r!=r_down_max-1:
                                                                 if down_right_state[r, j+i, 1].X == 1:
-                                                                        color_right="royalblue"
+                                                                        color_right="lightskyblue"
                                                                 if down_left_state[r, j+i, 1].X == 1:
-                                                                        color_left="royalblue"
+                                                                        color_left="lightskyblue"
                                                         if k == 1:
                                                                 if key[r+taille_distingueur+r_up_max, (j+i+8)%state_size, 1].X == 1:
                                                                         color_left="dodgerblue"
                                                         if k == 2:
                                                                 if down_left_state_8[r, j+i, 1].X == 1:
-                                                                        color_left="royalblue"
+                                                                        color_left="lightskyblue"
                                                                 if down_left_state_8[r, j+i, 2].X == 1:
                                                                         color_left="deepskyblue"
                                                                 if key[r+taille_distingueur+r_up_max, j+i, 1].X == 1:
@@ -1141,142 +1184,143 @@ def diff_mitm_SIMON():
                                                                         color_left="dodgerblue"
                                                         if k == 4:
                                                                 if down_left_state_1[r, j+i, 1].X == 1:
-                                                                        color_left="royalblue"
+                                                                        color_left="lightskyblue"
                                                                 if down_left_state_1[r, j+i, 2].X == 1:
                                                                         color_left="deepskyblue"
                                                                 if down_right_state[r, j+i, 1].X == 1:
-                                                                        color_right="royalblue"
+                                                                        color_right="lightskyblue"
 
                                                         if k == 5:
                                                                 if down_left_state_2[r, j+i, 1].X == 1:
-                                                                        color_left="royalblue"
+                                                                        color_left="lightskyblue"
                                                                 if down_right_state[r, j+i, 1].X == 1:
-                                                                        color_right="royalblue"
+                                                                        color_right="lightskyblue"
                                                 if r!=r_down_max-1:
-                                                        square = Rectangle(((i+dec-dec_start + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_left, edgecolor = "black")
+                                                        square = Rectangle(((i+dec-dec_start + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_left, edgecolor = "black", linewidth=0.1)
                                                         draw.add_patch(square)
                                                         if k not in [1,3]:  
-                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_right, edgecolor = "black")
+                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_right, edgecolor = "black", linewidth=0.1)
                                                                 draw.add_patch(square)
                                                 else :
                                                         if k not in [1,3]: 
-                                                                square = Rectangle(((i+dec-dec_start + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_left, edgecolor = "black")
+                                                                square = Rectangle(((i+dec-dec_start + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_left, edgecolor = "black", linewidth=0.1)
                                                                 draw.add_patch(square)
                                                         if k not in [1,2,3]:  
-                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_right, edgecolor = "black")
+                                                                square = Rectangle(((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r)*mult), (1)*mult, (1)*mult, facecolor=color_right, edgecolor = "black", linewidth=0.1)
                                                                 draw.add_patch(square)
                                                 if k == 0:
                                                         if down_left_difference[r, j+i,1].X==1:
                                                                 diff_value="1"
                                                         if down_left_difference[r, j+i,2].X==1:
                                                                 diff_value="?"
-                                                        plt.text((i+dec-dec_start+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        plt.text((i+dec-dec_start+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=font_difference)
                                                         diff_value="0"
                                                         if down_right_difference[r, j+i,1].X==1:
                                                                 diff_value="1"
                                                         if down_right_difference[r, j+i,2].X==1:
                                                                 diff_value="?"
-                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=font_difference)
                                                 if k == 2:
                                                         if down_left_difference[r, (j+i-8)%state_size,1].X==1:
                                                                 diff_value="1"
                                                         if down_left_difference[r, (j+i-8)%state_size,2].X==1:
                                                                 diff_value="?"
-                                                        plt.text((i+dec-dec_start+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        plt.text((i+dec-dec_start+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=font_difference)
                                                 if k == 4:
                                                         if down_left_difference[r, (j+i+1)%state_size,1].X==1:
                                                                 diff_value="1"
                                                         if down_left_difference[r, (j+i+1)%state_size,2].X==1:
                                                                 diff_value="?"
-                                                        plt.text((i+dec-dec_start+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        plt.text((i+dec-dec_start+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=font_difference)
                                                         diff_value="0"
                                                         if down_left_difference_AND[r, j+i,1].X==1:
                                                                 diff_value="?"
                                                         if down_left_difference_AND[r, j+i,2].X==1:
                                                                 diff_value="P"
-                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=font_difference)
                                                 if k == 5:
                                                         if down_left_difference[r, (j+i+2)%state_size,1].X==1:
                                                                 diff_value="1"
                                                         if down_left_difference[r, (j+i+2)%state_size,2].X==1:
                                                                 diff_value="?"
-                                                        plt.text((i+dec-dec_start+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        plt.text((i+dec-dec_start+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=font_difference)
                                                         diff_value="0"
                                                         if down_left_difference_XOR[r, j+i,1].X==1:
                                                                 diff_value="1"
                                                         if down_left_difference_XOR[r, j+i,2].X==1:
                                                                 diff_value="?"
-                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=17)
+                                                        plt.text((dec_start + state_draw + 10 + i + 0.1*(state_draw//4 -1) + dec+0.2 + dec_d)*mult, (-1*j-(n_s+1)*k-1 - dec_r+0.2)*mult, diff_value, fontname="serif", fontsize=font_difference)
 
 
                 #Légende
+                dec_d=dec_d-6
                 #upper state
-                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-6)*mult), (1)*mult, (1)*mult, facecolor="red", edgecolor = "black")
+                square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-6)*mult), (1)*mult, (1)*mult, facecolor="red", edgecolor = "black", linewidth=0.1)
                 draw.add_patch(square)               
-                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-6)*mult, ": This key bit is guessed by the upper part of the attack", fontname="serif", fontsize=30)
+                plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-6)*mult, ": This key bit is guessed by the upper part of the attack", fontname="serif", fontsize=font_legende)
 
-                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-8)*mult), (1)*mult, (1)*mult, facecolor="darkred", edgecolor = "black")
+                square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-8)*mult), (1)*mult, (1)*mult, facecolor="lightcoral", edgecolor = "black", linewidth=0.1)
                 draw.add_patch(square)               
-                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-8)*mult, ": This state bit can be computed by the upper part of the attack", fontname="serif", fontsize=30)
+                plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-8)*mult, ": This state bit can be computed by the upper part of the attack", fontname="serif", fontsize=font_legende)
 
-                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-10)*mult), (1)*mult, (1)*mult, facecolor="salmon", edgecolor = "black")
-                draw.add_patch(square)               
-                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-10)*mult, ": This state bit is guessed by the upper part of the attack", fontname="serif", fontsize=30)
+                if state_test_up_quantity.getValue() != 0:
+                        square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-10)*mult), (1)*mult, (1)*mult, facecolor="orangered", edgecolor = "black", linewidth=0.1)
+                        draw.add_patch(square)               
+                        plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-10)*mult, ": This state bit is guessed by the upper part of the attack", fontname="serif", fontsize=font_legende)
 
                 #lower state
-                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-12)*mult), (1)*mult, (1)*mult, facecolor="dodgerblue", edgecolor = "black")
+                square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-12)*mult), (1)*mult, (1)*mult, facecolor="dodgerblue", edgecolor = "black", linewidth=0.1)
                 draw.add_patch(square)               
-                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-12)*mult, ": This key bit is guessed by the lower part of the attack", fontname="serif", fontsize=30)
+                plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-12)*mult, ": This key bit is guessed by the lower part of the attack", fontname="serif", fontsize=font_legende)
 
-                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-14)*mult), (1)*mult, (1)*mult, facecolor="royalblue", edgecolor = "black")
+                square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-14)*mult), (1)*mult, (1)*mult, facecolor="lightskyblue", edgecolor = "black", linewidth=0.1)
                 draw.add_patch(square)               
-                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-14)*mult, ": This state bit can be computed by the lower part of the attack", fontname="serif", fontsize=30)
+                plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-14)*mult, ": This state bit can be computed by the lower part of the attack", fontname="serif", fontsize=font_legende)
 
-                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-16)*mult), (1)*mult, (1)*mult, facecolor="deepskyblue", edgecolor = "black")
-                draw.add_patch(square)               
-                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-16)*mult, ": This state bit is guessed by the lower part of the attack", fontname="serif", fontsize=30)
+                if state_test_down_quantity.getValue() != 0:
+                        square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-16)*mult), (1)*mult, (1)*mult, facecolor="deepskyblue", edgecolor = "black", linewidth=0.1)
+                        draw.add_patch(square)               
+                        plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-16)*mult, ": This state bit is guessed by the lower part of the attack", fontname="serif", fontsize=font_legende)
 
                 #differences
-                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-18)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black")
+                square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-18)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black", linewidth=0.1)
                 draw.add_patch(square) 
-                plt.text((dec_d+0.2)*mult, ((1*r_down_max)*(-6*n_s-11)-18+0.2)*mult, "0", fontname="serif", fontsize=17)              
-                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-18)*mult, ": The difference on this bit is 0", fontname="serif", fontsize=30)
+                plt.text((dec_d+0.2)*mult, ((r_down_max)*(-6*n_s-11)-18+0.2)*mult, "0", fontname="serif", fontsize=font_difference)              
+                plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-18)*mult, ": The difference on this bit is 0", fontname="serif", fontsize=font_legende)
 
-                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-20)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black")
+                square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-20)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black", linewidth=0.1)
                 draw.add_patch(square)               
-                plt.text((dec_d+0.2)*mult, ((1*r_down_max)*(-6*n_s-11)-20+0.2)*mult, "1", fontname="serif", fontsize=17)              
-                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-20)*mult, ": The difference on this bit is 1", fontname="serif", fontsize=30)
+                plt.text((dec_d+0.2)*mult, ((r_down_max)*(-6*n_s-11)-20+0.2)*mult, "1", fontname="serif", fontsize=font_difference)              
+                plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-20)*mult, ": The difference on this bit is 1", fontname="serif", fontsize=font_legende)
 
-                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-22)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black")
+                square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-22)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black", linewidth=0.1)
                 draw.add_patch(square)               
-                plt.text((dec_d+0.2)*mult, ((1*r_down_max)*(-6*n_s-11)-22+0.2)*mult, "?", fontname="serif", fontsize=17)              
-                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-22)*mult, ": The difference on this bit can be 0 or 1", fontname="serif", fontsize=30)
+                plt.text((dec_d+0.2)*mult, ((r_down_max)*(-6*n_s-11)-22+0.2)*mult, "?", fontname="serif", fontsize=font_difference)              
+                plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-22)*mult, ": The difference on this bit can be 0 or 1", fontname="serif", fontsize=font_legende)
                 
-                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-24)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black")
-                draw.add_patch(square)               
-                plt.text((dec_d+0.2)*mult, ((1*r_down_max)*(-6*n_s-11)-24+0.2)*mult, "P", fontname="serif", fontsize=17)              
-                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-24)*mult, ": The difference on this bit is considered 0 by probabilist propagation", fontname="serif", fontsize=30)
+                if probabilistic_key_recovery_down.getValue() + probabilistic_key_recovery_up.getValue() !=0 :
+                        square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-24)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black", linewidth=0.1)
+                        draw.add_patch(square)               
+                        plt.text((dec_d+0.2)*mult, ((r_down_max)*(-6*n_s-11)-24+0.2)*mult, "P", fontname="serif", fontsize=font_difference)              
+                        plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-24)*mult, ": The difference on this bit is considered 0 by probabilist propagation", fontname="serif", fontsize=font_legende)
                 
                 #structure
-                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-26)*mult), (1)*mult, (1)*mult, facecolor="green", edgecolor = "black")
+                square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-26)*mult), (1)*mult, (1)*mult, facecolor="lightgreen", edgecolor = "black", linewidth=0.1)
                 draw.add_patch(square)               
-                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-26)*mult, ": This bit takes all possible values", fontname="serif", fontsize=30)
+                plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-26)*mult, ": This bit takes all possible values", fontname="serif", fontsize=font_legende)
                 
-                square = Rectangle(((dec_d)*mult,((1*r_down_max)*(-6*n_s-11)-28)*mult), (1)*mult, (1)*mult, facecolor="gray", edgecolor = "black")
+                square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-28)*mult), (1)*mult, (1)*mult, facecolor="gray", edgecolor = "black", linewidth=0.1)
                 draw.add_patch(square)               
-                plt.text((dec_d+1.5)*mult, ((1*r_down_max)*(-6*n_s-11)-28)*mult, ": The value of this bit is fix for a specific structure", fontname="serif", fontsize=30)
+                plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-28)*mult, ": The value of this bit is fix for a specific structure", fontname="serif", fontsize=font_legende)
                 
-
-
-
 
                 #size control                                                      
-                fig.set_size_inches(mult * 8, mult * 6)
-                draw.set_aspect('equal')
+                fig.set_size_inches(8.27, 11.27)
                 plt.axis("off")
                 #plt.axis("equal")
-                
-                fig.savefig(f'{total_round}-rounds SIMON-{2*state_size}-{key_size}.pdf', format='pdf',  bbox_inches='tight', dpi=300)
+                draw.set_xlim(x_min, x_max)
+                draw.set_ylim(y_min, y_max)
+                fig.savefig(f'{total_round}-rounds SIMON-{2*state_size}-{key_size} down.pdf', format='pdf',  bbox_inches='tight', dpi=300)
 
 
         else :

@@ -1,255 +1,104 @@
 \ Model _copy
 \ LP format - for model browsing. Use MPS format to capture full model detail.
-\ Signature: 0x29be9b4e05633e00
-Minimize
- 
-Subject To
- link_between_binary_and_integer_complexity_up: key_3,_0_value_=1
-   + key_3,_1_value_=1 + key_3,_2_value_=1 + key_3,_3_value_=1
-   + key_3,_4_value_=1 + key_3,_5_value_=1 + key_3,_6_value_=1
-   + key_3,_7_value_=1 + key_3,_8_value_=1 + key_3,_9_value_=1
-   + key_3,_10_value_=1 + key_3,_11_value_=1 + key_3,_12_value_=1
-   + key_3,_13_value_=1 + key_3,_14_value_=1 + key_3,_15_value_=1
-   + key_3,_16_value_=1 + key_3,_17_value_=1 + key_3,_18_value_=1
-   + key_3,_19_value_=1 + key_3,_20_value_=1 + key_3,_21_value_=1
-   + key_3,_22_value_=1 + key_3,_23_value_=1 + key_3,_24_value_=1
-   + key_3,_25_value_=1 + key_3,_26_value_=1 + key_3,_27_value_=1
-   + key_3,_28_value_=1 + key_3,_29_value_=1 + key_3,_30_value_=1
-   + key_3,_31_value_=1 + key_4,_0_value_=1 + key_4,_1_value_=1
+\ Signature: 0x9533e41c6b48ed47
+Minimize multi-objectives
+  OBJ0: Priority=2 Weight=1 AbsTol=1e-09 RelTol=0
+  
+  OBJ1: Priority=1 Weight=1 AbsTol=1e-09 RelTol=0
+   key_3,_0_value_=1 + key_3,_1_value_=1 + key_3,_2_value_=1
+   + key_3,_3_value_=1 + key_3,_4_value_=1 + key_3,_5_value_=1
+   + key_3,_6_value_=1 + key_3,_7_value_=1 + key_3,_8_value_=1
+   + key_3,_9_value_=1 + key_3,_10_value_=1 + key_3,_11_value_=1
+   + key_3,_12_value_=1 + key_3,_13_value_=1 + key_3,_14_value_=1
+   + key_3,_15_value_=1 + key_4,_0_value_=1 + key_4,_1_value_=1
    + key_4,_2_value_=1 + key_4,_3_value_=1 + key_4,_4_value_=1
    + key_4,_5_value_=1 + key_4,_6_value_=1 + key_4,_7_value_=1
    + key_4,_8_value_=1 + key_4,_9_value_=1 + key_4,_10_value_=1
    + key_4,_11_value_=1 + key_4,_12_value_=1 + key_4,_13_value_=1
-   + key_4,_14_value_=1 + key_4,_15_value_=1 + key_4,_16_value_=1
-   + key_4,_17_value_=1 + key_4,_18_value_=1 + key_4,_19_value_=1
-   + key_4,_20_value_=1 + key_4,_21_value_=1 + key_4,_22_value_=1
-   + key_4,_23_value_=1 + key_4,_24_value_=1 + key_4,_25_value_=1
-   + key_4,_26_value_=1 + key_4,_27_value_=1 + key_4,_28_value_=1
-   + key_4,_29_value_=1 + key_4,_30_value_=1 + key_4,_31_value_=1
-   + key_5,_0_value_=1 + key_5,_1_value_=1 + key_5,_2_value_=1
-   + key_5,_3_value_=1 + key_5,_4_value_=1 + key_5,_5_value_=1
-   + key_5,_6_value_=1 + key_5,_7_value_=1 + key_5,_8_value_=1
-   + key_5,_9_value_=1 + key_5,_10_value_=1 + key_5,_11_value_=1
-   + key_5,_12_value_=1 + key_5,_13_value_=1 + key_5,_14_value_=1
-   + key_5,_15_value_=1 + key_5,_16_value_=1 + key_5,_17_value_=1
-   + key_5,_18_value_=1 + key_5,_19_value_=1 + key_5,_20_value_=1
-   + key_5,_21_value_=1 + key_5,_22_value_=1 + key_5,_23_value_=1
-   + key_5,_24_value_=1 + key_5,_25_value_=1 + key_5,_26_value_=1
-   + key_5,_27_value_=1 + key_5,_28_value_=1 + key_5,_29_value_=1
-   + key_5,_30_value_=1 + key_5,_31_value_=1 + key_6,_0_value_=1
-   + key_6,_1_value_=1 + key_6,_2_value_=1 + key_6,_3_value_=1
-   + key_6,_4_value_=1 + key_6,_5_value_=1 + key_6,_6_value_=1
-   + key_6,_7_value_=1 + key_6,_8_value_=1 + key_6,_9_value_=1
-   + key_6,_10_value_=1 + key_6,_11_value_=1 + key_6,_12_value_=1
-   + key_6,_13_value_=1 + key_6,_14_value_=1 + key_6,_15_value_=1
-   + key_6,_16_value_=1 + key_6,_17_value_=1 + key_6,_18_value_=1
-   + key_6,_19_value_=1 + key_6,_20_value_=1 + key_6,_21_value_=1
-   + key_6,_22_value_=1 + key_6,_23_value_=1 + key_6,_24_value_=1
-   + key_6,_25_value_=1 + key_6,_26_value_=1 + key_6,_27_value_=1
-   + key_6,_28_value_=1 + key_6,_29_value_=1 + key_6,_30_value_=1
-   + key_6,_31_value_=1 + key_7,_0_value_=1 + key_7,_1_value_=1
-   + key_7,_2_value_=1 + key_7,_3_value_=1 + key_7,_4_value_=1
-   + key_7,_5_value_=1 + key_7,_6_value_=1 + key_7,_7_value_=1
-   + key_7,_8_value_=1 + key_7,_9_value_=1 + key_7,_10_value_=1
-   + key_7,_11_value_=1 + key_7,_12_value_=1 + key_7,_13_value_=1
-   + key_7,_14_value_=1 + key_7,_15_value_=1 + key_7,_16_value_=1
-   + key_7,_17_value_=1 + key_7,_18_value_=1 + key_7,_19_value_=1
-   + key_7,_20_value_=1 + key_7,_21_value_=1 + key_7,_22_value_=1
-   + key_7,_23_value_=1 + key_7,_24_value_=1 + key_7,_25_value_=1
-   + key_7,_26_value_=1 + key_7,_27_value_=1 + key_7,_28_value_=1
-   + key_7,_29_value_=1 + key_7,_30_value_=1 + key_7,_31_value_=1
-   + key_0,_0_value_=2 + key_0,_1_value_=2 + key_0,_2_value_=2
-   + key_0,_3_value_=2 + key_0,_4_value_=2 + key_0,_5_value_=2
-   + key_0,_6_value_=2 + key_0,_7_value_=2 + key_0,_8_value_=2
-   + key_0,_9_value_=2 + key_0,_10_value_=2 + key_0,_11_value_=2
-   + key_0,_12_value_=2 + key_0,_13_value_=2 + key_0,_14_value_=2
-   + key_0,_15_value_=2 + key_0,_16_value_=2 + key_0,_17_value_=2
-   + key_0,_18_value_=2 + key_0,_19_value_=2 + key_0,_20_value_=2
-   + key_0,_21_value_=2 + key_0,_22_value_=2 + key_0,_23_value_=2
-   + key_0,_24_value_=2 + key_0,_25_value_=2 + key_0,_26_value_=2
-   + key_0,_27_value_=2 + key_0,_28_value_=2 + key_0,_29_value_=2
-   + key_0,_30_value_=2 + key_0,_31_value_=2 + key_1,_0_value_=2
-   + key_1,_1_value_=2 + key_1,_2_value_=2 + key_1,_3_value_=2
-   + key_1,_4_value_=2 + key_1,_5_value_=2 + key_1,_6_value_=2
-   + key_1,_7_value_=2 + key_1,_8_value_=2 + key_1,_9_value_=2
-   + key_1,_10_value_=2 + key_1,_11_value_=2 + key_1,_12_value_=2
-   + key_1,_13_value_=2 + key_1,_14_value_=2 + key_1,_15_value_=2
-   + key_1,_16_value_=2 + key_1,_17_value_=2 + key_1,_18_value_=2
-   + key_1,_19_value_=2 + key_1,_20_value_=2 + key_1,_21_value_=2
-   + key_1,_22_value_=2 + key_1,_23_value_=2 + key_1,_24_value_=2
-   + key_1,_25_value_=2 + key_1,_26_value_=2 + key_1,_27_value_=2
-   + key_1,_28_value_=2 + key_1,_29_value_=2 + key_1,_30_value_=2
-   + key_1,_31_value_=2 + key_2,_0_value_=2 + key_2,_1_value_=2
-   + key_2,_2_value_=2 + key_2,_3_value_=2 + key_2,_4_value_=2
-   + key_2,_5_value_=2 + key_2,_6_value_=2 + key_2,_7_value_=2
-   + key_2,_8_value_=2 + key_2,_9_value_=2 + key_2,_10_value_=2
-   + key_2,_11_value_=2 + key_2,_12_value_=2 + key_2,_13_value_=2
-   + key_2,_14_value_=2 + key_2,_15_value_=2 + key_2,_16_value_=2
-   + key_2,_17_value_=2 + key_2,_18_value_=2 + key_2,_19_value_=2
-   + key_2,_20_value_=2 + key_2,_21_value_=2 + key_2,_22_value_=2
-   + key_2,_23_value_=2 + key_2,_24_value_=2 + key_2,_25_value_=2
-   + key_2,_26_value_=2 + key_2,_27_value_=2 + key_2,_28_value_=2
-   + key_2,_29_value_=2 + key_2,_30_value_=2 + key_2,_31_value_=2
-   + down_left_difference_AND_0,_0___value_=_2
-   + down_left_difference_AND_0,_1___value_=_2
-   + down_left_difference_AND_0,_2___value_=_2
-   + down_left_difference_AND_0,_3___value_=_2
-   + down_left_difference_AND_0,_4___value_=_2
-   + down_left_difference_AND_0,_5___value_=_2
-   + down_left_difference_AND_0,_6___value_=_2
-   + down_left_difference_AND_0,_7___value_=_2
-   + down_left_difference_AND_0,_8___value_=_2
-   + down_left_difference_AND_0,_9___value_=_2
-   + down_left_difference_AND_0,_10___value_=_2
-   + down_left_difference_AND_0,_11___value_=_2
-   + down_left_difference_AND_0,_12___value_=_2
-   + down_left_difference_AND_0,_13___value_=_2
-   + down_left_difference_AND_0,_14___value_=_2
-   + down_left_difference_AND_0,_15___value_=_2
-   + down_left_difference_AND_0,_16___value_=_2
-   + down_left_difference_AND_0,_17___value_=_2
-   + down_left_difference_AND_0,_18___value_=_2
-   + down_left_difference_AND_0,_19___value_=_2
-   + down_left_difference_AND_0,_20___value_=_2
-   + down_left_difference_AND_0,_21___value_=_2
-   + down_left_difference_AND_0,_22___value_=_2
-   + down_left_difference_AND_0,_23___value_=_2
-   + down_left_difference_AND_0,_24___value_=_2
-   + down_left_difference_AND_0,_25___value_=_2
-   + down_left_difference_AND_0,_26___value_=_2
-   + down_left_difference_AND_0,_27___value_=_2
-   + down_left_difference_AND_0,_28___value_=_2
-   + down_left_difference_AND_0,_29___value_=_2
-   + down_left_difference_AND_0,_30___value_=_2
-   + down_left_difference_AND_0,_31___value_=_2
-   + down_left_difference_AND_1,_0___value_=_2
-   + down_left_difference_AND_1,_1___value_=_2
-   + down_left_difference_AND_1,_2___value_=_2
-   + down_left_difference_AND_1,_3___value_=_2
-   + down_left_difference_AND_1,_4___value_=_2
-   + down_left_difference_AND_1,_5___value_=_2
-   + down_left_difference_AND_1,_6___value_=_2
-   + down_left_difference_AND_1,_7___value_=_2
-   + down_left_difference_AND_1,_8___value_=_2
-   + down_left_difference_AND_1,_9___value_=_2
-   + down_left_difference_AND_1,_10___value_=_2
-   + down_left_difference_AND_1,_11___value_=_2
-   + down_left_difference_AND_1,_12___value_=_2
-   + down_left_difference_AND_1,_13___value_=_2
-   + down_left_difference_AND_1,_14___value_=_2
-   + down_left_difference_AND_1,_15___value_=_2
-   + down_left_difference_AND_1,_16___value_=_2
-   + down_left_difference_AND_1,_17___value_=_2
-   + down_left_difference_AND_1,_18___value_=_2
-   + down_left_difference_AND_1,_19___value_=_2
-   + down_left_difference_AND_1,_20___value_=_2
-   + down_left_difference_AND_1,_21___value_=_2
-   + down_left_difference_AND_1,_22___value_=_2
-   + down_left_difference_AND_1,_23___value_=_2
-   + down_left_difference_AND_1,_24___value_=_2
-   + down_left_difference_AND_1,_25___value_=_2
-   + down_left_difference_AND_1,_26___value_=_2
-   + down_left_difference_AND_1,_27___value_=_2
-   + down_left_difference_AND_1,_28___value_=_2
-   + down_left_difference_AND_1,_29___value_=_2
-   + down_left_difference_AND_1,_30___value_=_2
-   + down_left_difference_AND_1,_31___value_=_2
-   + down_left_difference_AND_2,_0___value_=_2
-   + down_left_difference_AND_2,_1___value_=_2
-   + down_left_difference_AND_2,_2___value_=_2
-   + down_left_difference_AND_2,_3___value_=_2
-   + down_left_difference_AND_2,_4___value_=_2
-   + down_left_difference_AND_2,_5___value_=_2
-   + down_left_difference_AND_2,_6___value_=_2
-   + down_left_difference_AND_2,_7___value_=_2
-   + down_left_difference_AND_2,_8___value_=_2
-   + down_left_difference_AND_2,_9___value_=_2
-   + down_left_difference_AND_2,_10___value_=_2
-   + down_left_difference_AND_2,_11___value_=_2
-   + down_left_difference_AND_2,_12___value_=_2
-   + down_left_difference_AND_2,_13___value_=_2
-   + down_left_difference_AND_2,_14___value_=_2
-   + down_left_difference_AND_2,_15___value_=_2
-   + down_left_difference_AND_2,_16___value_=_2
-   + down_left_difference_AND_2,_17___value_=_2
-   + down_left_difference_AND_2,_18___value_=_2
-   + down_left_difference_AND_2,_19___value_=_2
-   + down_left_difference_AND_2,_20___value_=_2
-   + down_left_difference_AND_2,_21___value_=_2
-   + down_left_difference_AND_2,_22___value_=_2
-   + down_left_difference_AND_2,_23___value_=_2
-   + down_left_difference_AND_2,_24___value_=_2
-   + down_left_difference_AND_2,_25___value_=_2
-   + down_left_difference_AND_2,_26___value_=_2
-   + down_left_difference_AND_2,_27___value_=_2
-   + down_left_difference_AND_2,_28___value_=_2
-   + down_left_difference_AND_2,_29___value_=_2
-   + down_left_difference_AND_2,_30___value_=_2
-   + down_left_difference_AND_2,_31___value_=_2
-   + down_left_difference_AND_3,_0___value_=_2
-   + down_left_difference_AND_3,_1___value_=_2
-   + down_left_difference_AND_3,_2___value_=_2
-   + down_left_difference_AND_3,_3___value_=_2
-   + down_left_difference_AND_3,_4___value_=_2
-   + down_left_difference_AND_3,_5___value_=_2
-   + down_left_difference_AND_3,_6___value_=_2
-   + down_left_difference_AND_3,_7___value_=_2
-   + down_left_difference_AND_3,_8___value_=_2
-   + down_left_difference_AND_3,_9___value_=_2
-   + down_left_difference_AND_3,_10___value_=_2
-   + down_left_difference_AND_3,_11___value_=_2
-   + down_left_difference_AND_3,_12___value_=_2
-   + down_left_difference_AND_3,_13___value_=_2
-   + down_left_difference_AND_3,_14___value_=_2
-   + down_left_difference_AND_3,_15___value_=_2
-   + down_left_difference_AND_3,_16___value_=_2
-   + down_left_difference_AND_3,_17___value_=_2
-   + down_left_difference_AND_3,_18___value_=_2
-   + down_left_difference_AND_3,_19___value_=_2
-   + down_left_difference_AND_3,_20___value_=_2
-   + down_left_difference_AND_3,_21___value_=_2
-   + down_left_difference_AND_3,_22___value_=_2
-   + down_left_difference_AND_3,_23___value_=_2
-   + down_left_difference_AND_3,_24___value_=_2
-   + down_left_difference_AND_3,_25___value_=_2
-   + down_left_difference_AND_3,_26___value_=_2
-   + down_left_difference_AND_3,_27___value_=_2
-   + down_left_difference_AND_3,_28___value_=_2
-   + down_left_difference_AND_3,_29___value_=_2
-   + down_left_difference_AND_3,_30___value_=_2
-   + down_left_difference_AND_3,_31___value_=_2
-   + down_left_difference_AND_4,_0___value_=_2
-   + down_left_difference_AND_4,_1___value_=_2
-   + down_left_difference_AND_4,_2___value_=_2
-   + down_left_difference_AND_4,_3___value_=_2
-   + down_left_difference_AND_4,_4___value_=_2
-   + down_left_difference_AND_4,_5___value_=_2
-   + down_left_difference_AND_4,_6___value_=_2
-   + down_left_difference_AND_4,_7___value_=_2
-   + down_left_difference_AND_4,_8___value_=_2
-   + down_left_difference_AND_4,_9___value_=_2
-   + down_left_difference_AND_4,_10___value_=_2
-   + down_left_difference_AND_4,_11___value_=_2
-   + down_left_difference_AND_4,_12___value_=_2
-   + down_left_difference_AND_4,_13___value_=_2
-   + down_left_difference_AND_4,_14___value_=_2
-   + down_left_difference_AND_4,_15___value_=_2
-   + down_left_difference_AND_4,_16___value_=_2
-   + down_left_difference_AND_4,_17___value_=_2
-   + down_left_difference_AND_4,_18___value_=_2
-   + down_left_difference_AND_4,_19___value_=_2
-   + down_left_difference_AND_4,_20___value_=_2
-   + down_left_difference_AND_4,_21___value_=_2
-   + down_left_difference_AND_4,_22___value_=_2
-   + down_left_difference_AND_4,_23___value_=_2
-   + down_left_difference_AND_4,_24___value_=_2
-   + down_left_difference_AND_4,_25___value_=_2
-   + down_left_difference_AND_4,_26___value_=_2
-   + down_left_difference_AND_4,_27___value_=_2
-   + down_left_difference_AND_4,_28___value_=_2
-   + down_left_difference_AND_4,_29___value_=_2
-   + down_left_difference_AND_4,_30___value_=_2
-   + down_left_difference_AND_4,_31___value_=_2
+   + key_4,_14_value_=1 + key_4,_15_value_=1 + key_5,_0_value_=1
+   + key_5,_1_value_=1 + key_5,_2_value_=1 + key_5,_3_value_=1
+   + key_5,_4_value_=1 + key_5,_5_value_=1 + key_5,_6_value_=1
+   + key_5,_7_value_=1 + key_5,_8_value_=1 + key_5,_9_value_=1
+   + key_5,_10_value_=1 + key_5,_11_value_=1 + key_5,_12_value_=1
+   + key_5,_13_value_=1 + key_5,_14_value_=1 + key_5,_15_value_=1
+   + key_6,_0_value_=1 + key_6,_1_value_=1 + key_6,_2_value_=1
+   + key_6,_3_value_=1 + key_6,_4_value_=1 + key_6,_5_value_=1
+   + key_6,_6_value_=1 + key_6,_7_value_=1 + key_6,_8_value_=1
+   + key_6,_9_value_=1 + key_6,_10_value_=1 + key_6,_11_value_=1
+   + key_6,_12_value_=1 + key_6,_13_value_=1 + key_6,_14_value_=1
+   + key_6,_15_value_=1 + key_structure_0,_0_value_=2
+   + key_structure_0,_1_value_=2 + key_structure_0,_2_value_=2
+   + key_structure_0,_3_value_=2 + key_structure_0,_4_value_=2
+   + key_structure_0,_5_value_=2 + key_structure_0,_6_value_=2
+   + key_structure_0,_7_value_=2 + key_structure_0,_8_value_=2
+   + key_structure_0,_9_value_=2 + key_structure_0,_10_value_=2
+   + key_structure_0,_11_value_=2 + key_structure_0,_12_value_=2
+   + key_structure_0,_13_value_=2 + key_structure_0,_14_value_=2
+   + key_structure_0,_15_value_=2 + key_structure_1,_0_value_=2
+   + key_structure_1,_1_value_=2 + key_structure_1,_2_value_=2
+   + key_structure_1,_3_value_=2 + key_structure_1,_4_value_=2
+   + key_structure_1,_5_value_=2 + key_structure_1,_6_value_=2
+   + key_structure_1,_7_value_=2 + key_structure_1,_8_value_=2
+   + key_structure_1,_9_value_=2 + key_structure_1,_10_value_=2
+   + key_structure_1,_11_value_=2 + key_structure_1,_12_value_=2
+   + key_structure_1,_13_value_=2 + key_structure_1,_14_value_=2
+   + key_structure_1,_15_value_=2 + key_structure_2,_0_value_=2
+   + key_structure_2,_1_value_=2 + key_structure_2,_2_value_=2
+   + key_structure_2,_3_value_=2 + key_structure_2,_4_value_=2
+   + key_structure_2,_5_value_=2 + key_structure_2,_6_value_=2
+   + key_structure_2,_7_value_=2 + key_structure_2,_8_value_=2
+   + key_structure_2,_9_value_=2 + key_structure_2,_10_value_=2
+   + key_structure_2,_11_value_=2 + key_structure_2,_12_value_=2
+   + key_structure_2,_13_value_=2 + key_structure_2,_14_value_=2
+   + key_structure_2,_15_value_=2
+   - structure_left1_0,_0state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_1state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_2state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_3state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_4state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_5state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_6state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_7state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_8state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_9state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_10state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_11state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_12state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_13state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_14state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_15state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_0state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_1state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_2state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_3state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_4state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_5state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_6state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_7state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_8state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_9state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_10state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_11state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_12state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_13state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_14state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_15state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_0state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_1state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_2state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_3state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_4state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_5state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_6state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_7state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_8state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_9state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_10state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_11state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_12state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_13state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_14state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_15state_type_0,_color_f2___value_=_1
    + up_left_state_8_0,_0___value_=_2 + up_left_state_1_0,_0___value_=_2
    + up_left_state_8_0,_1___value_=_2 + up_left_state_1_0,_1___value_=_2
    + up_left_state_8_0,_2___value_=_2 + up_left_state_1_0,_2___value_=_2
@@ -266,22 +115,6 @@ Subject To
    + up_left_state_8_0,_13___value_=_2 + up_left_state_1_0,_13___value_=_2
    + up_left_state_8_0,_14___value_=_2 + up_left_state_1_0,_14___value_=_2
    + up_left_state_8_0,_15___value_=_2 + up_left_state_1_0,_15___value_=_2
-   + up_left_state_8_0,_16___value_=_2 + up_left_state_1_0,_16___value_=_2
-   + up_left_state_8_0,_17___value_=_2 + up_left_state_1_0,_17___value_=_2
-   + up_left_state_8_0,_18___value_=_2 + up_left_state_1_0,_18___value_=_2
-   + up_left_state_8_0,_19___value_=_2 + up_left_state_1_0,_19___value_=_2
-   + up_left_state_8_0,_20___value_=_2 + up_left_state_1_0,_20___value_=_2
-   + up_left_state_8_0,_21___value_=_2 + up_left_state_1_0,_21___value_=_2
-   + up_left_state_8_0,_22___value_=_2 + up_left_state_1_0,_22___value_=_2
-   + up_left_state_8_0,_23___value_=_2 + up_left_state_1_0,_23___value_=_2
-   + up_left_state_8_0,_24___value_=_2 + up_left_state_1_0,_24___value_=_2
-   + up_left_state_8_0,_25___value_=_2 + up_left_state_1_0,_25___value_=_2
-   + up_left_state_8_0,_26___value_=_2 + up_left_state_1_0,_26___value_=_2
-   + up_left_state_8_0,_27___value_=_2 + up_left_state_1_0,_27___value_=_2
-   + up_left_state_8_0,_28___value_=_2 + up_left_state_1_0,_28___value_=_2
-   + up_left_state_8_0,_29___value_=_2 + up_left_state_1_0,_29___value_=_2
-   + up_left_state_8_0,_30___value_=_2 + up_left_state_1_0,_30___value_=_2
-   + up_left_state_8_0,_31___value_=_2 + up_left_state_1_0,_31___value_=_2
    + up_left_state_8_1,_0___value_=_2 + up_left_state_1_1,_0___value_=_2
    + up_left_state_8_1,_1___value_=_2 + up_left_state_1_1,_1___value_=_2
    + up_left_state_8_1,_2___value_=_2 + up_left_state_1_1,_2___value_=_2
@@ -298,22 +131,6 @@ Subject To
    + up_left_state_8_1,_13___value_=_2 + up_left_state_1_1,_13___value_=_2
    + up_left_state_8_1,_14___value_=_2 + up_left_state_1_1,_14___value_=_2
    + up_left_state_8_1,_15___value_=_2 + up_left_state_1_1,_15___value_=_2
-   + up_left_state_8_1,_16___value_=_2 + up_left_state_1_1,_16___value_=_2
-   + up_left_state_8_1,_17___value_=_2 + up_left_state_1_1,_17___value_=_2
-   + up_left_state_8_1,_18___value_=_2 + up_left_state_1_1,_18___value_=_2
-   + up_left_state_8_1,_19___value_=_2 + up_left_state_1_1,_19___value_=_2
-   + up_left_state_8_1,_20___value_=_2 + up_left_state_1_1,_20___value_=_2
-   + up_left_state_8_1,_21___value_=_2 + up_left_state_1_1,_21___value_=_2
-   + up_left_state_8_1,_22___value_=_2 + up_left_state_1_1,_22___value_=_2
-   + up_left_state_8_1,_23___value_=_2 + up_left_state_1_1,_23___value_=_2
-   + up_left_state_8_1,_24___value_=_2 + up_left_state_1_1,_24___value_=_2
-   + up_left_state_8_1,_25___value_=_2 + up_left_state_1_1,_25___value_=_2
-   + up_left_state_8_1,_26___value_=_2 + up_left_state_1_1,_26___value_=_2
-   + up_left_state_8_1,_27___value_=_2 + up_left_state_1_1,_27___value_=_2
-   + up_left_state_8_1,_28___value_=_2 + up_left_state_1_1,_28___value_=_2
-   + up_left_state_8_1,_29___value_=_2 + up_left_state_1_1,_29___value_=_2
-   + up_left_state_8_1,_30___value_=_2 + up_left_state_1_1,_30___value_=_2
-   + up_left_state_8_1,_31___value_=_2 + up_left_state_1_1,_31___value_=_2
    + up_left_state_8_2,_0___value_=_2 + up_left_state_1_2,_0___value_=_2
    + up_left_state_8_2,_1___value_=_2 + up_left_state_1_2,_1___value_=_2
    + up_left_state_8_2,_2___value_=_2 + up_left_state_1_2,_2___value_=_2
@@ -330,22 +147,6 @@ Subject To
    + up_left_state_8_2,_13___value_=_2 + up_left_state_1_2,_13___value_=_2
    + up_left_state_8_2,_14___value_=_2 + up_left_state_1_2,_14___value_=_2
    + up_left_state_8_2,_15___value_=_2 + up_left_state_1_2,_15___value_=_2
-   + up_left_state_8_2,_16___value_=_2 + up_left_state_1_2,_16___value_=_2
-   + up_left_state_8_2,_17___value_=_2 + up_left_state_1_2,_17___value_=_2
-   + up_left_state_8_2,_18___value_=_2 + up_left_state_1_2,_18___value_=_2
-   + up_left_state_8_2,_19___value_=_2 + up_left_state_1_2,_19___value_=_2
-   + up_left_state_8_2,_20___value_=_2 + up_left_state_1_2,_20___value_=_2
-   + up_left_state_8_2,_21___value_=_2 + up_left_state_1_2,_21___value_=_2
-   + up_left_state_8_2,_22___value_=_2 + up_left_state_1_2,_22___value_=_2
-   + up_left_state_8_2,_23___value_=_2 + up_left_state_1_2,_23___value_=_2
-   + up_left_state_8_2,_24___value_=_2 + up_left_state_1_2,_24___value_=_2
-   + up_left_state_8_2,_25___value_=_2 + up_left_state_1_2,_25___value_=_2
-   + up_left_state_8_2,_26___value_=_2 + up_left_state_1_2,_26___value_=_2
-   + up_left_state_8_2,_27___value_=_2 + up_left_state_1_2,_27___value_=_2
-   + up_left_state_8_2,_28___value_=_2 + up_left_state_1_2,_28___value_=_2
-   + up_left_state_8_2,_29___value_=_2 + up_left_state_1_2,_29___value_=_2
-   + up_left_state_8_2,_30___value_=_2 + up_left_state_1_2,_30___value_=_2
-   + up_left_state_8_2,_31___value_=_2 + up_left_state_1_2,_31___value_=_2
    + up_left_state_8_3,_0___value_=_2 + up_left_state_1_3,_0___value_=_2
    + up_left_state_8_3,_1___value_=_2 + up_left_state_1_3,_1___value_=_2
    + up_left_state_8_3,_2___value_=_2 + up_left_state_1_3,_2___value_=_2
@@ -362,360 +163,281 @@ Subject To
    + up_left_state_8_3,_13___value_=_2 + up_left_state_1_3,_13___value_=_2
    + up_left_state_8_3,_14___value_=_2 + up_left_state_1_3,_14___value_=_2
    + up_left_state_8_3,_15___value_=_2 + up_left_state_1_3,_15___value_=_2
-   + up_left_state_8_3,_16___value_=_2 + up_left_state_1_3,_16___value_=_2
-   + up_left_state_8_3,_17___value_=_2 + up_left_state_1_3,_17___value_=_2
-   + up_left_state_8_3,_18___value_=_2 + up_left_state_1_3,_18___value_=_2
-   + up_left_state_8_3,_19___value_=_2 + up_left_state_1_3,_19___value_=_2
-   + up_left_state_8_3,_20___value_=_2 + up_left_state_1_3,_20___value_=_2
-   + up_left_state_8_3,_21___value_=_2 + up_left_state_1_3,_21___value_=_2
-   + up_left_state_8_3,_22___value_=_2 + up_left_state_1_3,_22___value_=_2
-   + up_left_state_8_3,_23___value_=_2 + up_left_state_1_3,_23___value_=_2
-   + up_left_state_8_3,_24___value_=_2 + up_left_state_1_3,_24___value_=_2
-   + up_left_state_8_3,_25___value_=_2 + up_left_state_1_3,_25___value_=_2
-   + up_left_state_8_3,_26___value_=_2 + up_left_state_1_3,_26___value_=_2
-   + up_left_state_8_3,_27___value_=_2 + up_left_state_1_3,_27___value_=_2
-   + up_left_state_8_3,_28___value_=_2 + up_left_state_1_3,_28___value_=_2
-   + up_left_state_8_3,_29___value_=_2 + up_left_state_1_3,_29___value_=_2
-   + up_left_state_8_3,_30___value_=_2 + up_left_state_1_3,_30___value_=_2
-   + up_left_state_8_3,_31___value_=_2 + up_left_state_1_3,_31___value_=_2
-   + up_left_state_8_4,_0___value_=_2 + up_left_state_1_4,_0___value_=_2
-   + up_left_state_8_4,_1___value_=_2 + up_left_state_1_4,_1___value_=_2
-   + up_left_state_8_4,_2___value_=_2 + up_left_state_1_4,_2___value_=_2
-   + up_left_state_8_4,_3___value_=_2 + up_left_state_1_4,_3___value_=_2
-   + up_left_state_8_4,_4___value_=_2 + up_left_state_1_4,_4___value_=_2
-   + up_left_state_8_4,_5___value_=_2 + up_left_state_1_4,_5___value_=_2
-   + up_left_state_8_4,_6___value_=_2 + up_left_state_1_4,_6___value_=_2
-   + up_left_state_8_4,_7___value_=_2 + up_left_state_1_4,_7___value_=_2
-   + up_left_state_8_4,_8___value_=_2 + up_left_state_1_4,_8___value_=_2
-   + up_left_state_8_4,_9___value_=_2 + up_left_state_1_4,_9___value_=_2
-   + up_left_state_8_4,_10___value_=_2 + up_left_state_1_4,_10___value_=_2
-   + up_left_state_8_4,_11___value_=_2 + up_left_state_1_4,_11___value_=_2
-   + up_left_state_8_4,_12___value_=_2 + up_left_state_1_4,_12___value_=_2
-   + up_left_state_8_4,_13___value_=_2 + up_left_state_1_4,_13___value_=_2
-   + up_left_state_8_4,_14___value_=_2 + up_left_state_1_4,_14___value_=_2
-   + up_left_state_8_4,_15___value_=_2 + up_left_state_1_4,_15___value_=_2
-   + up_left_state_8_4,_16___value_=_2 + up_left_state_1_4,_16___value_=_2
-   + up_left_state_8_4,_17___value_=_2 + up_left_state_1_4,_17___value_=_2
-   + up_left_state_8_4,_18___value_=_2 + up_left_state_1_4,_18___value_=_2
-   + up_left_state_8_4,_19___value_=_2 + up_left_state_1_4,_19___value_=_2
-   + up_left_state_8_4,_20___value_=_2 + up_left_state_1_4,_20___value_=_2
-   + up_left_state_8_4,_21___value_=_2 + up_left_state_1_4,_21___value_=_2
-   + up_left_state_8_4,_22___value_=_2 + up_left_state_1_4,_22___value_=_2
-   + up_left_state_8_4,_23___value_=_2 + up_left_state_1_4,_23___value_=_2
-   + up_left_state_8_4,_24___value_=_2 + up_left_state_1_4,_24___value_=_2
-   + up_left_state_8_4,_25___value_=_2 + up_left_state_1_4,_25___value_=_2
-   + up_left_state_8_4,_26___value_=_2 + up_left_state_1_4,_26___value_=_2
-   + up_left_state_8_4,_27___value_=_2 + up_left_state_1_4,_27___value_=_2
-   + up_left_state_8_4,_28___value_=_2 + up_left_state_1_4,_28___value_=_2
-   + up_left_state_8_4,_29___value_=_2 + up_left_state_1_4,_29___value_=_2
-   + up_left_state_8_4,_30___value_=_2 + up_left_state_1_4,_30___value_=_2
-   + up_left_state_8_4,_31___value_=_2 + up_left_state_1_4,_31___value_=_2
-   - 96 binary_time_complexity_up_f{i} - 97 binary_time_complexity_up_f{i}
-   - 98 binary_time_complexity_up_f{i} - 99 binary_time_complexity_up_f{i}
-   - 100 binary_time_complexity_up_f{i}
-   - 101 binary_time_complexity_up_f{i}
-   - 102 binary_time_complexity_up_f{i}
-   - 103 binary_time_complexity_up_f{i}
-   - 104 binary_time_complexity_up_f{i}
-   - 105 binary_time_complexity_up_f{i}
-   - 106 binary_time_complexity_up_f{i}
-   - 107 binary_time_complexity_up_f{i}
-   - 108 binary_time_complexity_up_f{i}
-   - 109 binary_time_complexity_up_f{i}
-   - 110 binary_time_complexity_up_f{i}
-   - 111 binary_time_complexity_up_f{i}
-   - 112 binary_time_complexity_up_f{i}
-   - 113 binary_time_complexity_up_f{i}
-   - 114 binary_time_complexity_up_f{i}
-   - 115 binary_time_complexity_up_f{i}
-   - 116 binary_time_complexity_up_f{i}
-   - 117 binary_time_complexity_up_f{i}
-   - 118 binary_time_complexity_up_f{i}
-   - 119 binary_time_complexity_up_f{i}
-   - 120 binary_time_complexity_up_f{i}
-   - 121 binary_time_complexity_up_f{i}
-   - 122 binary_time_complexity_up_f{i}
-   - 123 binary_time_complexity_up_f{i}
-   - 124 binary_time_complexity_up_f{i}
-   - 125 binary_time_complexity_up_f{i}
-   - 126 binary_time_complexity_up_f{i}
-   - 127 binary_time_complexity_up_f{i}
-   - 128 binary_time_complexity_up_f{i}
-   - 129 binary_time_complexity_up_f{i}
-   - 130 binary_time_complexity_up_f{i}
-   - 131 binary_time_complexity_up_f{i}
-   - 132 binary_time_complexity_up_f{i}
-   - 133 binary_time_complexity_up_f{i}
-   - 134 binary_time_complexity_up_f{i}
-   - 135 binary_time_complexity_up_f{i}
-   - 136 binary_time_complexity_up_f{i}
-   - 137 binary_time_complexity_up_f{i}
-   - 138 binary_time_complexity_up_f{i}
-   - 139 binary_time_complexity_up_f{i}
-   - 140 binary_time_complexity_up_f{i}
-   - 141 binary_time_complexity_up_f{i}
-   - 142 binary_time_complexity_up_f{i}
-   - 143 binary_time_complexity_up_f{i}
-   - 144 binary_time_complexity_up_f{i}
-   - 145 binary_time_complexity_up_f{i}
-   - 146 binary_time_complexity_up_f{i}
-   - 147 binary_time_complexity_up_f{i}
-   - 148 binary_time_complexity_up_f{i}
-   - 149 binary_time_complexity_up_f{i}
-   - 150 binary_time_complexity_up_f{i}
-   - 151 binary_time_complexity_up_f{i}
-   - 152 binary_time_complexity_up_f{i}
-   - 153 binary_time_complexity_up_f{i}
-   - 154 binary_time_complexity_up_f{i}
-   - 155 binary_time_complexity_up_f{i}
-   - 156 binary_time_complexity_up_f{i}
-   - 157 binary_time_complexity_up_f{i}
-   - 158 binary_time_complexity_up_f{i}
-   - 159 binary_time_complexity_up_f{i} = -62
- R132: structure_left2_2,_15state_type_0,_color_1___value_=_1 = 1
- structure_left2_is_only_one_colour:
-   structure_left2_2,_15state_type_0,_color_1___value_=_0
-   + structure_left2_2,_15state_type_0,_color_1___value_=_1 = 1
+Subject To
+ unique_binary_complexity_match: binary_time_complexity_up_f{i}
+   + binary_time_complexity_up_f{i} + binary_time_complexity_up_f{i}
+   + binary_time_complexity_up_f{i} + binary_time_complexity_up_f{i}
+   + binary_time_complexity_up_f{i} + binary_time_complexity_up_f{i}
+   + binary_time_complexity_up_f{i} + binary_time_complexity_up_f{i}
+   + binary_time_complexity_up_f{i} + binary_time_complexity_up_f{i}
+   + binary_time_complexity_up_f{i} + binary_time_complexity_up_f{i}
+   + binary_time_complexity_up_f{i} + binary_time_complexity_up_f{i}
+   + binary_time_complexity_up_f{i} = 1
+ R8: key_3,_0_value_=1 + key_3,_1_value_=1 + key_3,_2_value_=1
+   + key_3,_3_value_=1 + key_3,_4_value_=1 + key_3,_5_value_=1
+   + key_3,_6_value_=1 + key_3,_7_value_=1 + key_3,_8_value_=1
+   + key_3,_9_value_=1 + key_3,_10_value_=1 + key_3,_11_value_=1
+   + key_3,_12_value_=1 + key_3,_13_value_=1 + key_3,_14_value_=1
+   + key_3,_15_value_=1 + key_4,_0_value_=1 + key_4,_1_value_=1
+   + key_4,_2_value_=1 + key_4,_3_value_=1 + key_4,_4_value_=1
+   + key_4,_5_value_=1 + key_4,_6_value_=1 + key_4,_7_value_=1
+   + key_4,_8_value_=1 + key_4,_9_value_=1 + key_4,_10_value_=1
+   + key_4,_11_value_=1 + key_4,_12_value_=1 + key_4,_13_value_=1
+   + key_4,_14_value_=1 + key_4,_15_value_=1 + key_5,_0_value_=1
+   + key_5,_1_value_=1 + key_5,_2_value_=1 + key_5,_3_value_=1
+   + key_5,_4_value_=1 + key_5,_5_value_=1 + key_5,_6_value_=1
+   + key_5,_7_value_=1 + key_5,_8_value_=1 + key_5,_9_value_=1
+   + key_5,_10_value_=1 + key_5,_11_value_=1 + key_5,_12_value_=1
+   + key_5,_13_value_=1 + key_5,_14_value_=1 + key_5,_15_value_=1
+   + key_6,_0_value_=1 + key_6,_1_value_=1 + key_6,_2_value_=1
+   + key_6,_3_value_=1 + key_6,_4_value_=1 + key_6,_5_value_=1
+   + key_6,_6_value_=1 + key_6,_7_value_=1 + key_6,_8_value_=1
+   + key_6,_9_value_=1 + key_6,_10_value_=1 + key_6,_11_value_=1
+   + key_6,_12_value_=1 + key_6,_13_value_=1 + key_6,_14_value_=1
+   + key_6,_15_value_=1 + key_structure_0,_0_value_=2
+   + key_structure_0,_1_value_=2 + key_structure_0,_2_value_=2
+   + key_structure_0,_3_value_=2 + key_structure_0,_4_value_=2
+   + key_structure_0,_5_value_=2 + key_structure_0,_6_value_=2
+   + key_structure_0,_7_value_=2 + key_structure_0,_8_value_=2
+   + key_structure_0,_9_value_=2 + key_structure_0,_10_value_=2
+   + key_structure_0,_11_value_=2 + key_structure_0,_12_value_=2
+   + key_structure_0,_13_value_=2 + key_structure_0,_14_value_=2
+   + key_structure_0,_15_value_=2 + key_structure_1,_0_value_=2
+   + key_structure_1,_1_value_=2 + key_structure_1,_2_value_=2
+   + key_structure_1,_3_value_=2 + key_structure_1,_4_value_=2
+   + key_structure_1,_5_value_=2 + key_structure_1,_6_value_=2
+   + key_structure_1,_7_value_=2 + key_structure_1,_8_value_=2
+   + key_structure_1,_9_value_=2 + key_structure_1,_10_value_=2
+   + key_structure_1,_11_value_=2 + key_structure_1,_12_value_=2
+   + key_structure_1,_13_value_=2 + key_structure_1,_14_value_=2
+   + key_structure_1,_15_value_=2 + key_structure_2,_0_value_=2
+   + key_structure_2,_1_value_=2 + key_structure_2,_2_value_=2
+   + key_structure_2,_3_value_=2 + key_structure_2,_4_value_=2
+   + key_structure_2,_5_value_=2 + key_structure_2,_6_value_=2
+   + key_structure_2,_7_value_=2 + key_structure_2,_8_value_=2
+   + key_structure_2,_9_value_=2 + key_structure_2,_10_value_=2
+   + key_structure_2,_11_value_=2 + key_structure_2,_12_value_=2
+   + key_structure_2,_13_value_=2 + key_structure_2,_14_value_=2
+   + key_structure_2,_15_value_=2
+   - structure_left1_0,_0state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_1state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_2state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_3state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_4state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_5state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_6state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_7state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_8state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_9state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_10state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_11state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_12state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_13state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_14state_type_0,_color_f2___value_=_1
+   - structure_left1_0,_15state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_0state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_1state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_2state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_3state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_4state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_5state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_6state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_7state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_8state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_9state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_10state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_11state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_12state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_13state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_14state_type_0,_color_f2___value_=_1
+   - structure_left1_1,_15state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_0state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_1state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_2state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_3state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_4state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_5state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_6state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_7state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_8state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_9state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_10state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_11state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_12state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_13state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_14state_type_0,_color_f2___value_=_1
+   - structure_left1_2,_15state_type_0,_color_f2___value_=_1
+   + up_left_state_8_0,_0___value_=_2 + up_left_state_1_0,_0___value_=_2
+   + up_left_state_8_0,_1___value_=_2 + up_left_state_1_0,_1___value_=_2
+   + up_left_state_8_0,_2___value_=_2 + up_left_state_1_0,_2___value_=_2
+   + up_left_state_8_0,_3___value_=_2 + up_left_state_1_0,_3___value_=_2
+   + up_left_state_8_0,_4___value_=_2 + up_left_state_1_0,_4___value_=_2
+   + up_left_state_8_0,_5___value_=_2 + up_left_state_1_0,_5___value_=_2
+   + up_left_state_8_0,_6___value_=_2 + up_left_state_1_0,_6___value_=_2
+   + up_left_state_8_0,_7___value_=_2 + up_left_state_1_0,_7___value_=_2
+   + up_left_state_8_0,_8___value_=_2 + up_left_state_1_0,_8___value_=_2
+   + up_left_state_8_0,_9___value_=_2 + up_left_state_1_0,_9___value_=_2
+   + up_left_state_8_0,_10___value_=_2 + up_left_state_1_0,_10___value_=_2
+   + up_left_state_8_0,_11___value_=_2 + up_left_state_1_0,_11___value_=_2
+   + up_left_state_8_0,_12___value_=_2 + up_left_state_1_0,_12___value_=_2
+   + up_left_state_8_0,_13___value_=_2 + up_left_state_1_0,_13___value_=_2
+   + up_left_state_8_0,_14___value_=_2 + up_left_state_1_0,_14___value_=_2
+   + up_left_state_8_0,_15___value_=_2 + up_left_state_1_0,_15___value_=_2
+   + up_left_state_8_1,_0___value_=_2 + up_left_state_1_1,_0___value_=_2
+   + up_left_state_8_1,_1___value_=_2 + up_left_state_1_1,_1___value_=_2
+   + up_left_state_8_1,_2___value_=_2 + up_left_state_1_1,_2___value_=_2
+   + up_left_state_8_1,_3___value_=_2 + up_left_state_1_1,_3___value_=_2
+   + up_left_state_8_1,_4___value_=_2 + up_left_state_1_1,_4___value_=_2
+   + up_left_state_8_1,_5___value_=_2 + up_left_state_1_1,_5___value_=_2
+   + up_left_state_8_1,_6___value_=_2 + up_left_state_1_1,_6___value_=_2
+   + up_left_state_8_1,_7___value_=_2 + up_left_state_1_1,_7___value_=_2
+   + up_left_state_8_1,_8___value_=_2 + up_left_state_1_1,_8___value_=_2
+   + up_left_state_8_1,_9___value_=_2 + up_left_state_1_1,_9___value_=_2
+   + up_left_state_8_1,_10___value_=_2 + up_left_state_1_1,_10___value_=_2
+   + up_left_state_8_1,_11___value_=_2 + up_left_state_1_1,_11___value_=_2
+   + up_left_state_8_1,_12___value_=_2 + up_left_state_1_1,_12___value_=_2
+   + up_left_state_8_1,_13___value_=_2 + up_left_state_1_1,_13___value_=_2
+   + up_left_state_8_1,_14___value_=_2 + up_left_state_1_1,_14___value_=_2
+   + up_left_state_8_1,_15___value_=_2 + up_left_state_1_1,_15___value_=_2
+   + up_left_state_8_2,_0___value_=_2 + up_left_state_1_2,_0___value_=_2
+   + up_left_state_8_2,_1___value_=_2 + up_left_state_1_2,_1___value_=_2
+   + up_left_state_8_2,_2___value_=_2 + up_left_state_1_2,_2___value_=_2
+   + up_left_state_8_2,_3___value_=_2 + up_left_state_1_2,_3___value_=_2
+   + up_left_state_8_2,_4___value_=_2 + up_left_state_1_2,_4___value_=_2
+   + up_left_state_8_2,_5___value_=_2 + up_left_state_1_2,_5___value_=_2
+   + up_left_state_8_2,_6___value_=_2 + up_left_state_1_2,_6___value_=_2
+   + up_left_state_8_2,_7___value_=_2 + up_left_state_1_2,_7___value_=_2
+   + up_left_state_8_2,_8___value_=_2 + up_left_state_1_2,_8___value_=_2
+   + up_left_state_8_2,_9___value_=_2 + up_left_state_1_2,_9___value_=_2
+   + up_left_state_8_2,_10___value_=_2 + up_left_state_1_2,_10___value_=_2
+   + up_left_state_8_2,_11___value_=_2 + up_left_state_1_2,_11___value_=_2
+   + up_left_state_8_2,_12___value_=_2 + up_left_state_1_2,_12___value_=_2
+   + up_left_state_8_2,_13___value_=_2 + up_left_state_1_2,_13___value_=_2
+   + up_left_state_8_2,_14___value_=_2 + up_left_state_1_2,_14___value_=_2
+   + up_left_state_8_2,_15___value_=_2 + up_left_state_1_2,_15___value_=_2
+   + up_left_state_8_3,_0___value_=_2 + up_left_state_1_3,_0___value_=_2
+   + up_left_state_8_3,_1___value_=_2 + up_left_state_1_3,_1___value_=_2
+   + up_left_state_8_3,_2___value_=_2 + up_left_state_1_3,_2___value_=_2
+   + up_left_state_8_3,_3___value_=_2 + up_left_state_1_3,_3___value_=_2
+   + up_left_state_8_3,_4___value_=_2 + up_left_state_1_3,_4___value_=_2
+   + up_left_state_8_3,_5___value_=_2 + up_left_state_1_3,_5___value_=_2
+   + up_left_state_8_3,_6___value_=_2 + up_left_state_1_3,_6___value_=_2
+   + up_left_state_8_3,_7___value_=_2 + up_left_state_1_3,_7___value_=_2
+   + up_left_state_8_3,_8___value_=_2 + up_left_state_1_3,_8___value_=_2
+   + up_left_state_8_3,_9___value_=_2 + up_left_state_1_3,_9___value_=_2
+   + up_left_state_8_3,_10___value_=_2 + up_left_state_1_3,_10___value_=_2
+   + up_left_state_8_3,_11___value_=_2 + up_left_state_1_3,_11___value_=_2
+   + up_left_state_8_3,_12___value_=_2 + up_left_state_1_3,_12___value_=_2
+   + up_left_state_8_3,_13___value_=_2 + up_left_state_1_3,_13___value_=_2
+   + up_left_state_8_3,_14___value_=_2 + up_left_state_1_3,_14___value_=_2
+   + up_left_state_8_3,_15___value_=_2 + up_left_state_1_3,_15___value_=_2
+   - 1.6777216e+07 binary_time_complexity_up_f{i}
+   - 3.3554432e+07 binary_time_complexity_up_f{i}
+   - 6.7108864e+07 binary_time_complexity_up_f{i}
+   - 1.34217728e+08 binary_time_complexity_up_f{i}
+   - 2.68435456e+08 binary_time_complexity_up_f{i}
+   - 5.36870912e+08 binary_time_complexity_up_f{i}
+   - 1.073741824e+09 binary_time_complexity_up_f{i}
+   - 2.147483648e+09 binary_time_complexity_up_f{i}
+   - 4.294967296e+09 binary_time_complexity_up_f{i}
+   - 8.589934592e+09 binary_time_complexity_up_f{i}
+   - 1.7179869184e+10 binary_time_complexity_up_f{i}
+   - 3.4359738368e+10 binary_time_complexity_up_f{i}
+   - 6.8719476736e+10 binary_time_complexity_up_f{i}
+   - 1.37438953472e+11 binary_time_complexity_up_f{i}
+   - 2.74877906944e+11 binary_time_complexity_up_f{i}
+   - 5.49755813888e+11 binary_time_complexity_up_f{i} = 0
 Bounds
 Binaries
  key_3,_0_value_=1 key_3,_1_value_=1 key_3,_2_value_=1 key_3,_3_value_=1
  key_3,_4_value_=1 key_3,_5_value_=1 key_3,_6_value_=1 key_3,_7_value_=1
  key_3,_8_value_=1 key_3,_9_value_=1 key_3,_10_value_=1 key_3,_11_value_=1
  key_3,_12_value_=1 key_3,_13_value_=1 key_3,_14_value_=1
- key_3,_15_value_=1 key_3,_16_value_=1 key_3,_17_value_=1
- key_3,_18_value_=1 key_3,_19_value_=1 key_3,_20_value_=1
- key_3,_21_value_=1 key_3,_22_value_=1 key_3,_23_value_=1
- key_3,_24_value_=1 key_3,_25_value_=1 key_3,_26_value_=1
- key_3,_27_value_=1 key_3,_28_value_=1 key_3,_29_value_=1
- key_3,_30_value_=1 key_3,_31_value_=1 key_4,_0_value_=1 key_4,_1_value_=1
- key_4,_2_value_=1 key_4,_3_value_=1 key_4,_4_value_=1 key_4,_5_value_=1
- key_4,_6_value_=1 key_4,_7_value_=1 key_4,_8_value_=1 key_4,_9_value_=1
- key_4,_10_value_=1 key_4,_11_value_=1 key_4,_12_value_=1
- key_4,_13_value_=1 key_4,_14_value_=1 key_4,_15_value_=1
- key_4,_16_value_=1 key_4,_17_value_=1 key_4,_18_value_=1
- key_4,_19_value_=1 key_4,_20_value_=1 key_4,_21_value_=1
- key_4,_22_value_=1 key_4,_23_value_=1 key_4,_24_value_=1
- key_4,_25_value_=1 key_4,_26_value_=1 key_4,_27_value_=1
- key_4,_28_value_=1 key_4,_29_value_=1 key_4,_30_value_=1
- key_4,_31_value_=1 key_5,_0_value_=1 key_5,_1_value_=1 key_5,_2_value_=1
- key_5,_3_value_=1 key_5,_4_value_=1 key_5,_5_value_=1 key_5,_6_value_=1
- key_5,_7_value_=1 key_5,_8_value_=1 key_5,_9_value_=1 key_5,_10_value_=1
- key_5,_11_value_=1 key_5,_12_value_=1 key_5,_13_value_=1
- key_5,_14_value_=1 key_5,_15_value_=1 key_5,_16_value_=1
- key_5,_17_value_=1 key_5,_18_value_=1 key_5,_19_value_=1
- key_5,_20_value_=1 key_5,_21_value_=1 key_5,_22_value_=1
- key_5,_23_value_=1 key_5,_24_value_=1 key_5,_25_value_=1
- key_5,_26_value_=1 key_5,_27_value_=1 key_5,_28_value_=1
- key_5,_29_value_=1 key_5,_30_value_=1 key_5,_31_value_=1 key_6,_0_value_=1
+ key_3,_15_value_=1 key_4,_0_value_=1 key_4,_1_value_=1 key_4,_2_value_=1
+ key_4,_3_value_=1 key_4,_4_value_=1 key_4,_5_value_=1 key_4,_6_value_=1
+ key_4,_7_value_=1 key_4,_8_value_=1 key_4,_9_value_=1 key_4,_10_value_=1
+ key_4,_11_value_=1 key_4,_12_value_=1 key_4,_13_value_=1
+ key_4,_14_value_=1 key_4,_15_value_=1 key_5,_0_value_=1 key_5,_1_value_=1
+ key_5,_2_value_=1 key_5,_3_value_=1 key_5,_4_value_=1 key_5,_5_value_=1
+ key_5,_6_value_=1 key_5,_7_value_=1 key_5,_8_value_=1 key_5,_9_value_=1
+ key_5,_10_value_=1 key_5,_11_value_=1 key_5,_12_value_=1
+ key_5,_13_value_=1 key_5,_14_value_=1 key_5,_15_value_=1 key_6,_0_value_=1
  key_6,_1_value_=1 key_6,_2_value_=1 key_6,_3_value_=1 key_6,_4_value_=1
  key_6,_5_value_=1 key_6,_6_value_=1 key_6,_7_value_=1 key_6,_8_value_=1
  key_6,_9_value_=1 key_6,_10_value_=1 key_6,_11_value_=1 key_6,_12_value_=1
  key_6,_13_value_=1 key_6,_14_value_=1 key_6,_15_value_=1
- key_6,_16_value_=1 key_6,_17_value_=1 key_6,_18_value_=1
- key_6,_19_value_=1 key_6,_20_value_=1 key_6,_21_value_=1
- key_6,_22_value_=1 key_6,_23_value_=1 key_6,_24_value_=1
- key_6,_25_value_=1 key_6,_26_value_=1 key_6,_27_value_=1
- key_6,_28_value_=1 key_6,_29_value_=1 key_6,_30_value_=1
- key_6,_31_value_=1 key_7,_0_value_=1 key_7,_1_value_=1 key_7,_2_value_=1
- key_7,_3_value_=1 key_7,_4_value_=1 key_7,_5_value_=1 key_7,_6_value_=1
- key_7,_7_value_=1 key_7,_8_value_=1 key_7,_9_value_=1 key_7,_10_value_=1
- key_7,_11_value_=1 key_7,_12_value_=1 key_7,_13_value_=1
- key_7,_14_value_=1 key_7,_15_value_=1 key_7,_16_value_=1
- key_7,_17_value_=1 key_7,_18_value_=1 key_7,_19_value_=1
- key_7,_20_value_=1 key_7,_21_value_=1 key_7,_22_value_=1
- key_7,_23_value_=1 key_7,_24_value_=1 key_7,_25_value_=1
- key_7,_26_value_=1 key_7,_27_value_=1 key_7,_28_value_=1
- key_7,_29_value_=1 key_7,_30_value_=1 key_7,_31_value_=1 key_0,_0_value_=2
- key_0,_1_value_=2 key_0,_2_value_=2 key_0,_3_value_=2 key_0,_4_value_=2
- key_0,_5_value_=2 key_0,_6_value_=2 key_0,_7_value_=2 key_0,_8_value_=2
- key_0,_9_value_=2 key_0,_10_value_=2 key_0,_11_value_=2 key_0,_12_value_=2
- key_0,_13_value_=2 key_0,_14_value_=2 key_0,_15_value_=2
- key_0,_16_value_=2 key_0,_17_value_=2 key_0,_18_value_=2
- key_0,_19_value_=2 key_0,_20_value_=2 key_0,_21_value_=2
- key_0,_22_value_=2 key_0,_23_value_=2 key_0,_24_value_=2
- key_0,_25_value_=2 key_0,_26_value_=2 key_0,_27_value_=2
- key_0,_28_value_=2 key_0,_29_value_=2 key_0,_30_value_=2
- key_0,_31_value_=2 key_1,_0_value_=2 key_1,_1_value_=2 key_1,_2_value_=2
- key_1,_3_value_=2 key_1,_4_value_=2 key_1,_5_value_=2 key_1,_6_value_=2
- key_1,_7_value_=2 key_1,_8_value_=2 key_1,_9_value_=2 key_1,_10_value_=2
- key_1,_11_value_=2 key_1,_12_value_=2 key_1,_13_value_=2
- key_1,_14_value_=2 key_1,_15_value_=2 key_1,_16_value_=2
- key_1,_17_value_=2 key_1,_18_value_=2 key_1,_19_value_=2
- key_1,_20_value_=2 key_1,_21_value_=2 key_1,_22_value_=2
- key_1,_23_value_=2 key_1,_24_value_=2 key_1,_25_value_=2
- key_1,_26_value_=2 key_1,_27_value_=2 key_1,_28_value_=2
- key_1,_29_value_=2 key_1,_30_value_=2 key_1,_31_value_=2 key_2,_0_value_=2
- key_2,_1_value_=2 key_2,_2_value_=2 key_2,_3_value_=2 key_2,_4_value_=2
- key_2,_5_value_=2 key_2,_6_value_=2 key_2,_7_value_=2 key_2,_8_value_=2
- key_2,_9_value_=2 key_2,_10_value_=2 key_2,_11_value_=2 key_2,_12_value_=2
- key_2,_13_value_=2 key_2,_14_value_=2 key_2,_15_value_=2
- key_2,_16_value_=2 key_2,_17_value_=2 key_2,_18_value_=2
- key_2,_19_value_=2 key_2,_20_value_=2 key_2,_21_value_=2
- key_2,_22_value_=2 key_2,_23_value_=2 key_2,_24_value_=2
- key_2,_25_value_=2 key_2,_26_value_=2 key_2,_27_value_=2
- key_2,_28_value_=2 key_2,_29_value_=2 key_2,_30_value_=2
- key_2,_31_value_=2 structure_left2_2,_15state_type_0,_color_1___value_=_0
- structure_left2_2,_15state_type_0,_color_1___value_=_1
- down_left_difference_AND_0,_0___value_=_2
- down_left_difference_AND_0,_1___value_=_2
- down_left_difference_AND_0,_2___value_=_2
- down_left_difference_AND_0,_3___value_=_2
- down_left_difference_AND_0,_4___value_=_2
- down_left_difference_AND_0,_5___value_=_2
- down_left_difference_AND_0,_6___value_=_2
- down_left_difference_AND_0,_7___value_=_2
- down_left_difference_AND_0,_8___value_=_2
- down_left_difference_AND_0,_9___value_=_2
- down_left_difference_AND_0,_10___value_=_2
- down_left_difference_AND_0,_11___value_=_2
- down_left_difference_AND_0,_12___value_=_2
- down_left_difference_AND_0,_13___value_=_2
- down_left_difference_AND_0,_14___value_=_2
- down_left_difference_AND_0,_15___value_=_2
- down_left_difference_AND_0,_16___value_=_2
- down_left_difference_AND_0,_17___value_=_2
- down_left_difference_AND_0,_18___value_=_2
- down_left_difference_AND_0,_19___value_=_2
- down_left_difference_AND_0,_20___value_=_2
- down_left_difference_AND_0,_21___value_=_2
- down_left_difference_AND_0,_22___value_=_2
- down_left_difference_AND_0,_23___value_=_2
- down_left_difference_AND_0,_24___value_=_2
- down_left_difference_AND_0,_25___value_=_2
- down_left_difference_AND_0,_26___value_=_2
- down_left_difference_AND_0,_27___value_=_2
- down_left_difference_AND_0,_28___value_=_2
- down_left_difference_AND_0,_29___value_=_2
- down_left_difference_AND_0,_30___value_=_2
- down_left_difference_AND_0,_31___value_=_2
- down_left_difference_AND_1,_0___value_=_2
- down_left_difference_AND_1,_1___value_=_2
- down_left_difference_AND_1,_2___value_=_2
- down_left_difference_AND_1,_3___value_=_2
- down_left_difference_AND_1,_4___value_=_2
- down_left_difference_AND_1,_5___value_=_2
- down_left_difference_AND_1,_6___value_=_2
- down_left_difference_AND_1,_7___value_=_2
- down_left_difference_AND_1,_8___value_=_2
- down_left_difference_AND_1,_9___value_=_2
- down_left_difference_AND_1,_10___value_=_2
- down_left_difference_AND_1,_11___value_=_2
- down_left_difference_AND_1,_12___value_=_2
- down_left_difference_AND_1,_13___value_=_2
- down_left_difference_AND_1,_14___value_=_2
- down_left_difference_AND_1,_15___value_=_2
- down_left_difference_AND_1,_16___value_=_2
- down_left_difference_AND_1,_17___value_=_2
- down_left_difference_AND_1,_18___value_=_2
- down_left_difference_AND_1,_19___value_=_2
- down_left_difference_AND_1,_20___value_=_2
- down_left_difference_AND_1,_21___value_=_2
- down_left_difference_AND_1,_22___value_=_2
- down_left_difference_AND_1,_23___value_=_2
- down_left_difference_AND_1,_24___value_=_2
- down_left_difference_AND_1,_25___value_=_2
- down_left_difference_AND_1,_26___value_=_2
- down_left_difference_AND_1,_27___value_=_2
- down_left_difference_AND_1,_28___value_=_2
- down_left_difference_AND_1,_29___value_=_2
- down_left_difference_AND_1,_30___value_=_2
- down_left_difference_AND_1,_31___value_=_2
- down_left_difference_AND_2,_0___value_=_2
- down_left_difference_AND_2,_1___value_=_2
- down_left_difference_AND_2,_2___value_=_2
- down_left_difference_AND_2,_3___value_=_2
- down_left_difference_AND_2,_4___value_=_2
- down_left_difference_AND_2,_5___value_=_2
- down_left_difference_AND_2,_6___value_=_2
- down_left_difference_AND_2,_7___value_=_2
- down_left_difference_AND_2,_8___value_=_2
- down_left_difference_AND_2,_9___value_=_2
- down_left_difference_AND_2,_10___value_=_2
- down_left_difference_AND_2,_11___value_=_2
- down_left_difference_AND_2,_12___value_=_2
- down_left_difference_AND_2,_13___value_=_2
- down_left_difference_AND_2,_14___value_=_2
- down_left_difference_AND_2,_15___value_=_2
- down_left_difference_AND_2,_16___value_=_2
- down_left_difference_AND_2,_17___value_=_2
- down_left_difference_AND_2,_18___value_=_2
- down_left_difference_AND_2,_19___value_=_2
- down_left_difference_AND_2,_20___value_=_2
- down_left_difference_AND_2,_21___value_=_2
- down_left_difference_AND_2,_22___value_=_2
- down_left_difference_AND_2,_23___value_=_2
- down_left_difference_AND_2,_24___value_=_2
- down_left_difference_AND_2,_25___value_=_2
- down_left_difference_AND_2,_26___value_=_2
- down_left_difference_AND_2,_27___value_=_2
- down_left_difference_AND_2,_28___value_=_2
- down_left_difference_AND_2,_29___value_=_2
- down_left_difference_AND_2,_30___value_=_2
- down_left_difference_AND_2,_31___value_=_2
- down_left_difference_AND_3,_0___value_=_2
- down_left_difference_AND_3,_1___value_=_2
- down_left_difference_AND_3,_2___value_=_2
- down_left_difference_AND_3,_3___value_=_2
- down_left_difference_AND_3,_4___value_=_2
- down_left_difference_AND_3,_5___value_=_2
- down_left_difference_AND_3,_6___value_=_2
- down_left_difference_AND_3,_7___value_=_2
- down_left_difference_AND_3,_8___value_=_2
- down_left_difference_AND_3,_9___value_=_2
- down_left_difference_AND_3,_10___value_=_2
- down_left_difference_AND_3,_11___value_=_2
- down_left_difference_AND_3,_12___value_=_2
- down_left_difference_AND_3,_13___value_=_2
- down_left_difference_AND_3,_14___value_=_2
- down_left_difference_AND_3,_15___value_=_2
- down_left_difference_AND_3,_16___value_=_2
- down_left_difference_AND_3,_17___value_=_2
- down_left_difference_AND_3,_18___value_=_2
- down_left_difference_AND_3,_19___value_=_2
- down_left_difference_AND_3,_20___value_=_2
- down_left_difference_AND_3,_21___value_=_2
- down_left_difference_AND_3,_22___value_=_2
- down_left_difference_AND_3,_23___value_=_2
- down_left_difference_AND_3,_24___value_=_2
- down_left_difference_AND_3,_25___value_=_2
- down_left_difference_AND_3,_26___value_=_2
- down_left_difference_AND_3,_27___value_=_2
- down_left_difference_AND_3,_28___value_=_2
- down_left_difference_AND_3,_29___value_=_2
- down_left_difference_AND_3,_30___value_=_2
- down_left_difference_AND_3,_31___value_=_2
- down_left_difference_AND_4,_0___value_=_2
- down_left_difference_AND_4,_1___value_=_2
- down_left_difference_AND_4,_2___value_=_2
- down_left_difference_AND_4,_3___value_=_2
- down_left_difference_AND_4,_4___value_=_2
- down_left_difference_AND_4,_5___value_=_2
- down_left_difference_AND_4,_6___value_=_2
- down_left_difference_AND_4,_7___value_=_2
- down_left_difference_AND_4,_8___value_=_2
- down_left_difference_AND_4,_9___value_=_2
- down_left_difference_AND_4,_10___value_=_2
- down_left_difference_AND_4,_11___value_=_2
- down_left_difference_AND_4,_12___value_=_2
- down_left_difference_AND_4,_13___value_=_2
- down_left_difference_AND_4,_14___value_=_2
- down_left_difference_AND_4,_15___value_=_2
- down_left_difference_AND_4,_16___value_=_2
- down_left_difference_AND_4,_17___value_=_2
- down_left_difference_AND_4,_18___value_=_2
- down_left_difference_AND_4,_19___value_=_2
- down_left_difference_AND_4,_20___value_=_2
- down_left_difference_AND_4,_21___value_=_2
- down_left_difference_AND_4,_22___value_=_2
- down_left_difference_AND_4,_23___value_=_2
- down_left_difference_AND_4,_24___value_=_2
- down_left_difference_AND_4,_25___value_=_2
- down_left_difference_AND_4,_26___value_=_2
- down_left_difference_AND_4,_27___value_=_2
- down_left_difference_AND_4,_28___value_=_2
- down_left_difference_AND_4,_29___value_=_2
- down_left_difference_AND_4,_30___value_=_2
- down_left_difference_AND_4,_31___value_=_2
+ key_structure_0,_0_value_=2 key_structure_0,_1_value_=2
+ key_structure_0,_2_value_=2 key_structure_0,_3_value_=2
+ key_structure_0,_4_value_=2 key_structure_0,_5_value_=2
+ key_structure_0,_6_value_=2 key_structure_0,_7_value_=2
+ key_structure_0,_8_value_=2 key_structure_0,_9_value_=2
+ key_structure_0,_10_value_=2 key_structure_0,_11_value_=2
+ key_structure_0,_12_value_=2 key_structure_0,_13_value_=2
+ key_structure_0,_14_value_=2 key_structure_0,_15_value_=2
+ key_structure_1,_0_value_=2 key_structure_1,_1_value_=2
+ key_structure_1,_2_value_=2 key_structure_1,_3_value_=2
+ key_structure_1,_4_value_=2 key_structure_1,_5_value_=2
+ key_structure_1,_6_value_=2 key_structure_1,_7_value_=2
+ key_structure_1,_8_value_=2 key_structure_1,_9_value_=2
+ key_structure_1,_10_value_=2 key_structure_1,_11_value_=2
+ key_structure_1,_12_value_=2 key_structure_1,_13_value_=2
+ key_structure_1,_14_value_=2 key_structure_1,_15_value_=2
+ key_structure_2,_0_value_=2 key_structure_2,_1_value_=2
+ key_structure_2,_2_value_=2 key_structure_2,_3_value_=2
+ key_structure_2,_4_value_=2 key_structure_2,_5_value_=2
+ key_structure_2,_6_value_=2 key_structure_2,_7_value_=2
+ key_structure_2,_8_value_=2 key_structure_2,_9_value_=2
+ key_structure_2,_10_value_=2 key_structure_2,_11_value_=2
+ key_structure_2,_12_value_=2 key_structure_2,_13_value_=2
+ key_structure_2,_14_value_=2 key_structure_2,_15_value_=2
+ structure_left1_0,_0state_type_0,_color_f2___value_=_1
+ structure_left1_0,_1state_type_0,_color_f2___value_=_1
+ structure_left1_0,_2state_type_0,_color_f2___value_=_1
+ structure_left1_0,_3state_type_0,_color_f2___value_=_1
+ structure_left1_0,_4state_type_0,_color_f2___value_=_1
+ structure_left1_0,_5state_type_0,_color_f2___value_=_1
+ structure_left1_0,_6state_type_0,_color_f2___value_=_1
+ structure_left1_0,_7state_type_0,_color_f2___value_=_1
+ structure_left1_0,_8state_type_0,_color_f2___value_=_1
+ structure_left1_0,_9state_type_0,_color_f2___value_=_1
+ structure_left1_0,_10state_type_0,_color_f2___value_=_1
+ structure_left1_0,_11state_type_0,_color_f2___value_=_1
+ structure_left1_0,_12state_type_0,_color_f2___value_=_1
+ structure_left1_0,_13state_type_0,_color_f2___value_=_1
+ structure_left1_0,_14state_type_0,_color_f2___value_=_1
+ structure_left1_0,_15state_type_0,_color_f2___value_=_1
+ structure_left1_1,_0state_type_0,_color_f2___value_=_1
+ structure_left1_1,_1state_type_0,_color_f2___value_=_1
+ structure_left1_1,_2state_type_0,_color_f2___value_=_1
+ structure_left1_1,_3state_type_0,_color_f2___value_=_1
+ structure_left1_1,_4state_type_0,_color_f2___value_=_1
+ structure_left1_1,_5state_type_0,_color_f2___value_=_1
+ structure_left1_1,_6state_type_0,_color_f2___value_=_1
+ structure_left1_1,_7state_type_0,_color_f2___value_=_1
+ structure_left1_1,_8state_type_0,_color_f2___value_=_1
+ structure_left1_1,_9state_type_0,_color_f2___value_=_1
+ structure_left1_1,_10state_type_0,_color_f2___value_=_1
+ structure_left1_1,_11state_type_0,_color_f2___value_=_1
+ structure_left1_1,_12state_type_0,_color_f2___value_=_1
+ structure_left1_1,_13state_type_0,_color_f2___value_=_1
+ structure_left1_1,_14state_type_0,_color_f2___value_=_1
+ structure_left1_1,_15state_type_0,_color_f2___value_=_1
+ structure_left1_2,_0state_type_0,_color_f2___value_=_1
+ structure_left1_2,_1state_type_0,_color_f2___value_=_1
+ structure_left1_2,_2state_type_0,_color_f2___value_=_1
+ structure_left1_2,_3state_type_0,_color_f2___value_=_1
+ structure_left1_2,_4state_type_0,_color_f2___value_=_1
+ structure_left1_2,_5state_type_0,_color_f2___value_=_1
+ structure_left1_2,_6state_type_0,_color_f2___value_=_1
+ structure_left1_2,_7state_type_0,_color_f2___value_=_1
+ structure_left1_2,_8state_type_0,_color_f2___value_=_1
+ structure_left1_2,_9state_type_0,_color_f2___value_=_1
+ structure_left1_2,_10state_type_0,_color_f2___value_=_1
+ structure_left1_2,_11state_type_0,_color_f2___value_=_1
+ structure_left1_2,_12state_type_0,_color_f2___value_=_1
+ structure_left1_2,_13state_type_0,_color_f2___value_=_1
+ structure_left1_2,_14state_type_0,_color_f2___value_=_1
+ structure_left1_2,_15state_type_0,_color_f2___value_=_1
  up_left_state_8_0,_0___value_=_2 up_left_state_1_0,_0___value_=_2
  up_left_state_8_0,_1___value_=_2 up_left_state_1_0,_1___value_=_2
  up_left_state_8_0,_2___value_=_2 up_left_state_1_0,_2___value_=_2
@@ -732,22 +454,6 @@ Binaries
  up_left_state_8_0,_13___value_=_2 up_left_state_1_0,_13___value_=_2
  up_left_state_8_0,_14___value_=_2 up_left_state_1_0,_14___value_=_2
  up_left_state_8_0,_15___value_=_2 up_left_state_1_0,_15___value_=_2
- up_left_state_8_0,_16___value_=_2 up_left_state_1_0,_16___value_=_2
- up_left_state_8_0,_17___value_=_2 up_left_state_1_0,_17___value_=_2
- up_left_state_8_0,_18___value_=_2 up_left_state_1_0,_18___value_=_2
- up_left_state_8_0,_19___value_=_2 up_left_state_1_0,_19___value_=_2
- up_left_state_8_0,_20___value_=_2 up_left_state_1_0,_20___value_=_2
- up_left_state_8_0,_21___value_=_2 up_left_state_1_0,_21___value_=_2
- up_left_state_8_0,_22___value_=_2 up_left_state_1_0,_22___value_=_2
- up_left_state_8_0,_23___value_=_2 up_left_state_1_0,_23___value_=_2
- up_left_state_8_0,_24___value_=_2 up_left_state_1_0,_24___value_=_2
- up_left_state_8_0,_25___value_=_2 up_left_state_1_0,_25___value_=_2
- up_left_state_8_0,_26___value_=_2 up_left_state_1_0,_26___value_=_2
- up_left_state_8_0,_27___value_=_2 up_left_state_1_0,_27___value_=_2
- up_left_state_8_0,_28___value_=_2 up_left_state_1_0,_28___value_=_2
- up_left_state_8_0,_29___value_=_2 up_left_state_1_0,_29___value_=_2
- up_left_state_8_0,_30___value_=_2 up_left_state_1_0,_30___value_=_2
- up_left_state_8_0,_31___value_=_2 up_left_state_1_0,_31___value_=_2
  up_left_state_8_1,_0___value_=_2 up_left_state_1_1,_0___value_=_2
  up_left_state_8_1,_1___value_=_2 up_left_state_1_1,_1___value_=_2
  up_left_state_8_1,_2___value_=_2 up_left_state_1_1,_2___value_=_2
@@ -764,22 +470,6 @@ Binaries
  up_left_state_8_1,_13___value_=_2 up_left_state_1_1,_13___value_=_2
  up_left_state_8_1,_14___value_=_2 up_left_state_1_1,_14___value_=_2
  up_left_state_8_1,_15___value_=_2 up_left_state_1_1,_15___value_=_2
- up_left_state_8_1,_16___value_=_2 up_left_state_1_1,_16___value_=_2
- up_left_state_8_1,_17___value_=_2 up_left_state_1_1,_17___value_=_2
- up_left_state_8_1,_18___value_=_2 up_left_state_1_1,_18___value_=_2
- up_left_state_8_1,_19___value_=_2 up_left_state_1_1,_19___value_=_2
- up_left_state_8_1,_20___value_=_2 up_left_state_1_1,_20___value_=_2
- up_left_state_8_1,_21___value_=_2 up_left_state_1_1,_21___value_=_2
- up_left_state_8_1,_22___value_=_2 up_left_state_1_1,_22___value_=_2
- up_left_state_8_1,_23___value_=_2 up_left_state_1_1,_23___value_=_2
- up_left_state_8_1,_24___value_=_2 up_left_state_1_1,_24___value_=_2
- up_left_state_8_1,_25___value_=_2 up_left_state_1_1,_25___value_=_2
- up_left_state_8_1,_26___value_=_2 up_left_state_1_1,_26___value_=_2
- up_left_state_8_1,_27___value_=_2 up_left_state_1_1,_27___value_=_2
- up_left_state_8_1,_28___value_=_2 up_left_state_1_1,_28___value_=_2
- up_left_state_8_1,_29___value_=_2 up_left_state_1_1,_29___value_=_2
- up_left_state_8_1,_30___value_=_2 up_left_state_1_1,_30___value_=_2
- up_left_state_8_1,_31___value_=_2 up_left_state_1_1,_31___value_=_2
  up_left_state_8_2,_0___value_=_2 up_left_state_1_2,_0___value_=_2
  up_left_state_8_2,_1___value_=_2 up_left_state_1_2,_1___value_=_2
  up_left_state_8_2,_2___value_=_2 up_left_state_1_2,_2___value_=_2
@@ -796,22 +486,6 @@ Binaries
  up_left_state_8_2,_13___value_=_2 up_left_state_1_2,_13___value_=_2
  up_left_state_8_2,_14___value_=_2 up_left_state_1_2,_14___value_=_2
  up_left_state_8_2,_15___value_=_2 up_left_state_1_2,_15___value_=_2
- up_left_state_8_2,_16___value_=_2 up_left_state_1_2,_16___value_=_2
- up_left_state_8_2,_17___value_=_2 up_left_state_1_2,_17___value_=_2
- up_left_state_8_2,_18___value_=_2 up_left_state_1_2,_18___value_=_2
- up_left_state_8_2,_19___value_=_2 up_left_state_1_2,_19___value_=_2
- up_left_state_8_2,_20___value_=_2 up_left_state_1_2,_20___value_=_2
- up_left_state_8_2,_21___value_=_2 up_left_state_1_2,_21___value_=_2
- up_left_state_8_2,_22___value_=_2 up_left_state_1_2,_22___value_=_2
- up_left_state_8_2,_23___value_=_2 up_left_state_1_2,_23___value_=_2
- up_left_state_8_2,_24___value_=_2 up_left_state_1_2,_24___value_=_2
- up_left_state_8_2,_25___value_=_2 up_left_state_1_2,_25___value_=_2
- up_left_state_8_2,_26___value_=_2 up_left_state_1_2,_26___value_=_2
- up_left_state_8_2,_27___value_=_2 up_left_state_1_2,_27___value_=_2
- up_left_state_8_2,_28___value_=_2 up_left_state_1_2,_28___value_=_2
- up_left_state_8_2,_29___value_=_2 up_left_state_1_2,_29___value_=_2
- up_left_state_8_2,_30___value_=_2 up_left_state_1_2,_30___value_=_2
- up_left_state_8_2,_31___value_=_2 up_left_state_1_2,_31___value_=_2
  up_left_state_8_3,_0___value_=_2 up_left_state_1_3,_0___value_=_2
  up_left_state_8_3,_1___value_=_2 up_left_state_1_3,_1___value_=_2
  up_left_state_8_3,_2___value_=_2 up_left_state_1_3,_2___value_=_2
@@ -828,78 +502,6 @@ Binaries
  up_left_state_8_3,_13___value_=_2 up_left_state_1_3,_13___value_=_2
  up_left_state_8_3,_14___value_=_2 up_left_state_1_3,_14___value_=_2
  up_left_state_8_3,_15___value_=_2 up_left_state_1_3,_15___value_=_2
- up_left_state_8_3,_16___value_=_2 up_left_state_1_3,_16___value_=_2
- up_left_state_8_3,_17___value_=_2 up_left_state_1_3,_17___value_=_2
- up_left_state_8_3,_18___value_=_2 up_left_state_1_3,_18___value_=_2
- up_left_state_8_3,_19___value_=_2 up_left_state_1_3,_19___value_=_2
- up_left_state_8_3,_20___value_=_2 up_left_state_1_3,_20___value_=_2
- up_left_state_8_3,_21___value_=_2 up_left_state_1_3,_21___value_=_2
- up_left_state_8_3,_22___value_=_2 up_left_state_1_3,_22___value_=_2
- up_left_state_8_3,_23___value_=_2 up_left_state_1_3,_23___value_=_2
- up_left_state_8_3,_24___value_=_2 up_left_state_1_3,_24___value_=_2
- up_left_state_8_3,_25___value_=_2 up_left_state_1_3,_25___value_=_2
- up_left_state_8_3,_26___value_=_2 up_left_state_1_3,_26___value_=_2
- up_left_state_8_3,_27___value_=_2 up_left_state_1_3,_27___value_=_2
- up_left_state_8_3,_28___value_=_2 up_left_state_1_3,_28___value_=_2
- up_left_state_8_3,_29___value_=_2 up_left_state_1_3,_29___value_=_2
- up_left_state_8_3,_30___value_=_2 up_left_state_1_3,_30___value_=_2
- up_left_state_8_3,_31___value_=_2 up_left_state_1_3,_31___value_=_2
- up_left_state_8_4,_0___value_=_2 up_left_state_1_4,_0___value_=_2
- up_left_state_8_4,_1___value_=_2 up_left_state_1_4,_1___value_=_2
- up_left_state_8_4,_2___value_=_2 up_left_state_1_4,_2___value_=_2
- up_left_state_8_4,_3___value_=_2 up_left_state_1_4,_3___value_=_2
- up_left_state_8_4,_4___value_=_2 up_left_state_1_4,_4___value_=_2
- up_left_state_8_4,_5___value_=_2 up_left_state_1_4,_5___value_=_2
- up_left_state_8_4,_6___value_=_2 up_left_state_1_4,_6___value_=_2
- up_left_state_8_4,_7___value_=_2 up_left_state_1_4,_7___value_=_2
- up_left_state_8_4,_8___value_=_2 up_left_state_1_4,_8___value_=_2
- up_left_state_8_4,_9___value_=_2 up_left_state_1_4,_9___value_=_2
- up_left_state_8_4,_10___value_=_2 up_left_state_1_4,_10___value_=_2
- up_left_state_8_4,_11___value_=_2 up_left_state_1_4,_11___value_=_2
- up_left_state_8_4,_12___value_=_2 up_left_state_1_4,_12___value_=_2
- up_left_state_8_4,_13___value_=_2 up_left_state_1_4,_13___value_=_2
- up_left_state_8_4,_14___value_=_2 up_left_state_1_4,_14___value_=_2
- up_left_state_8_4,_15___value_=_2 up_left_state_1_4,_15___value_=_2
- up_left_state_8_4,_16___value_=_2 up_left_state_1_4,_16___value_=_2
- up_left_state_8_4,_17___value_=_2 up_left_state_1_4,_17___value_=_2
- up_left_state_8_4,_18___value_=_2 up_left_state_1_4,_18___value_=_2
- up_left_state_8_4,_19___value_=_2 up_left_state_1_4,_19___value_=_2
- up_left_state_8_4,_20___value_=_2 up_left_state_1_4,_20___value_=_2
- up_left_state_8_4,_21___value_=_2 up_left_state_1_4,_21___value_=_2
- up_left_state_8_4,_22___value_=_2 up_left_state_1_4,_22___value_=_2
- up_left_state_8_4,_23___value_=_2 up_left_state_1_4,_23___value_=_2
- up_left_state_8_4,_24___value_=_2 up_left_state_1_4,_24___value_=_2
- up_left_state_8_4,_25___value_=_2 up_left_state_1_4,_25___value_=_2
- up_left_state_8_4,_26___value_=_2 up_left_state_1_4,_26___value_=_2
- up_left_state_8_4,_27___value_=_2 up_left_state_1_4,_27___value_=_2
- up_left_state_8_4,_28___value_=_2 up_left_state_1_4,_28___value_=_2
- up_left_state_8_4,_29___value_=_2 up_left_state_1_4,_29___value_=_2
- up_left_state_8_4,_30___value_=_2 up_left_state_1_4,_30___value_=_2
- up_left_state_8_4,_31___value_=_2 up_left_state_1_4,_31___value_=_2
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
- binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
  binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
  binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}
  binary_time_complexity_up_f{i} binary_time_complexity_up_f{i}

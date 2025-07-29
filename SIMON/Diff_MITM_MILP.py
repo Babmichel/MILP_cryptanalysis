@@ -559,14 +559,14 @@ def diff_mitm_SIMON():
         
         for round, bit in product(range(MITM_down_size-1), range(state_size)):
                 model.addConstr(down_AND1_equation[round, bit, 0] == gp.and_(down_right_equation[round, (bit+8)%state_size, 0], key[structure_size+MITM_down_size+distinguisher_size+round, (bit+8)%state_size, 1]))
-                model.addConstr(down_AND1_equation[round, bit, 2]==down_left_equation[round, (bit+8)%state_size, 2])
+                model.addConstr(down_AND1_equation[round, bit, 2]==down_right_equation[round, (bit+8)%state_size, 2])
 
                 model.addConstr(down_AND1_statetest_equation[round, bit, 0]==gp.or_(down_AND1_equation[round, bit, 0], down_left_state_8[round, bit, 2]))
                 model.addConstr((down_AND1_statetest_equation[round, bit, 1]==1)>>(down_AND1_equation[round, bit, 1]==1))
                 model.addConstr((down_AND1_statetest_equation[round, bit, 2]==1)>>(down_AND1_equation[round, bit, 2]==1))
 
                 model.addConstr(down_AND2_equation[round, bit, 0] == gp.and_(down_right_equation[round, (bit+1)%state_size, 0], key[structure_size+MITM_down_size+distinguisher_size+round, (bit+1)%state_size, 1]))
-                model.addConstr(down_AND2_equation[round, bit, 2]==down_left_equation[round, (bit+1)%state_size, 2])
+                model.addConstr(down_AND2_equation[round, bit, 2]==down_right_equation[round, (bit+1)%state_size, 2])
 
                 model.addConstr(down_AND2_statetest_equation[round, bit, 0]==gp.or_(down_AND2_equation[round, bit, 0], down_left_state_1[round, bit, 2]))
                 model.addConstr((down_AND2_statetest_equation[round, bit, 1]==1)>>(down_AND2_equation[round, bit, 1]==1))

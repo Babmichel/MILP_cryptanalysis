@@ -147,6 +147,8 @@ def diff_mitm_SIMON():
         up_right2_equation = np.zeros([MITM_up_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
         up_AND1_equation = np.zeros([MITM_up_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
         up_AND2_equation = np.zeros([MITM_up_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
+        up_AND1_statetest_equation = np.zeros([MITM_up_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
+        up_AND2_statetest_equation = np.zeros([MITM_up_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
         
         down_left_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
         down_right_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
@@ -154,6 +156,8 @@ def diff_mitm_SIMON():
         down_right2_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
         down_AND1_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
         down_AND2_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
+        down_AND1_statetest_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
+        down_AND2_statetest_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
         
         ### MILP Variable initialisation ###
         for round, bit, value in product(range(total_round), range(subkey_size), range(2)):
@@ -183,6 +187,8 @@ def diff_mitm_SIMON():
                         down_right2_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'down_right2_equation{round}, {bit} : value = {value}')
                         down_AND1_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'down_AND1_equation{round}, {bit} : value = {value}')
                         down_AND2_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'down_AND2_equation{round}, {bit} : value = {value}')
+                        down_AND1_statetest_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'down_AND1_statetest_equation{round}, {bit} : value = {value}')
+                        down_AND2_statetest_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'down_AND2_statetest_equation{round}, {bit} : value = {value}')
                         
                         down_right_difference[round, bit ,value] = model.addVar(vtype = GRB.BINARY, name = f'down_right difference {round}, {bit} : value = {value}')
                         down_left_difference[round, bit ,value] = model.addVar(vtype = GRB.BINARY, name = f'down_left difference {round}, {bit} : value = {value}')
@@ -209,6 +215,8 @@ def diff_mitm_SIMON():
                         up_right2_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'up_right2_equation{round}, {bit} : value = {value}')
                         up_AND1_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'up_AND1_equation{round}, {bit} : value = {value}')
                         up_AND2_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'up_AND2_equation{round}, {bit} : value = {value}')
+                        up_AND1_statetest_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'up_AND1_statetest_equation{round}, {bit} : value = {value}')
+                        up_AND2_statetest_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'up_AND2_statetest_equation{round}, {bit} : value = {value}')
                         
                         up_right_difference[round, bit ,value] = model.addVar(vtype = GRB.BINARY, name = f'up_right difference {round}, {bit} : value = {value}')
                         up_left_difference[round, bit ,value] = model.addVar(vtype = GRB.BINARY, name = f'up_left difference {round}, {bit} : value = {value}')
@@ -252,8 +260,8 @@ def diff_mitm_SIMON():
         state_test_up_quantity = gp.quicksum(up_left_state_1[round, bit, 2] for round, bit in product(range(MITM_up_size), range(state_size))) + gp.quicksum(up_left_state_8[round, bit, 2] for round, bit in product(range(MITM_up_size), range(state_size)))
         probabilistic_key_recovery_up = gp.quicksum(up_left_difference_AND[round, bit, 2] for round, bit in product(range(MITM_up_size), range(state_size)))
         
-        filtered_state_test_up = gp.quicksum(up_left_state_1[round, bit, 2]*up_left_equation[round, (bit-1)%state_size, 1] for round, bit in product(range(MITM_up_size), range(state_size))) + gp.quicksum((up_left_state_8[round, bit, 2]*up_left_equation[round, (bit-8)%state_size, 1]) for round, bit in product(range(MITM_up_size), range(state_size)))
-        filtered_state_test_down = gp.quicksum(down_left_state_1[round, bit, 2]*down_left_equation[round, (bit-1)%state_size, 1] for round, bit in product(range(MITM_down_size), range(state_size))) + gp.quicksum((down_left_state_8[round, bit, 2]*down_left_equation[round, (bit-8)%state_size, 1]) for round, bit in product(range(MITM_down_size), range(state_size)))
+        filtered_state_test_up = gp.quicksum(up_left_state_1[round, bit, 2]*(1-up_AND2_equation[round, bit, 2]) for round, bit in product(range(MITM_up_size), range(state_size))) + gp.quicksum((up_left_state_8[round, bit, 2]*(1-up_AND1_equation[round, bit, 2])) for round, bit in product(range(MITM_up_size), range(state_size)))
+        filtered_state_test_down = gp.quicksum(down_left_state_1[round, bit, 2]*(1-down_AND2_equation[round, bit, 2]) for round, bit in product(range(MITM_down_size), range(state_size))) + gp.quicksum((down_left_state_8[round, bit, 2]*(1-down_AND1_equation[round, bit, 2])) for round, bit in product(range(MITM_down_size), range(state_size)))
         
         if not state_test :
                 model.addConstr(state_test_up_quantity == 0, name="State test limit")
@@ -295,7 +303,7 @@ def diff_mitm_SIMON():
         model.addConstr(distinguisher_probability + probabilistic_key_recovery_down + probabilistic_key_recovery_up <= 2*state_size)
 
         model.setObjectiveN(complexity, 0, 2, abstol=1e-9)
-        model.setObjectiveN(m_complexity, 1, 2, abstol=1e-9)
+        #model.setObjectiveN(m_complexity, 1, 2, abstol=1e-9)
         #model.setObjectiveN(complexity_match, 1, 50)
         #model.setObjectiveN(state_test_up_quantity + state_test_down_quantity, 2, 25)
 
@@ -510,21 +518,36 @@ def diff_mitm_SIMON():
                 model.addConstr(up_right_equation[1, bit, 0]==1)
         
         for round, bit in product(range(1, MITM_up_size), range(state_size)):
-                model.addConstr(up_AND1_equation[round, bit, 0]==gp.and_(key[structure_size+round, (bit-8)%state_size, 1], up_left_equation[round, (bit-8)%state_size, 0]))
-                model.addConstr(up_AND2_equation[round, bit, 0]==gp.and_(key[structure_size+round, (bit-1)%state_size, 1], up_left_equation[round, (bit-1)%state_size, 0]))
-                model.addConstr((up_left_equation[round, (bit-8)%state_size, 2] == 1) >> (up_AND1_equation[round, bit, 2] == 1))
-                model.addConstr((up_left_equation[round, (bit-1)%state_size, 2] == 1) >> (up_AND2_equation[round, bit, 2] == 1))
-                model.addConstr(up_AND_equation[round, bit, 0]==gp.and_(up_AND1_equation[round, bit, 0], up_AND2_equation[round, bit, 0]))
-                model.addConstr((up_AND_equation[round, bit, 2] == 1) >> (2*up_AND1_equation[round, bit, 2] + 2*up_AND2_equation[round, bit, 2] + up_AND1_equation[round, bit, 2] + up_AND2_equation[round, bit, 1] >= 2))
-                model.addConstr(up_right2_equation[round, bit, 2]==gp.or_(up_right_equation[round, bit, 2], up_left_equation[round, (bit-2)%state_size, 2], up_AND_equation[round, bit, 2]))
-                model.addConstr(up_right2_equation[round, bit, 0]==gp.and_(up_right_equation[round, bit, 0], up_left_equation[round, (bit-2)%state_size, 0], up_AND_equation[round, bit, 0]))
+                
+                model.addConstr(up_AND1_equation[round, bit, 0] == gp.and_(up_left_equation[round, (bit+8)%state_size, 0], key[structure_size+round, (bit+8)%state_size, 1]))
+                model.addConstr(up_AND1_equation[round, bit, 2]==up_left_equation[round, (bit+8)%state_size, 2])
 
-        for round, bit in product(range(1, MITM_up_size-1), range(state_size)):
-                model.addConstr(up_left_equation[round+1, bit, 0] == gp.or_(up_right2_equation[round, bit, 0], up_left_state_8[round, (bit+8)%state_size, 2], up_left_state_1[round, (bit+1)%state_size, 2]))
-                model.addConstr((up_left_equation[round+1, bit, 1]==1) >> (up_right2_equation[round, bit, 1] == 1))
-                model.addConstr((up_left_equation[round+1, bit, 2]==1) >> (up_right2_equation[round, bit, 2] == 1))
-                for type_equation in range(3):
-                        model.addConstr(up_right_equation[round+1, bit, type_equation] == up_left_equation[round, bit, type_equation])
+                model.addConstr(up_AND1_statetest_equation[round, bit, 0]==gp.or_(up_AND1_equation[round, bit, 0], up_left_state_8[round, bit, 2]))
+                model.addConstr((up_AND1_statetest_equation[round, bit, 1]==1)>>(up_AND1_equation[round, bit, 1]==1))
+                model.addConstr((up_AND1_statetest_equation[round, bit, 2]==1)>>(up_AND1_equation[round, bit, 2]==1))
+
+                model.addConstr(up_AND2_equation[round, bit, 0] == gp.and_(up_left_equation[round, (bit+1)%state_size, 0], key[structure_size+round, (bit+1)%state_size, 1]))
+                model.addConstr(up_AND2_equation[round, bit, 2]==up_left_equation[round, (bit+1)%state_size, 2])
+
+                model.addConstr(up_AND2_statetest_equation[round, bit, 0]==gp.or_(up_AND2_equation[round, bit, 0], up_left_state_1[round, bit, 2]))
+                model.addConstr((up_AND2_statetest_equation[round, bit, 1]==1)>>(up_AND2_equation[round, bit, 1]==1))
+                model.addConstr((up_AND2_statetest_equation[round, bit, 2]==1)>>(up_AND2_equation[round, bit, 2]==1))
+        
+                model.addConstr((up_AND_equation[round, bit, 1] == 1) >> (up_AND1_statetest_equation[round, bit, 0] + up_AND2_statetest_equation[round, bit, 0] >=1))
+
+                model.addConstr((up_AND_equation[round, bit, 2] == 1) >> (2*up_AND1_statetest_equation[round, bit, 2] + 2*up_AND2_statetest_equation[round, bit, 2] + up_AND1_statetest_equation[round, bit, 1] + up_AND2_statetest_equation[round, bit, 1] >=2))
+               
+                model.addConstr((up_AND2_statetest_equation[round, bit, 2] == 1) >> (up_AND_equation[round, bit, 2] == 1))
+                model.addConstr((up_AND1_statetest_equation[round, bit, 2] == 1) >> (up_AND_equation[round, bit, 2] == 1))
+                
+                model.addConstr(up_AND_equation[round, bit, 0]==gp.and_(up_AND1_statetest_equation[round, bit, 0], up_AND2_statetest_equation[round, bit, 0]))
+                
+                model.addConstr(up_right2_equation[round, bit, 2]==gp.or_(up_right_equation[round, bit, 2], up_left_equation[round, (bit+2)%state_size, 2], up_AND_equation[round, bit, 2]))
+                model.addConstr(up_right2_equation[round, bit, 0]==gp.and_(up_right_equation[round, bit, 0], up_left_equation[round, (bit+2)%state_size, 0], up_AND_equation[round, bit, 0]))
+
+        for round, bit, type_equation in product(range(1, MITM_up_size), range(state_size), range(3)):
+                model.addConstr(up_right_equation[round, bit, type_equation] == up_left_equation[round-1, bit, type_equation])
+                model.addConstr(up_left_equation[round, bit, type_equation] == up_right2_equation[round-1, bit, type_equation])
 
         ### down propagation 
         
@@ -532,23 +555,37 @@ def diff_mitm_SIMON():
         for bit in range(state_size):
                 model.addConstr(down_left_equation[MITM_down_size-2, bit, 0]==1)
                 model.addConstr(down_right_equation[MITM_down_size-2, bit, 0]==1)
-        
-        for round, bit in product(range(0, MITM_down_size-2), range(state_size)):
-                model.addConstr(down_AND1_equation[round, bit, 0]==gp.and_(key[structure_size+MITM_up_size+distinguisher_size+round, (bit-8)%state_size, 1], down_left_equation[round, (bit-8)%state_size, 0]))
-                model.addConstr(down_AND2_equation[round, bit, 0]==gp.and_(key[structure_size+MITM_up_size+distinguisher_size+round, (bit-1)%state_size, 1], down_left_equation[round, (bit-1)%state_size, 0]))
-                model.addConstr((down_left_equation[round, (bit-8)%state_size, 2] == 1) >> (down_AND1_equation[round, bit, 2] == 1))
-                model.addConstr((down_left_equation[round, (bit-1)%state_size, 2] == 1) >> (down_AND2_equation[round, bit, 2] == 1))
-                model.addConstr(down_AND_equation[round, bit, 0]==gp.and_(down_AND1_equation[round, bit, 0], down_AND2_equation[round, bit, 0]))
-                model.addConstr((down_AND_equation[round, bit, 2] == 1) >> (2*down_AND1_equation[round, bit, 2] + 2*down_AND2_equation[round, bit, 2] + down_AND1_equation[round, bit, 2] + down_AND2_equation[round, bit, 1] >= 2))
-                model.addConstr(down_right2_equation[round, bit, 2]==gp.or_(down_right_equation[round, bit, 2], down_left_equation[round, (bit-2)%state_size, 2], down_AND_equation[round, bit, 2]))
-                model.addConstr(down_right2_equation[round, bit, 0]==gp.and_(down_right_equation[round, bit, 0], down_left_equation[round, (bit-2)%state_size, 0], down_AND_equation[round, bit, 0]))
 
-        for round, bit in product(range(1, MITM_down_size-1), range(state_size)):
-                model.addConstr(down_left_equation[round-1, bit, 0] == gp.or_(down_right2_equation[round, bit, 0], down_left_state_8[round, (bit+8)%state_size, 2], down_left_state_1[round, (bit+1)%state_size, 2]))
-                model.addConstr((down_left_equation[round-1, bit, 1]==1) >> (down_right2_equation[round, bit, 1] == 1))
-                model.addConstr((down_left_equation[round-1, bit, 2]==1) >> (down_right2_equation[round, bit, 2] == 1))
+        
+        for round, bit in product(range(MITM_down_size-1), range(state_size)):
+                model.addConstr(down_AND1_equation[round, bit, 0] == gp.and_(down_right_equation[round, (bit+8)%state_size, 0], key[structure_size+MITM_down_size+distinguisher_size+round, (bit+8)%state_size, 1]))
+                model.addConstr(down_AND1_equation[round, bit, 2]==down_left_equation[round, (bit+8)%state_size, 2])
+
+                model.addConstr(down_AND1_statetest_equation[round, bit, 0]==gp.or_(down_AND1_equation[round, bit, 0], down_left_state_8[round, bit, 2]))
+                model.addConstr((down_AND1_statetest_equation[round, bit, 1]==1)>>(down_AND1_equation[round, bit, 1]==1))
+                model.addConstr((down_AND1_statetest_equation[round, bit, 2]==1)>>(down_AND1_equation[round, bit, 2]==1))
+
+                model.addConstr(down_AND2_equation[round, bit, 0] == gp.and_(down_right_equation[round, (bit+1)%state_size, 0], key[structure_size+MITM_down_size+distinguisher_size+round, (bit+1)%state_size, 1]))
+                model.addConstr(down_AND2_equation[round, bit, 2]==down_left_equation[round, (bit+1)%state_size, 2])
+
+                model.addConstr(down_AND2_statetest_equation[round, bit, 0]==gp.or_(down_AND2_equation[round, bit, 0], down_left_state_1[round, bit, 2]))
+                model.addConstr((down_AND2_statetest_equation[round, bit, 1]==1)>>(down_AND2_equation[round, bit, 1]==1))
+                model.addConstr((down_AND2_statetest_equation[round, bit, 2]==1)>>(down_AND2_equation[round, bit, 2]==1))
+                
+                model.addConstr(down_AND_equation[round, bit, 0]==gp.and_(down_AND1_statetest_equation[round, bit, 0], down_AND2_statetest_equation[round, bit, 0]))
+                model.addConstr((down_AND2_statetest_equation[round, bit, 2] == 1) >> (down_AND_equation[round, bit, 2] == 1))
+                
+                model.addConstr((down_AND1_statetest_equation[round, bit, 2] == 1) >> (down_AND_equation[round, bit, 2] == 1))
+                model.addConstr((down_AND_equation[round, bit, 2] == 1) >> (2*down_AND1_statetest_equation[round, bit, 2] + 2*down_AND2_statetest_equation[round, bit, 2] + down_AND1_statetest_equation[round, bit, 1] + down_AND2_statetest_equation[round, bit, 1] >=2))
+               
+                model.addConstr((down_AND_equation[round, bit, 1] == 1) >> (down_AND1_statetest_equation[round, bit, 0] + down_AND2_statetest_equation[round, bit, 0] >=1))
+                model.addConstr(down_right2_equation[round, bit, 2]==gp.or_(down_left_equation[round, bit, 2], down_right_equation[round, (bit-2)%state_size, 2], down_AND_equation[round, bit, 2]))
+                model.addConstr(down_right2_equation[round, bit, 0]==gp.and_(down_left_equation[round, bit, 0], down_right_equation[round, (bit-2)%state_size, 0], down_AND_equation[round, bit, 0]))
+
+        for round, bit in product(range(MITM_down_size-1), range(state_size)):
                 for type_equation in range(3):
-                        model.addConstr(down_right_equation[round-1, bit, type_equation] == down_left_equation[round, bit, type_equation])
+                        model.addConstr(down_right_equation[round, bit, type_equation] == down_right2_equation[round+1, bit, type_equation])
+                        model.addConstr(down_left_equation[round, bit, type_equation] == down_right_equation[round+1, bit, type_equation])
         
         
         ### unique value constraints ###
@@ -569,6 +606,8 @@ def diff_mitm_SIMON():
                 model.addConstr(gp.quicksum(down_AND_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND down')
                 model.addConstr(gp.quicksum(down_AND1_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND1 down')
                 model.addConstr(gp.quicksum(down_AND2_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND2 down')   
+                model.addConstr(gp.quicksum(down_AND1_statetest_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND1 statetest down')
+                model.addConstr(gp.quicksum(down_AND2_statetest_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND2 statetest down')   
                 model.addConstr(gp.quicksum(down_left_difference[round, bit, value] for value in range(3)) == 1, name = f"unique value down left difference")
                 model.addConstr(gp.quicksum(down_left_difference_AND[round, bit, value] for value in range(3)) == 1, name = f"unique value down left difference AND")
                 model.addConstr(gp.quicksum(down_left_difference_XOR[round, bit, value] for value in range(3)) == 1, name = f"unique value down left difference XOR")
@@ -589,6 +628,8 @@ def diff_mitm_SIMON():
                 model.addConstr(gp.quicksum(up_AND_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND up')
                 model.addConstr(gp.quicksum(up_AND1_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND1 up')
                 model.addConstr(gp.quicksum(up_AND2_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND2 up')   
+                model.addConstr(gp.quicksum(up_AND1_statetest_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND1 statetest up')
+                model.addConstr(gp.quicksum(up_AND2_statetest_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND2 statetest up')   
                 model.addConstr(gp.quicksum(up_left_difference[round, bit, value] for value in range(3)) == 1, name = f"unique value up left difference")
                 model.addConstr(gp.quicksum(up_left_difference_AND[round, bit, value] for value in range(3)) == 1, name = f"unique value up left difference AND")
                 model.addConstr(gp.quicksum(up_left_difference_XOR[round, bit, value] for value in range(3)) == 1, name = f"unique value up left difference XOR")
@@ -636,6 +677,22 @@ def diff_mitm_SIMON():
                                         print ("||", end="")
                         print("\033[90m R1")
                         for bit in range(state_size):
+                                if key[structure_size + round, (bit-8)%state_size, 0].X == 1:
+                                        print(f"\033[90m 0 ", end="")
+                                if key[structure_size + round, (bit-8)%state_size, 1].X == 1:
+                                        print(f"\033[93m 1 ", end="")
+                                if (bit+1)%4 == 0 :
+                                        print ("||", end="")
+                        print("\033[90m K_8    ", end="")
+                        for bit in range(state_size):
+                                if key[structure_size + round, (bit+1)%state_size, 0].X == 1:
+                                        print(f"\033[90m 0 ", end="")
+                                if key[structure_size + round, (bit+1)%state_size, 1].X == 1:
+                                        print(f"\033[93m 1 ", end="")
+                                if (bit+1)%4 == 0 :
+                                        print ("||", end="")
+                        print("\033[90m K_1")
+                        for bit in range(state_size):
                                 couleur=0
                                 if up_AND1_equation[round, bit, 0].X == 1:
                                         print(f"\033[9{couleur}m 0 ", end="")
@@ -654,6 +711,30 @@ def diff_mitm_SIMON():
                                 elif up_AND2_equation[round, bit, 1].X == 1:
                                         print(f"\033[9{couleur}m L ", end="")
                                 elif up_AND2_equation[round, bit, 2].X == 1:
+                                        print(f"\033[9{couleur}m N ", end="")
+                                else : print(f"\033[9{couleur}m ? ", end="")
+                                if (bit+1)%4 == 0 :
+                                        print ("||", end="")
+                        print("\033[90m AND2")
+                        for bit in range(state_size):
+                                couleur=0
+                                if up_AND1_statetest_equation[round, bit, 0].X == 1:
+                                        print(f"\033[9{couleur}m 0 ", end="")
+                                elif up_AND1_statetest_equation[round, bit, 1].X == 1:
+                                        print(f"\033[9{couleur}m L ", end="")
+                                elif up_AND1_statetest_equation[round, bit, 2].X == 1:
+                                        print(f"\033[9{couleur}m N ", end="")
+                                else : print(f"\033[9{couleur}m ? ", end="")
+                                if (bit+1)%4 == 0 :
+                                        print ("||", end="")
+                        print("\033[90m AND1   ", end="")
+                        for bit in range(state_size):
+                                couleur=0
+                                if up_AND2_statetest_equation[round, bit, 0].X == 1:
+                                        print(f"\033[9{couleur}m 0 ", end="")
+                                elif up_AND2_statetest_equation[round, bit, 1].X == 1:
+                                        print(f"\033[9{couleur}m L ", end="")
+                                elif up_AND2_statetest_equation[round, bit, 2].X == 1:
                                         print(f"\033[9{couleur}m N ", end="")
                                 else : print(f"\033[9{couleur}m ? ", end="")
                                 if (bit+1)%4 == 0 :
@@ -683,6 +764,121 @@ def diff_mitm_SIMON():
                                 if (bit+1)%4 == 0 :
                                         print ("||", end="")
                         print("\033[90m R2")
+                for round in range(MITM_down_size):
+                        print(f"\033[90m ROUND : {round}")
+                        for bit in range(state_size):
+                                couleur=0
+                                if down_AND_equation[round, bit, 0].X == 1:
+                                        print(f"\033[9{couleur}m 0 ", end="")
+                                elif down_AND_equation[round, bit, 1].X == 1:
+                                        print(f"\033[9{couleur}m L ", end="")
+                                elif down_AND_equation[round, bit, 2].X == 1:
+                                        print(f"\033[9{couleur}m N ", end="")
+                                else : print(f"\033[9{couleur}m ? ", end="")
+                                if (bit+1)%4 == 0 :
+                                        print ("||", end="")
+                        print("\033[90m AND    ", end="")
+                        for bit in range(state_size):
+                                couleur=0
+                                if down_right2_equation[round, bit, 0].X == 1:
+                                        print(f"\033[9{couleur}m 0 ", end="")
+                                elif down_right2_equation[round, bit, 1].X == 1:
+                                        print(f"\033[9{couleur}m L ", end="")
+                                elif down_right2_equation[round, bit, 2].X == 1:
+                                        print(f"\033[9{couleur}m N ", end="")
+                                else : print(f"\033[9{couleur}m ? ", end="")
+                                if (bit+1)%4 == 0 :
+                                        print ("||", end="")
+                        print("\033[90m R2")
+                        for bit in range(state_size):
+                                couleur=0
+                                if down_AND1_statetest_equation[round, bit, 0].X == 1:
+                                        print(f"\033[9{couleur}m 0 ", end="")
+                                elif down_AND1_statetest_equation[round, bit, 1].X == 1:
+                                        print(f"\033[9{couleur}m L ", end="")
+                                elif down_AND1_statetest_equation[round, bit, 2].X == 1:
+                                        print(f"\033[9{couleur}m N ", end="")
+                                else : print(f"\033[9{couleur}m ? ", end="")
+                                if (bit+1)%4 == 0 :
+                                        print ("||", end="")
+                        print("\033[90m AND1   ", end="")
+                        for bit in range(state_size):
+                                couleur=0
+                                if down_AND2_statetest_equation[round, bit, 0].X == 1:
+                                        print(f"\033[9{couleur}m 0 ", end="")
+                                elif down_AND2_statetest_equation[round, bit, 1].X == 1:
+                                        print(f"\033[9{couleur}m L ", end="")
+                                elif down_AND2_statetest_equation[round, bit, 2].X == 1:
+                                        print(f"\033[9{couleur}m N ", end="")
+                                else : print(f"\033[9{couleur}m ? ", end="")
+                                if (bit+1)%4 == 0 :
+                                        print ("||", end="")
+                        print("\033[90m AND2")
+                        for bit in range(state_size):
+                                couleur=0
+                                if down_AND1_equation[round, bit, 0].X == 1:
+                                        print(f"\033[9{couleur}m 0 ", end="")
+                                elif down_AND1_equation[round, bit, 1].X == 1:
+                                        print(f"\033[9{couleur}m L ", end="")
+                                elif down_AND1_equation[round, bit, 2].X == 1:
+                                        print(f"\033[9{couleur}m N ", end="")
+                                else : print(f"\033[9{couleur}m ? ", end="")
+                                if (bit+1)%4 == 0 :
+                                        print ("||", end="")
+                        print("\033[90m AND1   ", end="")
+                        for bit in range(state_size):
+                                couleur=0
+                                if down_AND2_equation[round, bit, 0].X == 1:
+                                        print(f"\033[9{couleur}m 0 ", end="")
+                                elif down_AND2_equation[round, bit, 1].X == 1:
+                                        print(f"\033[9{couleur}m L ", end="")
+                                elif down_AND2_equation[round, bit, 2].X == 1:
+                                        print(f"\033[9{couleur}m N ", end="")
+                                else : print(f"\033[9{couleur}m ? ", end="")
+                                if (bit+1)%4 == 0 :
+                                        print ("||", end="")
+                        print("\033[90m AND2")
+                        for bit in range(state_size):
+                                if key[structure_size + MITM_up_size + distinguisher_size + round, (bit-8)%state_size, 0].X == 1:
+                                        print(f"\033[90m 0 ", end="")
+                                if key[structure_size + MITM_up_size + distinguisher_size + round, (bit-8)%state_size, 1].X == 1:
+                                        print(f"\033[93m 1 ", end="")
+                                if (bit+1)%4 == 0 :
+                                        print ("||", end="")
+                        print("\033[90m K_8    ", end="")
+                        for bit in range(state_size):
+                                if key[structure_size + MITM_up_size + distinguisher_size + round, (bit+1)%state_size, 0].X == 1:
+                                        print(f"\033[90m 0 ", end="")
+                                if key[structure_size + MITM_up_size + distinguisher_size + round, (bit+1)%state_size, 1].X == 1:
+                                        print(f"\033[93m 1 ", end="")
+                                if (bit+1)%4 == 0 :
+                                        print ("||", end="")
+                        print("\033[90m K_1")
+                        for bit in range(state_size):
+                                couleur=0
+                                if down_left_equation[round, bit, 0].X == 1:
+                                        print(f"\033[9{couleur}m 0 ", end="")
+                                elif down_left_equation[round, bit, 1].X == 1:
+                                        print(f"\033[9{couleur}m L ", end="")
+                                elif down_left_equation[round, bit, 2].X == 1:
+                                        print(f"\033[9{couleur}m N ", end="")
+                                else : print(f"\033[9{couleur}m ? ", end="")
+                                if (bit+1)%4 == 0 :
+                                        print ("||", end="")
+                        print("\033[90m L1     ", end="")
+                        for bit in range(state_size):
+                                couleur=0
+                                if down_right_equation[round, bit, 0].X == 1:
+                                        print(f"\033[9{couleur}m 0 ", end="")
+                                elif down_right_equation[round, bit, 1].X == 1:
+                                        print(f"\033[9{couleur}m L ", end="")
+                                elif down_right_equation[round, bit, 2].X == 1:
+                                        print(f"\033[9{couleur}m N ", end="")
+                                else : print(f"\033[9{couleur}m ? ", end="")
+                                if (bit+1)%4 == 0 :
+                                        print ("||", end="")
+                        print("\033[90m R1")
+                       
                 for round in range(structure_size):
                         print(f"\033[90m ROUND : {round}")
                         for bit in range(state_size):

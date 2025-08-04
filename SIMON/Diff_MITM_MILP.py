@@ -107,6 +107,8 @@ def diff_mitm_SIMON():
 
         up_left_state_down = np.zeros([MITM_up_size, state_size, 2], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know, 2 = state tested]
 
+        up_state_test_or = np.zeros([MITM_up_size, state_size, 2], dtype = object)
+        
         #up_differences
         up_left_difference = np.zeros([MITM_up_size, state_size, 3], dtype = object) #[round index, bit index, value : 0 = no difference, 1 = difference, 2 = unknown difference]
 
@@ -132,6 +134,8 @@ def diff_mitm_SIMON():
         down_left_state_up = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know, 2 = state tested]
 
         down_left_state_down = np.zeros([MITM_down_size, state_size, 2], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know, 2 = state tested]
+
+        down_state_test_or = np.zeros([MITM_up_size, state_size, 2], dtype = object)
 
         #down_differences
         down_left_difference = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round index, bit index, value : 0 = no difference, 1 = difference, 2 = unknown difference]
@@ -186,7 +190,7 @@ def diff_mitm_SIMON():
                         structure_AND[round, bit, state_type, color, activity] = model.addVar(vtype = GRB.BINARY, name = f'structure_AND {round}, {bit}state type:{state_type}, color:{color} : value = {activity}')
                         structure_right2[round, bit, state_type, color, activity] = model.addVar(vtype = GRB.BINARY, name = f'structure_right2 {round}, {bit}state type:{state_type}, color:{color} : value = {activity}')
                         structure_left2[round, bit, state_type, color, activity] = model.addVar(vtype = GRB.BINARY, name = f'structure_left2 {round}, {bit}state type:{state_type}, color:{color} : value = {activity}')
-                
+
                 
         for round, bit in product(range(MITM_down_size), range(state_size)): 
                 for value in range(3):
@@ -210,6 +214,7 @@ def diff_mitm_SIMON():
                         down_left_state_mid[round, bit ,value] = model.addVar(vtype = GRB.BINARY, name = f'down_left_state_mid {round}, {bit} : value = {value}')
                 
                 for value in range(2):
+                        down_state_test_or[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'down_state_test_or {value} {bit} {value}')
                         down_right_state[round, bit ,value] = model.addVar(vtype = GRB.BINARY, name = f'down_right state {round}, {bit} : value = {value}')
                         down_left_state[round, bit ,value] = model.addVar(vtype = GRB.BINARY, name = f'down_left_state {round}, {bit} : value = {value}')
                         down_left_state_down[round, bit ,value] = model.addVar(vtype = GRB.BINARY, name = f'down_left_state_down {round}, {bit} : value = {value}')
@@ -238,6 +243,7 @@ def diff_mitm_SIMON():
                         up_left_state_mid[round, bit ,value] = model.addVar(vtype = GRB.BINARY, name = f'up_left_state_mid {round}, {bit} : value = {value}')
                 
                 for value in range(2):
+                        up_state_test_or[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'up_state_test_or {round} {bit} {value}')
                         up_right_state[round, bit ,value] = model.addVar(vtype = GRB.BINARY, name = f'up_right state {round}, {bit} : value = {value}')
                         up_left_state[round, bit ,value] = model.addVar(vtype = GRB.BINARY, name = f'up_left_state {round}, {bit} : value = {value}')
                         up_left_state_down[round, bit ,value] = model.addVar(vtype = GRB.BINARY, name = f'up_left_state_down {round}, {bit} : value = {value}')
@@ -261,20 +267,18 @@ def diff_mitm_SIMON():
         binary_memory_complexity_up = {i: model.addVar(vtype=GRB.BINARY, name="binary_time_complexity_up_f{i}") for i in search_domain}
         binary_memory_complexity_down = {i: model.addVar(vtype=GRB.BINARY, name="binary_time_complexity_up_f{i}") for i in search_domain}
 
-        
-
         #Objective function
         key_quantity_up = gp.quicksum(key[round, bit, 1] for round, bit in product(range(structure_size, structure_size + MITM_up_size), range(state_size))) + gp.quicksum(key_structure[round, bit, 2] for round, bit in product(range(structure_size), range(state_size)))
         key_quantity_down = gp.quicksum(key[round, bit, 1] for round, bit in product(range(structure_size + MITM_up_size + distinguisher_size, structure_size + MITM_up_size + distinguisher_size + MITM_down_size), range(state_size))) + gp.quicksum(key_structure[round, bit, 1] for round, bit in product(range(structure_size), range(state_size)))
        
-        state_test_down_quantity = gp.quicksum(down_left_state_mid[round, bit, 2] for round, bit in product(range(MITM_down_size), range(state_size))) + gp.quicksum(down_left_state_up[round, bit, 2] for round, bit in product(range(MITM_down_size), range(state_size)))
+        state_test_down_quantity = gp.quicksum(down_state_test_or[round, bit, 1] for round in range(MITM_down_size) for bit in range(state_size))
         probabilistic_key_recovery_down = gp.quicksum(down_left_difference_AND[round, bit, 2] for round, bit in product(range(MITM_down_size), range(state_size)))        
         
-        state_test_up_quantity = gp.quicksum(up_left_state_mid[round, bit, 2] for round, bit in product(range(MITM_up_size), range(state_size))) + gp.quicksum(up_left_state_up[round, bit, 2] for round, bit in product(range(MITM_up_size), range(state_size)))
+        state_test_up_quantity = gp.quicksum(up_state_test_or[round, bit, 1] for round in range(MITM_up_size) for bit in range(state_size))
         probabilistic_key_recovery_up = gp.quicksum(up_left_difference_AND[round, bit, 2] for round, bit in product(range(MITM_up_size), range(state_size)))
         
-        filtered_state_test_up = gp.quicksum(up_left_state_mid[round, bit, 2]*(1-up_AND2_equation[round, bit, 2]) for round, bit in product(range(MITM_up_size), range(state_size))) + gp.quicksum((up_left_state_up[round, bit, 2]*(1-up_AND1_equation[round, bit, 2])) for round, bit in product(range(MITM_up_size), range(state_size)))
-        filtered_state_test_down = gp.quicksum(down_left_state_mid[round, bit, 2]*(1-down_AND2_equation[round, bit, 2]) for round, bit in product(range(MITM_down_size), range(state_size))) + gp.quicksum((down_left_state_up[round, bit, 2]*(1-down_AND1_equation[round, bit, 2])) for round, bit in product(range(MITM_down_size), range(state_size)))
+        filtered_state_test_up = gp.quicksum(up_state_test_or[round, bit, 1]*(1-up_AND2_equation[round, bit, 2]) for round, bit in product(range(MITM_up_size), range(state_size)))
+        filtered_state_test_down = gp.quicksum(down_state_test_or[round, bit, 1]*(1-down_AND2_equation[round, bit, 2]) for round, bit in product(range(MITM_down_size), range(state_size)))
         
         model.addConstr(distinguisher_probability + probabilistic_key_recovery_down + probabilistic_key_recovery_up <= 2*state_size)
 
@@ -436,6 +440,8 @@ def diff_mitm_SIMON():
                 model.addConstr((up_right_state[round, bit, 1] == 1) >> (up_left_state_down[round, (bit-dec_down)%state_size, 1]==1), name = f"up left state propa << 2 ")
                 model.addConstr((up_right_state[round, bit, 1] == 1) >> (up_left_state_up[round, (bit-dec_up)%state_size, 1]==1), name = f"up left state propa << 8 ")
 
+                model.addConstr(up_state_test_or[round, bit, 1] == gp.or_(up_left_state_up[round, (bit+dec_up)%state_size, 2], up_left_state_mid[round, (bit+dec_mid)%state_size, 2]), name="state_test_or_up")
+        
         for round, bit in product(range(1,MITM_up_size), range(state_size)):
                 #propagation to next round
                 model.addConstr((up_left_state_mid[round, bit, 1] == 1) >> (up_left_state[round-1, (bit+dec_mid)%state_size, 1] == 1), name = f"up state : L=R+1 <<1")
@@ -445,6 +451,7 @@ def diff_mitm_SIMON():
                 #Key addition
                 model.addConstr((up_left_state_mid[round, bit, 1] == 1) >> (key[structure_size + round, (bit+dec_mid)%state_size, 1] == 1), name = f"up Key state implication <<1")
                 model.addConstr((up_left_state_up[round, bit, 1] == 1) >> (key[structure_size + round, (bit+dec_up)%state_size, 1] == 1), name = f"up Key state implication <<1")
+
 
         ### Key recovery DOWN ###
         
@@ -512,6 +519,8 @@ def diff_mitm_SIMON():
                 model.addConstr((down_left_state[round, bit, 1] == 1) >> (down_left_state_down[round, (bit-dec_down)%state_size, 1]==1), name = f"down left state propa << 2 ")
                 model.addConstr((down_left_state[round, bit, 1] == 1) >> (down_left_state_up[round, (bit-dec_up)%state_size, 1]==1), name = f"down left state propa << 8 ")
 
+                model.addConstr(down_state_test_or[round, bit, 1] == gp.or_(down_left_state_up[round, (bit+dec_up)%state_size, 2], down_left_state_mid[round, (bit+dec_mid)%state_size, 2]), name="state_test_or_down")
+        
         for round, bit in product(range(MITM_down_size-1), range(state_size)):
                 #propagation to next round
                 model.addConstr((down_left_state_mid[round, bit, 1] == 1) >> (down_right_state[round+1, (bit+dec_mid)%state_size, 1] == 1), name = f"down state : L=R+1 <<1")
@@ -613,6 +622,7 @@ def diff_mitm_SIMON():
                         model.addConstr(gp.quicksum(structure_left2[round, bit, state, color, activity] for activity in range(2)) <= 1, name="structure_left2 cannot be active and inactive")
 
         for round, bit in product(range(MITM_down_size), range(state_size)):
+                model.addConstr(gp.quicksum(down_state_test_or[round, bit, value] for value in range(2))==1)
                 model.addConstr(gp.quicksum(down_left_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation left down')
                 model.addConstr(gp.quicksum(down_right_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation right down')
                 model.addConstr(gp.quicksum(down_right2_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation right2  down')
@@ -635,6 +645,7 @@ def diff_mitm_SIMON():
                 model.addConstr(gp.quicksum(down_var_for_right_XOR_1[round, bit, value] for value in range(2)) == 1, name = f"unique value down_var_for_right_XOR_1")
                 
         for round, bit in product(range(MITM_up_size), range(state_size)):
+                model.addConstr(gp.quicksum(up_state_test_or[round, bit, value] for value in range(2))==1)
                 model.addConstr(gp.quicksum(up_left_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation left up')
                 model.addConstr(gp.quicksum(up_right_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation right up')
                 model.addConstr(gp.quicksum(up_right2_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation right2  up')

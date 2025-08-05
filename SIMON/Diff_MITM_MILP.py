@@ -135,7 +135,7 @@ def diff_mitm_SIMON():
 
         down_left_state_down = np.zeros([MITM_down_size, state_size, 2], dtype = object) #[round index, bit index, value : 0 = unknow, 1 = know, 2 = state tested]
 
-        down_state_test_or = np.zeros([MITM_up_size, state_size, 2], dtype = object)
+        down_state_test_or = np.zeros([MITM_down_size, state_size, 2], dtype = object)
 
         #down_differences
         down_left_difference = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round index, bit index, value : 0 = no difference, 1 = difference, 2 = unknown difference]

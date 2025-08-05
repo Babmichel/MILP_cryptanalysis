@@ -277,8 +277,8 @@ def diff_mitm_SIMON():
         state_test_up_quantity = gp.quicksum(up_state_test_or[round, bit, 1] for round in range(MITM_up_size) for bit in range(state_size))
         probabilistic_key_recovery_up = gp.quicksum(up_left_difference_AND[round, bit, 2] for round, bit in product(range(MITM_up_size), range(state_size)))
         
-        filtered_state_test_up = gp.quicksum(up_state_test_or[round, bit, 1]*(1-up_AND2_equation[round, bit, 2]) for round, bit in product(range(MITM_up_size), range(state_size)))
-        filtered_state_test_down = gp.quicksum(down_state_test_or[round, bit, 1]*(1-down_AND2_equation[round, bit, 2]) for round, bit in product(range(MITM_down_size), range(state_size)))
+        filtered_state_test_up = gp.quicksum(up_state_test_or[round, bit, 1]*(1-up_left_equation[round, bit, 2]) for round, bit in product(range(MITM_up_size), range(state_size)))
+        filtered_state_test_down = gp.quicksum(down_state_test_or[round, bit, 1]*(1-down_left_equation[round, bit, 2]) for round, bit in product(range(MITM_down_size), range(state_size)))
         
         model.addConstr(distinguisher_probability + probabilistic_key_recovery_down + probabilistic_key_recovery_up <= 2*state_size)
 
@@ -440,7 +440,7 @@ def diff_mitm_SIMON():
                 model.addConstr((up_right_state[round, bit, 1] == 1) >> (up_left_state_down[round, (bit-dec_down)%state_size, 1]==1), name = f"up left state propa << 2 ")
                 model.addConstr((up_right_state[round, bit, 1] == 1) >> (up_left_state_up[round, (bit-dec_up)%state_size, 1]==1), name = f"up left state propa << 8 ")
 
-                model.addConstr(up_state_test_or[round, bit, 1] == gp.or_(up_left_state_up[round, (bit+dec_up)%state_size, 2], up_left_state_mid[round, (bit+dec_mid)%state_size, 2]), name="state_test_or_up")
+                model.addConstr(up_state_test_or[round, bit, 1] == gp.or_(up_left_state_up[round, (bit-dec_up)%state_size, 2], up_left_state_mid[round, (bit-dec_mid)%state_size, 2]), name="state_test_or_up")
         
         for round, bit in product(range(1,MITM_up_size), range(state_size)):
                 #propagation to next round
@@ -519,7 +519,7 @@ def diff_mitm_SIMON():
                 model.addConstr((down_left_state[round, bit, 1] == 1) >> (down_left_state_down[round, (bit-dec_down)%state_size, 1]==1), name = f"down left state propa << 2 ")
                 model.addConstr((down_left_state[round, bit, 1] == 1) >> (down_left_state_up[round, (bit-dec_up)%state_size, 1]==1), name = f"down left state propa << 8 ")
 
-                model.addConstr(down_state_test_or[round, bit, 1] == gp.or_(down_left_state_up[round, (bit+dec_up)%state_size, 2], down_left_state_mid[round, (bit+dec_mid)%state_size, 2]), name="state_test_or_down")
+                model.addConstr(down_state_test_or[round, bit, 1] == gp.or_(down_left_state_up[round, (bit-dec_up)%state_size, 2], down_left_state_mid[round, (bit-dec_mid)%state_size, 2]), name="state_test_or_down")
         
         for round, bit in product(range(MITM_down_size-1), range(state_size)):
                 #propagation to next round
@@ -674,7 +674,20 @@ def diff_mitm_SIMON():
 
         if model.Status != GRB.INFEASIBLE:
                 print("-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ Non linearity propagation for states tests -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+")
-                
+                for round in range(MITM_up_size):
+                        for bit in range(state_size):
+                                if up_state_test_or[round, bit, 1].X==1:
+                                        print(f"\033[95m 0 ", end="")
+                                else :
+                                        print(f"\033[90m 0 ", end="")
+                        print("")
+                for round in range(MITM_down_size):
+                        for bit in range(state_size):
+                                if down_state_test_or[round, bit, 1].X==1:
+                                        print(f"\033[95m 0 ", end="")
+                                else :
+                                        print(f"\033[90m 0 ", end="")
+                        print("")
                 for round in range(MITM_up_size):
                         print(f"\033[90m ROUND : {round}")
                         for bit in range(state_size):

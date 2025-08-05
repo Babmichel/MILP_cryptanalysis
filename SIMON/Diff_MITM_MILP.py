@@ -166,8 +166,8 @@ def diff_mitm_SIMON():
         down_right_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
         down_AND_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
         down_right2_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
-        down_AND1_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
-        down_AND2_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
+        down_AND_up_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
+        down_AND_mid_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
         down_AND1_statetest_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
         down_AND2_statetest_equation = np.zeros([MITM_down_size, state_size, 3], dtype = object) #[round, bit index, equation type : 0 = linear, 1 pseudo linear, 2 non linear]
         
@@ -198,8 +198,8 @@ def diff_mitm_SIMON():
                         down_right_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'down_right_equation{round}, {bit} : value = {value}')
                         down_AND_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'down_AND_equation{round}, {bit} : value = {value}')
                         down_right2_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'down_right2_equation{round}, {bit} : value = {value}')
-                        down_AND1_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'down_AND1_equation{round}, {bit} : value = {value}')
-                        down_AND2_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'down_AND2_equation{round}, {bit} : value = {value}')
+                        down_AND_up_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'down_AND_up_equation{round}, {bit} : value = {value}')
+                        down_AND_mid_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'down_AND_mid_equation{round}, {bit} : value = {value}')
                         down_AND1_statetest_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'down_AND1_statetest_equation{round}, {bit} : value = {value}')
                         down_AND2_statetest_equation[round, bit, value] = model.addVar(vtype = GRB.BINARY, name = f'down_AND2_statetest_equation{round}, {bit} : value = {value}')
                         
@@ -278,7 +278,7 @@ def diff_mitm_SIMON():
         probabilistic_key_recovery_up = gp.quicksum(up_left_difference_AND[round, bit, 2] for round, bit in product(range(MITM_up_size), range(state_size)))
         
         filtered_state_test_up = gp.quicksum(up_state_test_or[round, bit, 1]*(1-up_left_equation[round, bit, 2]) for round, bit in product(range(MITM_up_size), range(state_size)))
-        filtered_state_test_down = gp.quicksum(down_state_test_or[round, bit, 1]*(1-down_left_equation[round, bit, 2]) for round, bit in product(range(MITM_down_size), range(state_size)))
+        filtered_state_test_down = gp.quicksum(down_state_test_or[round, bit, 1]*(1-down_right_equation[round, bit, 2]) for round, bit in product(range(MITM_down_size), range(state_size)))
         
         model.addConstr(distinguisher_probability + probabilistic_key_recovery_down + probabilistic_key_recovery_up <= 2*state_size)
 
@@ -580,19 +580,19 @@ def diff_mitm_SIMON():
 
         
         for round, bit in product(range(MITM_down_size-1), range(state_size)):
-                model.addConstr(down_AND1_equation[round, bit, 0] == gp.and_(down_right_equation[round, (bit+dec_up)%state_size, 0], key[structure_size+MITM_up_size+distinguisher_size+round, (bit+dec_up)%state_size, 1]))
-                model.addConstr(down_AND1_equation[round, bit, 2]==down_right_equation[round, (bit+dec_up)%state_size, 2])
+                model.addConstr(down_AND_up_equation[round, bit, 0] == gp.and_(down_right_equation[round, (bit+dec_up)%state_size, 0], key[structure_size+MITM_up_size+distinguisher_size+round, (bit+dec_up)%state_size, 1]))
+                model.addConstr(down_AND_up_equation[round, bit, 2]==down_right_equation[round, (bit+dec_up)%state_size, 2])
 
-                model.addConstr(down_AND1_statetest_equation[round, bit, 0]==gp.or_(down_AND1_equation[round, bit, 0], down_left_state_up[round, bit, 2]))
-                model.addConstr((down_AND1_statetest_equation[round, bit, 1]==1)>>(down_AND1_equation[round, bit, 1]==1))
-                model.addConstr((down_AND1_statetest_equation[round, bit, 2]==1)>>(down_AND1_equation[round, bit, 2]==1))
+                model.addConstr(down_AND1_statetest_equation[round, bit, 0]==gp.or_(down_AND_up_equation[round, bit, 0], down_left_state_up[round, bit, 2]))
+                model.addConstr((down_AND1_statetest_equation[round, bit, 1]==1)>>(down_AND_up_equation[round, bit, 1]==1))
+                model.addConstr((down_AND1_statetest_equation[round, bit, 2]==1)>>(down_AND_up_equation[round, bit, 2]==1))
 
-                model.addConstr(down_AND2_equation[round, bit, 0] == gp.and_(down_right_equation[round, (bit+dec_mid)%state_size, 0], key[structure_size+MITM_up_size+distinguisher_size+round, (bit+dec_mid)%state_size, 1]))
-                model.addConstr(down_AND2_equation[round, bit, 2]==down_right_equation[round, (bit+dec_mid)%state_size, 2])
+                model.addConstr(down_AND_mid_equation[round, bit, 0] == gp.and_(down_right_equation[round, (bit+dec_mid)%state_size, 0], key[structure_size+MITM_up_size+distinguisher_size+round, (bit+dec_mid)%state_size, 1]))
+                model.addConstr(down_AND_mid_equation[round, bit, 2]==down_right_equation[round, (bit+dec_mid)%state_size, 2])
 
-                model.addConstr(down_AND2_statetest_equation[round, bit, 0]==gp.or_(down_AND2_equation[round, bit, 0], down_left_state_mid[round, bit, 2]))
-                model.addConstr((down_AND2_statetest_equation[round, bit, 1]==1)>>(down_AND2_equation[round, bit, 1]==1))
-                model.addConstr((down_AND2_statetest_equation[round, bit, 2]==1)>>(down_AND2_equation[round, bit, 2]==1))
+                model.addConstr(down_AND2_statetest_equation[round, bit, 0]==gp.or_(down_AND_mid_equation[round, bit, 0], down_left_state_mid[round, bit, 2]))
+                model.addConstr((down_AND2_statetest_equation[round, bit, 1]==1)>>(down_AND_mid_equation[round, bit, 1]==1))
+                model.addConstr((down_AND2_statetest_equation[round, bit, 2]==1)>>(down_AND_mid_equation[round, bit, 2]==1))
                 
                 model.addConstr(down_AND_equation[round, bit, 0]==gp.and_(down_AND1_statetest_equation[round, bit, 0], down_AND2_statetest_equation[round, bit, 0]))
                 model.addConstr((down_AND2_statetest_equation[round, bit, 2] == 1) >> (down_AND_equation[round, bit, 2] == 1))
@@ -627,8 +627,8 @@ def diff_mitm_SIMON():
                 model.addConstr(gp.quicksum(down_right_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation right down')
                 model.addConstr(gp.quicksum(down_right2_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation right2  down')
                 model.addConstr(gp.quicksum(down_AND_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND down')
-                model.addConstr(gp.quicksum(down_AND1_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND1 down')
-                model.addConstr(gp.quicksum(down_AND2_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND2 down')   
+                model.addConstr(gp.quicksum(down_AND_up_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND1 down')
+                model.addConstr(gp.quicksum(down_AND_mid_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND2 down')   
                 model.addConstr(gp.quicksum(down_AND1_statetest_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND1 statetest down')
                 model.addConstr(gp.quicksum(down_AND2_statetest_equation[round, bit, equation_type] for equation_type in range(3)) == 1, name = f'unique equation AND2 statetest down')   
                 model.addConstr(gp.quicksum(down_left_difference[round, bit, value] for value in range(3)) == 1, name = f"unique value down left difference")
@@ -855,11 +855,11 @@ def diff_mitm_SIMON():
                         print("\033[90m AND2")
                         for bit in range(state_size):
                                 couleur=0
-                                if down_AND1_equation[round, bit, 0].X == 1:
+                                if down_AND_up_equation[round, bit, 0].X == 1:
                                         print(f"\033[9{couleur}m 0 ", end="")
-                                elif down_AND1_equation[round, bit, 1].X == 1:
+                                elif down_AND_up_equation[round, bit, 1].X == 1:
                                         print(f"\033[9{couleur}m L ", end="")
-                                elif down_AND1_equation[round, bit, 2].X == 1:
+                                elif down_AND_up_equation[round, bit, 2].X == 1:
                                         print(f"\033[9{couleur}m N ", end="")
                                 else : print(f"\033[9{couleur}m ? ", end="")
                                 if (bit+1)%4 == 0 :
@@ -867,11 +867,11 @@ def diff_mitm_SIMON():
                         print("\033[90m AND1   ", end="")
                         for bit in range(state_size):
                                 couleur=0
-                                if down_AND2_equation[round, bit, 0].X == 1:
+                                if down_AND_mid_equation[round, bit, 0].X == 1:
                                         print(f"\033[9{couleur}m 0 ", end="")
-                                elif down_AND2_equation[round, bit, 1].X == 1:
+                                elif down_AND_mid_equation[round, bit, 1].X == 1:
                                         print(f"\033[9{couleur}m L ", end="")
-                                elif down_AND2_equation[round, bit, 2].X == 1:
+                                elif down_AND_mid_equation[round, bit, 2].X == 1:
                                         print(f"\033[9{couleur}m N ", end="")
                                 else : print(f"\033[9{couleur}m ? ", end="")
                                 if (bit+1)%4 == 0 :
@@ -1532,8 +1532,8 @@ def diff_mitm_SIMON():
                                                                 if k == 2:
                                                                         if up_left_state_up[r-structure_size, j*state_draw+i, 1].X == 1:
                                                                                 color_right="lightcoral"
-                                                                        if up_left_state_up[r-structure_size, j*state_draw+i, 2].X == 1:
-                                                                                if up_AND1_equation[r-structure_size, (j*state_draw+i)%state_size, 2].X == 1:
+                                                                        if up_state_test_or[r-structure_size, (j*state_draw+i+dec_up)%state_size, 1].X == 1:
+                                                                                if up_left_equation[r-structure_size, (j*state_draw+i+dec_up)%state_size, 2].X == 1:
                                                                                         color_right="orange"
                                                                                 else :
                                                                                         color_right="gold"
@@ -1545,8 +1545,8 @@ def diff_mitm_SIMON():
                                                                 if k == 4:
                                                                         if up_left_state_mid[r-structure_size, j*state_draw+i, 1].X == 1:
                                                                                 color_right="lightcoral"
-                                                                        if up_left_state_mid[r-structure_size, j*state_draw+i, 2].X==1:
-                                                                                if up_AND2_equation[r-structure_size, (j*state_draw+i)%state_size, 2].X == 1:
+                                                                        if up_state_test_or[r-structure_size, (j*state_draw+i+dec_mid)%state_size, 1].X == 1:
+                                                                                if up_left_equation[r-structure_size, (j*state_draw+i+dec_mid)%state_size, 2].X == 1:
                                                                                         color_right="orange"
                                                                                 else :
                                                                                         color_right="gold"
@@ -1754,8 +1754,8 @@ def diff_mitm_SIMON():
                                                                 if k == 2:
                                                                         if down_left_state_up[r, j*state_draw+i, 1].X == 1:
                                                                                 color_left="lightskyblue"
-                                                                        elif down_left_state_up[r, j*state_draw+i, 2].X == 1:
-                                                                                if down_AND1_equation[r, (j*state_draw+i)%state_size, 2].X==1:
+                                                                        if down_state_test_or[r, (j*state_draw+i+dec_up)%state_size, 1].X == 1:
+                                                                                if down_right_equation[r, (j*state_draw+i+dec_up)%state_size, 2].X==1:
                                                                                         color_left="mediumturquoise"
                                                                                 else :
                                                                                         color_left="aquamarine"
@@ -1767,8 +1767,8 @@ def diff_mitm_SIMON():
                                                                 if k == 4:
                                                                         if down_left_state_mid[r, j*state_draw+i, 1].X == 1:
                                                                                 color_left="lightskyblue"
-                                                                        if down_left_state_mid[r, j*state_draw+i, 2].X == 1:
-                                                                                if down_AND2_equation[r, (j*state_draw+i)%state_size, 2].X==1:
+                                                                        if down_state_test_or[r, (j*state_draw+i+dec_mid)%state_size, 1].X == 1:
+                                                                                if down_right_equation[r, (j*state_draw+i+dec_mid)%state_size, 2].X==1:
                                                                                         color_left="mediumturquoise"
                                                                                 else :
                                                                                         color_left="aquamarine"
@@ -1852,10 +1852,11 @@ def diff_mitm_SIMON():
                                 plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-10)*mult, ": This state bit is guessed by the upper part of the attack,", fontname="serif", fontsize=font_legende)
                                 plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-12)*mult, "  it is used to sieve the candidates during the match", fontname="serif", fontsize=font_legende)
                                 
-                                square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-14)*mult), (1)*mult, (1)*mult, facecolor="orange", edgecolor = "black", linewidth=0.1)
-                                draw.add_patch(square)               
-                                plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-14)*mult, ": This state bit is guessed by the upper part of the attack,", fontname="serif", fontsize=font_legende)
-                                plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-16)*mult, "  it cannot be used in the match because of it's non linearity", fontname="serif", fontsize=font_legende)
+                                if state_test_up_quantity.getValue() != filtered_state_test_up.getValue():
+                                        square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-14)*mult), (1)*mult, (1)*mult, facecolor="orange", edgecolor = "black", linewidth=0.1)
+                                        draw.add_patch(square)               
+                                        plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-14)*mult, ": This state bit is guessed by the upper part of the attack,", fontname="serif", fontsize=font_legende)
+                                        plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-16)*mult, "  it cannot be used in the match because of it's non linearity", fontname="serif", fontsize=font_legende)
 
                         #lower state
                         square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-18)*mult), (1)*mult, (1)*mult, facecolor="dodgerblue", edgecolor = "black", linewidth=0.1)
@@ -1872,10 +1873,11 @@ def diff_mitm_SIMON():
                                 plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-22)*mult, ": This state bit is guessed by the lower part of the attack,", fontname="serif", fontsize=font_legende)
                                 plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-24)*mult, "  it is used to sieve the candidates during the match", fontname="serif", fontsize=font_legende)
                                 
-                                square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-26)*mult), (1)*mult, (1)*mult, facecolor="deepskyblue", edgecolor = "black", linewidth=0.1)
-                                draw.add_patch(square)               
-                                plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-26)*mult, ": This state bit is guessed by the lower part of the attack", fontname="serif", fontsize=font_legende)
-                                plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-28)*mult, "  it cannot be used in the match because of it's non linearity", fontname="serif", fontsize=font_legende)
+                                if state_test_down_quantity.getValue() != filtered_state_test_down.getValue() :
+                                        square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-26)*mult), (1)*mult, (1)*mult, facecolor="deepskyblue", edgecolor = "black", linewidth=0.1)
+                                        draw.add_patch(square)               
+                                        plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-26)*mult, ": This state bit is guessed by the lower part of the attack", fontname="serif", fontsize=font_legende)
+                                        plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-28)*mult, "  it cannot be used in the match because of it's non linearity", fontname="serif", fontsize=font_legende)
                                 
                         #differences
                         square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-30)*mult), (1)*mult, (1)*mult, facecolor="white", edgecolor = "black", linewidth=0.1)
@@ -1905,9 +1907,10 @@ def diff_mitm_SIMON():
                         plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-38)*mult, ": The difference on this bit can be computed by the upper", fontname="serif", fontsize=font_legende)
                         plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-40)*mult, "  and lower part of the attack", fontname="serif", fontsize=font_legende)
                         
-                        square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-42)*mult), (1)*mult, (1)*mult, facecolor="silver", edgecolor = "black", linewidth=0.1)
-                        draw.add_patch(square)               
-                        plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-42)*mult, ": The value of this bit is fix", fontname="serif", fontsize=font_legende)
+                        if structure_fix.getValue() != 0:
+                                square = Rectangle(((dec_d)*mult,((r_down_max)*(-6*n_s-11)-42)*mult), (1)*mult, (1)*mult, facecolor="silver", edgecolor = "black", linewidth=0.1)
+                                draw.add_patch(square)               
+                                plt.text((dec_d+1.5)*mult, ((r_down_max)*(-6*n_s-11)-42)*mult, ": The value of this bit is fix", fontname="serif", fontsize=font_legende)
                         
 
                         #size control                                                      

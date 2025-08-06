@@ -303,6 +303,7 @@ def diff_mitm_SIMON():
 
         model.setObjectiveN(complexity, 0, 2, abstol=1e-9)
 
+        model.setObjectiveN(state_test_up_quantity+state_test_down_quantity,2, 1)
 
         #Constraints 
 

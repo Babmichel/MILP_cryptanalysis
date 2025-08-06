@@ -324,8 +324,9 @@ def diff_mitm_SIMON():
         model.addConstr(m_complexity <= gp.quicksum((2**i)*binary_memory_complexity_up[i] for i in search_domain))
         model.addConstr(m_complexity <= gp.quicksum((2**i)*binary_memory_complexity_down[i] for i in search_domain))
 
-        model.setObjectiveN(complexity, 0, 2, abstol=1e-9)
-        model.setObjectiveN(m_complexity, 1, 1, abstol=1e-9)
+        model.setObjectiveN(complexity, 0, 3, abstol=1e-9)
+        model.setObjectiveN(m_complexity, 1, 2, abstol=1e-9)
+        model.setObjectiveN(state_test_up_quantity+state_test_down_quantity,2, 1)
 
         #Constraints 
 

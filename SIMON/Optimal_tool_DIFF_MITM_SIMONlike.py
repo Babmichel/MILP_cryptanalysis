@@ -66,11 +66,11 @@ def diff_mitm_SIMON():
         MITM_up_size = int(input())
         print('Enter the size of the lower part :')
         MITM_down_size = int(input())
-        print('Enter the circular shift of the upper branch (For SIMON, it is 8)')
+        print('Enter the circular shift of the upper branch (For SIMON, it is 8, for SIMECK it is 0)')
         dec_up = int(input())
-        print('Enter the circular shift of the middle branch (For SIMON, it is 1)')
+        print('Enter the circular shift of the middle branch (For SIMON, it is 1, for SIMECK it is 5)')
         dec_mid = int(input())
-        print('Enter the circular shift of the lower branch (For SIMON, it is 2)')
+        print('Enter the circular shift of the lower branch (For SIMON, it is 2), for SIMECK it is 1')
         dec_down = int(input())
         print('Do you consider a linear key schedule ? type 1 for yes, 0 for no')
         key_schedule_linearity = int(input())
@@ -280,7 +280,6 @@ def diff_mitm_SIMON():
         structure_fix = gp.quicksum(fix_state[bit, value] for bit in range(state_size) for value in range(2))
         structure_match_differences = gp.quicksum(filtered_difference[bit, value] for bit in range(state_size) for value in range(2)) - structure_fix
         
-        
         if not state_test : #constraints to avoid state test
                 model.addConstr(state_test_up_quantity == 0, name="State test limit")
                 model.addConstr(state_test_down_quantity == 0, name="State test limit")
@@ -289,7 +288,7 @@ def diff_mitm_SIMON():
                 model.addConstr(probabilistic_key_recovery_up == 0, name = "probabilisitc key recovery limit")
                 model.addConstr(probabilistic_key_recovery_down == 0, name = "probabilisitc key recovery limit")
 
-        if key_schedule_linearity == 1: #if the key schedule is linear we can filter the excessing key guess
+        if key_schedule_linearity: #if the key schedule is linear we can filter the excessing key guess
                 total_key_information = key_quantity_up + key_quantity_down + structure_match_differences + filtered_state_test_up + filtered_state_test_down - key_size
         else :
                 total_key_information = 0 #if the key schedule is linear we cannot filter the excessing key guess and we need to ensure that we recover the full key after the attack
@@ -1261,7 +1260,7 @@ def diff_mitm_SIMON():
                         font_difference = 4
                         font_text = 8
 
-                        if 2*state_size == 64 or 2*state_size == 96:
+                        if 2*state_size == 128 :
                                 font_decallage = 2.5
                                 font_etat = 5
                                 font_legende = 6
@@ -1633,7 +1632,7 @@ def diff_mitm_SIMON():
                         #plt.axis("equal")
                         draw.set_xlim(x_min, x_max)
                         draw.set_ylim(y_min, y_max)      
-                        fig.savefig(f'{total_round}-rounds SIMON-{2*state_size}-{key_size} up.pdf', format='pdf',  bbox_inches='tight', dpi=300)
+                        fig.savefig(f'{total_round}-rounds {name}-{2*state_size}-{key_size} up.pdf', format='pdf',  bbox_inches='tight', dpi=300)
 
                         fig = plt.figure()
                         draw = fig.add_subplot()

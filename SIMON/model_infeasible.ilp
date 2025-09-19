@@ -1,0 +1,16 @@
+\ Model _copy
+\ LP format - for model browsing. Use MPS format to capture full model detail.
+\ Signature: 0xa4254560ff77cd1f
+Minimize multi-objectives
+  OBJ0: Priority=3 Weight=1 AbsTol=1e-09 RelTol=0
+   0 complexity_match
+  OBJ1: Priority=2 Weight=1 AbsTol=1e-09 RelTol=0
+  
+  OBJ2: Priority=1 Weight=1 AbsTol=1e-06 RelTol=0
+  
+Subject To
+Bounds
+ 332 <= complexity_match <= 128
+Generals
+ complexity_match
+End

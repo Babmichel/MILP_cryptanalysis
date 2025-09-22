@@ -29,7 +29,7 @@ def diff_mitm_SIMON():
         #------------------------------------------------#
 
         #SIMON parameters :
-        print('Enter the size of the state (under 120) :')
+        print('Enter the size of the state :')
         state_size = int(input())
         print('Enter the size of the key :')
         key_size = int(input())
@@ -246,10 +246,16 @@ def diff_mitm_SIMON():
         memory_complexity_up = model.addVar(lb = state_size, ub = key_size,vtype= GRB.INTEGER, name = "complexity_match")
         memory_complexity_down = model.addVar(lb = state_size, ub = key_size,vtype= GRB.INTEGER, name = "complexity_match")
         
-        time_complexity_up = model.addVar(lb = state_size, ub = 128,vtype= GRB.INTEGER, name = "complexity_up")
-        time_complexity_down = model.addVar(lb = state_size, ub = 128,vtype= GRB.INTEGER, name = "complexity_down")
-        time_complexity_match = model.addVar(lb = state_size, ub = 128,vtype= GRB.INTEGER, name = "complexity_match")
-                
+        if state_size<=60 :
+                time_complexity_up = model.addVar(lb = state_size, ub = 128,vtype= GRB.INTEGER, name = "complexity_up")
+                time_complexity_down = model.addVar(lb = state_size, ub = 128,vtype= GRB.INTEGER, name = "complexity_down")
+                time_complexity_match = model.addVar(lb = state_size, ub = 128,vtype= GRB.INTEGER, name = "complexity_match")
+        
+        else : 
+                time_complexity_up = model.addVar(lb = state_size, ub = state_size*2,vtype= GRB.INTEGER, name = "complexity_up")
+                time_complexity_down = model.addVar(lb = state_size, ub = state_size*2,vtype= GRB.INTEGER, name = "complexity_down")
+                time_complexity_match = model.addVar(lb = state_size, ub = state_size*2,vtype= GRB.INTEGER, name = "complexity_match")
+
         search_domain = range(int(state_size), int(128))
 
         binary_time_complexity_up = {i: model.addVar(vtype=GRB.BINARY, name="binary_time_complexity_up_f{i}") for i in search_domain}
@@ -303,21 +309,30 @@ def diff_mitm_SIMON():
         memory_complexity_up = key_quantity_up + state_test_up_quantity - structure_fix
         memory_complexity_down = key_quantity_down + state_test_down_quantity + (state_size-structure_fix)
         
-        model.addConstr(time_complexity_up == gp.quicksum(i * binary_time_complexity_up[i] for i in search_domain), name="link between binary and integer complexity up")
-        model.addConstr(time_complexity_down == gp.quicksum(i * binary_time_complexity_down[i] for i in search_domain), name="link between binary and integer complexity down")
-        model.addConstr(time_complexity_match == gp.quicksum(i * binary_time_complexity_match[i] for i in search_domain), name="link between binary and integer complexity match")
-        model.addConstr(memory_complexity_up == gp.quicksum(i * binary_memory_complexity_up[i] for i in search_domain), name="link between binary and integer complexity match")
-        model.addConstr(memory_complexity_down == gp.quicksum(i * binary_memory_complexity_down[i] for i in search_domain), name="link between binary and integer complexity match")
+        if state_size <=60: # if state <120 we can use optimal search 
+                model.addConstr(time_complexity_up == gp.quicksum(i * binary_time_complexity_up[i] for i in search_domain), name="link between binary and integer complexity up")
+                model.addConstr(time_complexity_down == gp.quicksum(i * binary_time_complexity_down[i] for i in search_domain), name="link between binary and integer complexity down")
+                model.addConstr(time_complexity_match == gp.quicksum(i * binary_time_complexity_match[i] for i in search_domain), name="link between binary and integer complexity match")
+                model.addConstr(memory_complexity_up == gp.quicksum(i * binary_memory_complexity_up[i] for i in search_domain), name="link between binary and integer complexity match")
+                model.addConstr(memory_complexity_down == gp.quicksum(i * binary_memory_complexity_down[i] for i in search_domain), name="link between binary and integer complexity match")
         
-        model.addConstr(gp.quicksum(binary_time_complexity_up[i] for i in search_domain)==1, name="unique binary complexity up")
-        model.addConstr(gp.quicksum(binary_time_complexity_down[i] for i in search_domain)==1, name="unique binary complexity down")
-        model.addConstr(gp.quicksum(binary_time_complexity_match[i] for i in search_domain)==1, name="unique binary complexity match")
-        model.addConstr(gp.quicksum(binary_memory_complexity_up[i] for i in search_domain)==1, name="unique binary complexity match")
-        model.addConstr(gp.quicksum(binary_memory_complexity_down[i] for i in search_domain)==1, name="unique binary complexity match")
+                model.addConstr(gp.quicksum(binary_time_complexity_up[i] for i in search_domain)==1, name="unique binary complexity up")
+                model.addConstr(gp.quicksum(binary_time_complexity_down[i] for i in search_domain)==1, name="unique binary complexity down")
+                model.addConstr(gp.quicksum(binary_time_complexity_match[i] for i in search_domain)==1, name="unique binary complexity match")
+                model.addConstr(gp.quicksum(binary_memory_complexity_up[i] for i in search_domain)==1, name="unique binary complexity match")
+                model.addConstr(gp.quicksum(binary_memory_complexity_down[i] for i in search_domain)==1, name="unique binary complexity match")
 
-        model.addConstr(complexity == gp.quicksum((2**i)*(binary_time_complexity_up[i] + binary_time_complexity_down[i] + binary_time_complexity_match[i]) for i in search_domain), name="time complexity")
-        model.addConstr(m_complexity <= gp.quicksum((2**i)*binary_memory_complexity_up[i] for i in search_domain), name="memory complexity up")
-        model.addConstr(m_complexity <= gp.quicksum((2**i)*binary_memory_complexity_down[i] for i in search_domain), name="memory complexity down")
+                model.addConstr(complexity == gp.quicksum((2**i)*(binary_time_complexity_up[i] + binary_time_complexity_down[i] + binary_time_complexity_match[i]) for i in search_domain), name="time complexity")
+                model.addConstr(m_complexity <= gp.quicksum((2**i)*binary_memory_complexity_up[i] for i in search_domain), name="memory complexity up")
+                model.addConstr(m_complexity <= gp.quicksum((2**i)*binary_memory_complexity_down[i] for i in search_domain), name="memory complexity down")
+
+
+        else :
+                model.addConstr(time_complexity_down <= complexity)
+                model.addConstr(time_complexity_up <= complexity)
+                model.addConstr(time_complexity_match <= complexity)
+                model.addConstr(memory_complexity_up <= m_complexity)
+                model.addConstr(memory_complexity_down <= m_complexity)
 
         #OBJECTIVE 
         model.setObjectiveN(complexity, 0, 10, abstol=1e-9)
@@ -673,7 +688,7 @@ def diff_mitm_SIMON():
         
         if model.Status != GRB.INFEASIBLE:
                 #if the model is Feaible the best solution is displayed in the consol.
-                print("-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ Non linearity propagation for states tests -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+")
+                print(" Non linearity propagation for states tests")
                 for round in range(MITM_up_size):
                         for bit in range(state_size):
                                 if up_state_test_or[round, bit, 1].X==1:
@@ -802,7 +817,7 @@ def diff_mitm_SIMON():
                                 if (bit+1)%4 == 0 :
                                         print ("||", end="")
                         print("\033[90m R2")
-                print("################################################## Differential DISTINGUISHER ###########################################################")
+                print("Differential DISTINGUISHER")
                 for round in range(MITM_down_size):
                         print(f"\033[90m ROUND : {round}")
                         for bit in range(state_size):
@@ -917,7 +932,7 @@ def diff_mitm_SIMON():
                                 if (bit+1)%4 == 0 :
                                         print ("||", end="")
                         print("\033[90m R1")            
-                print("*~~**~~**~~**~~**~~**~~**~~**~~**~~**~~**~~**~~**~~* START of the attack *~~**~~**~~**~~**~~**~~**~~**~~**~~**~~**~~**~~**~~*")
+                print("START of the attack")
                 
                 for round in range(structure_size):
                         print(f"\033[90m ROUND : {round}")
@@ -1010,7 +1025,7 @@ def diff_mitm_SIMON():
                                         print ("||", end="")
                         print("\033[90m r2")
                 
-                print("<^><^><^><^><^><^><^><^><^><^><^><^><^><^><^><^><^> END OF THE STRUCTURE <^><^><^><^><^><^><^><^><^><^><^><^><^><^><^><^><^>")
+                print("END OF THE STRUCTURE")
                 for round in range(MITM_up_size):
                         print(f"\033[90m ROUND : {structure_size + round}")
                         for bit in range(state_size):
@@ -1115,7 +1130,7 @@ def diff_mitm_SIMON():
                                         print ("||", end="")
                         print("\033[90m R")
                 print("")
-                print("################################################### DISTINGUISHER ###########################################################")
+                print("DISTINGUISHER")
                 print("")
                 for round in range(MITM_down_size):
                         print(f"\033[90m ROUND : {structure_size + MITM_up_size + distinguisher_size + round}")
@@ -1261,8 +1276,8 @@ def diff_mitm_SIMON():
                         font_text = 8
 
                         if 2*state_size == 128 :
-                                font_decallage = 2.5
-                                font_etat = 5
+                                font_decallage = 2
+                                font_etat = 4
                                 font_legende = 6
                                 font_difference = 3
                                 font_text = 5.5
@@ -1632,7 +1647,7 @@ def diff_mitm_SIMON():
                         #plt.axis("equal")
                         draw.set_xlim(x_min, x_max)
                         draw.set_ylim(y_min, y_max)      
-                        fig.savefig(f'{total_round}-rounds {name}-{2*state_size}-{key_size} up.pdf', format='pdf',  bbox_inches='tight', dpi=300)
+                        fig.savefig(f'{name}_up.pdf', format='pdf',  bbox_inches='tight', dpi=300)
 
                         fig = plt.figure()
                         draw = fig.add_subplot()
@@ -1929,7 +1944,7 @@ def diff_mitm_SIMON():
                         #plt.axis("equal")
                         draw.set_xlim(x_min, x_max)
                         draw.set_ylim(y_min, y_max)
-                        fig.savefig(f'{total_round}-rounds {name}-{2*state_size}-{key_size} down.pdf', format='pdf',  bbox_inches='tight', dpi=300)
+                        fig.savefig(f'{name}_down', format='pdf',  bbox_inches='tight', dpi=300)
 
                         
         else : #if model is not feasible, return ISS file for debuging

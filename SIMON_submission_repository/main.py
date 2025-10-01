@@ -6,7 +6,7 @@ import MILP_model_diff_MITM_Simonlike
 import display
 import pandas as pd
 
-from parameters_folder import parameters_29_rounds_SIMON_48_96
+from parameters_folder import your_parameters as user_parameters
 
 def main(parameters):
     """ Generate and solve model then display the result
@@ -40,4 +40,4 @@ def main(parameters):
     else :
         print("The model is infeasible, please check you parameters file and the .ilp generate file")
 
-main(parameters_29_rounds_SIMON_48_96)
+main(user_parameters)

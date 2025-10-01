@@ -17,7 +17,7 @@ Content of the folder :
 
 Search for an attack :
     Step 1 : COMPLETE the gurobi_licence file.
-    Step 2 : COMPLETE the your_parameters file or change the parameters file in the main file.
+    Step 2 : COMPLETE the your_parameters file or change the parameters file in the main file (line 9).
     Step 3 : LAUNCH the main.py() file.
     Step 4 : The results are displayed in the terminal, a pdf picture is generated if asked in the parameter file.
 

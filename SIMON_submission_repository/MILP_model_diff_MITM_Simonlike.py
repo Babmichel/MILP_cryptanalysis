@@ -159,7 +159,7 @@ def differential_Meet_in_the_middle(user_parameters, licence):
                 #Variables needed to represent the filter state and diferences in the structure
                 for  bit, value in product(range(state_size), range(2)):
                         filtered_difference[bit, value] = model.addVar(vtype = GRB.BINARY, name = f'filtered_difference_{bit}_{value}')
-                        fix_state[bit, value] = model.addVar(vtype = GRB.BINARY, name = f'filtered_difference_{bit}_{value}')
+                        fix_state[bit, value] = model.addVar(vtype = GRB.BINARY, name = f'filtered_state_{bit}_{value}')
 
                 #Variables needed to represent the key in the structure
                 for round, bit, value in product(range(structure_size), range(subkey_size), range(3)):
@@ -249,6 +249,7 @@ def differential_Meet_in_the_middle(user_parameters, licence):
                 filtered_state_test_down = model.addVar(vtype= GRB.INTEGER, name = "filtered_state_test_down")
 
                 structure_fix = model.addVar(vtype= GRB.INTEGER, name = "structure_fix")
+                structure_fix_first_round = model.addVar(vtype= GRB.INTEGER, name = "structure_fix_first_round")
                 structure_match_differences = model.addVar(vtype= GRB.INTEGER, name = "structure_match_differences")
 
                 total_key_information = model.addVar(vtype= GRB.INTEGER, name = "total_key_information")
@@ -260,6 +261,8 @@ def differential_Meet_in_the_middle(user_parameters, licence):
 
                 memory_complexity_up = model.addVar(vtype= GRB.INTEGER, name = "memory_complexity_up")
                 memory_complexity_down = model.addVar(vtype= GRB.INTEGER, name = "memory_complexity_down")
+
+                data_complexity = model.addVar(vtype= GRB.INTEGER, name = "data_complexity")
 
                 # As we modelize the complexity as 2^x + 2^y 2^z, we cannot directly write it like this in MILP
                 # We need to use a discret model, the following variables and constraints are used to build this discret model of the objective function 
@@ -311,20 +314,24 @@ def differential_Meet_in_the_middle(user_parameters, licence):
 
                 #Counting the filter trough the structure
                 model.addConstr(structure_fix == gp.quicksum(fix_state[bit, value] for bit in range(state_size) for value in range(2)), name="structure_fix")
+                model.addConstr(structure_fix_first_round == gp.quicksum(structure_right1[0, bit, 0, 1, 1] for bit in range(state_size))+gp.quicksum(structure_left1[0, bit, 0, 1, 1] for bit in range(state_size)), name="structure_fix_first_round")
+                
                 model.addConstr(structure_match_differences == gp.quicksum(filtered_difference[bit, value] for bit in range(state_size) for value in range(2)) - structure_fix, name="structure_match_differences")
 
                 if key_schedule_linearity: #if the key schedule is linear we can filter the excessing key guess
                         model.addConstr(total_key_information == key_quantity_up + key_quantity_down + structure_match_differences + filtered_state_test_up + filtered_state_test_down - key_size, name="total_key_information")
                 else :
-                        model.addConstr(total_key_information == 0) #if the key schedule is linear we cannot filter the excessing key guess and we need to ensure that we recover the full key after the attack
+                        model.addConstr(total_key_information == 0) #if the key schedule is not linear we cannot filter the excessing key guess and we need to ensure that we recover the full key after the attack
                         model.addConstr(key_information == key_quantity_up + key_quantity_down + structure_match_differences + filtered_state_test_up + filtered_state_test_down, name="total_key_information_constraint")
                         model.addConstr(key_information >= key_size, name="total_key_information>=key_size")
-                        
+
                 model.addConstr(time_complexity_up ==  key_quantity_up + state_test_up_quantity + probabilistic_key_recovery_down, name="time_complexity_up_constraint")
                 model.addConstr(time_complexity_down ==  key_quantity_down + state_test_down_quantity + probabilistic_key_recovery_up, name="time_complexity_down_constraint")
                 model.addConstr(time_complexity_match ==  key_quantity_up + key_quantity_down + state_test_up_quantity + state_test_down_quantity + 2*state_size -2*structure_fix- structure_match_differences - total_key_information, name="time_complexity_match_constraint")
 
-
+                model.addConstr(data_complexity >= distinguisher_proba + probabilistic_key_recovery_up + probabilistic_key_recovery_down)
+                model.addConstr(data_complexity == state_size*2 - structure_fix_first_round)
+                
                 model.addConstr(memory_complexity_up == key_quantity_up + state_test_up_quantity - structure_fix, name="memory_complexity_up_constraints")
                 model.addConstr(memory_complexity_down == key_quantity_down + state_test_down_quantity + (state_size-structure_fix), name="memory_complexity_down_constraints")
 
@@ -354,20 +361,25 @@ def differential_Meet_in_the_middle(user_parameters, licence):
                         model.addConstr(memory_complexity_down <= m_complexity, name="suboptimal m_complexity down")
 
                         ### OBJECTIVE 
-                model.setObjectiveN(complexity, 0, 10, abstol=1e-9) #Minimize the time complexity
+                model.setObjectiveN(complexity, 0, 10, abstol=1e-9, name='time complexity objective') #Minimize the time complexity
 
-                model.setObjectiveN(m_complexity, 1, 8, abstol=1e-9) #Minimize the memory complexity
+                model.setObjectiveN(m_complexity, 1, 8, abstol=1e-9, name='memory complexity objective') #Minimize the memory complexity
+
+                model.setObjectiveN(data_complexity, 2, 9, abstol=1e-9, name='data complexity objective') #Minimize the data complexity
 
                 # As we are not interest in doing a state that make us win only one key guess, 
                 # we minimize the number of state test to ensure the model will not choose useless state test
-                model.setObjectiveN(state_test_up_quantity+state_test_down_quantity,2, 5)
+                model.setObjectiveN(state_test_up_quantity+state_test_down_quantity,3, 5, name='min state test objective')
 
+                
                 #---------------------------------------------------------------------------------------------------------------------------------------
                 ### MODEL'S CONSTRAINT
                 #---------------------------------------------------------------------------------------------------------------------------------------
 
                 #Global constraints
                 model.addConstr(distinguisher_probability + probabilistic_key_recovery_down + probabilistic_key_recovery_up <= 2*state_size, "total probability of the attack cannot exceed the size of the state")
+
+                model.addConstr(distinguisher_proba+probabilistic_key_recovery_up+probabilistic_key_recovery_down-(state_size*2-structure_fix) >=0)
 
                 if not state_test : #constraints to avoid state test
                         model.addConstr(state_test_up_quantity == 0, name="State test limit")
@@ -716,7 +728,7 @@ def differential_Meet_in_the_middle(user_parameters, licence):
                 #---------------------------------------------------------------------------------------------------------------------------------------
                 #Constraints only for display
                 display_constraint = gp.quicksum(up_left_state_mid[round, bit, 1] + up_left_state_up[round, bit, 1] + up_left_state[round, bit, 1] for round in range(MITM_up_size) for bit in range(state_size)) + gp.quicksum(down_left_state_mid[round, bit, 1] + down_left_state_up[round, bit, 1] + down_left_state[round, bit, 1] for round in range(MITM_down_size) for bit in range(state_size))
-                model.setObjectiveN(-1*display_constraint,3, 1)
+                model.setObjectiveN(-1*display_constraint, 4, 1)
 
                 #---------------------------------------------------------------------------------------------------------------------------------------
                 model.optimize()

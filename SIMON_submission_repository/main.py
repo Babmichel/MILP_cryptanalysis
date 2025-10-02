@@ -6,7 +6,7 @@ import MILP_model_diff_MITM_Simonlike
 import display
 import pandas as pd
 
-from parameters_folder import your_parameters as user_parameters
+from parameters_folder import parameters_36_rounds_SIMON_64_128 as user_parameters
 
 def main(parameters):
     """ Generate and solve model then display the result

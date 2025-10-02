@@ -22,6 +22,6 @@ attack_parameters = {
     "state_test" : 1,
     "probabilistic_key_recovery" : 1,
 
-    "pdf_display" : 1,
+    "pdf_display" : 0,
     "pdf_name" : "24_rounds_SIMECK_32-64"
 }

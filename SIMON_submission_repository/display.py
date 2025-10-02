@@ -37,6 +37,7 @@ def parameters_display(parameters, solution):
         print("--- MATCH and Structure parameters ---")
         print("structure_size :", parameters['structure_size'])
         print("fix number :", solution['structure_fix'])
+        print("fix_on_first_round :", solution['structure_fix_first_round'])
         print("filtered differences :", solution['structure_match_differences'])
         if parameters["key_schedule_linearity"] == 1:
                 print("key quantity :", solution['total_key_information'] + parameters['key_size'])
@@ -47,7 +48,7 @@ def parameters_display(parameters, solution):
         print("number of rounds attacked :", parameters['structure_size'] + parameters['upper_part_size'] + parameters['lower_part_size'] + parameters['distinguisher_size'])
         print("Final time complexity :", math.log2(pow(2, solution['time_complexity_up'] + parameters["distinguisher_probability"]) + pow(2, solution['time_complexity_down'] + parameters["distinguisher_probability"]) + pow(2, solution['time_complexity_match'] + parameters["distinguisher_probability"])))
         print("Final memory complexity :", min(solution['key_quantity_up'] + solution['state_test_up_quantity'] + parameters['block_size'] - solution['structure_fix'], solution['key_quantity_down'] + solution['state_test_down_quantity'] + parameters['block_size'] - solution['structure_fix']))
-        print("Final data complexity :", parameters["distinguisher_probability"] + solution['probabilistic_key_recovery_up'] + solution['probabilistic_key_recovery_down'])
+        print("Final data complexity :", solution['data_complexity'])
         print("")
 
 

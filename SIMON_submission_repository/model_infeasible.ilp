@@ -1,0 +1,25 @@
+\ Model _copy
+\ LP format - for model browsing. Use MPS format to capture full model detail.
+\ Signature: 0xb37bae3e841f79a6
+Minimize multi-objectives
+  OBJ0: Priority=10 Weight=1 AbsTol=1e-09 RelTol=0
+  
+  OBJ1: Priority=8 Weight=1 AbsTol=1e-09 RelTol=0
+  
+  OBJ2: Priority=10 Weight=1 AbsTol=1e-09 RelTol=0
+   data_complexity
+  OBJ3: Priority=5 Weight=1 AbsTol=1e-06 RelTol=0
+  
+  OBJ4: Priority=1 Weight=1 AbsTol=1e-06 RelTol=0
+  
+Subject To
+ R12: - probabilistic_key_recovery_down - probabilistic_key_recovery_up
+   + data_complexity = 61.5
+Bounds
+ probabilistic_key_recovery_down free
+ probabilistic_key_recovery_up free
+ data_complexity free
+Generals
+ probabilistic_key_recovery_down probabilistic_key_recovery_up
+ data_complexity
+End

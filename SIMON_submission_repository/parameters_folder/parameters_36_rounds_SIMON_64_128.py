@@ -23,5 +23,5 @@ attack_parameters = {
     "probabilistic_key_recovery" : 1,
 
     "pdf_display" : 1,
-    "pdf_name" : "35_rounds_SIMON_64-128"
+    "pdf_name" : "36_rounds_SIMON_64-128"
 }

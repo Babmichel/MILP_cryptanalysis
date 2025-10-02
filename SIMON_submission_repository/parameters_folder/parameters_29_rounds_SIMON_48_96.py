@@ -11,7 +11,7 @@ attack_parameters = {
     "distinguisher_active_output_bits" : [0],
 
     "structure_size" : 3,
-    "upper_part_size" : 4,
+    "upper_part_size" : 5,
     "lower_part_size" : 4,
     
     "first_branch_shift" : 8,
@@ -23,5 +23,5 @@ attack_parameters = {
     "probabilistic_key_recovery" : 1,
 
     "pdf_display" : 1,
-    "pdf_name" : "28_rounds_SIMON_48-96"
+    "pdf_name" : "29_rounds_SIMON_48-96"
 }

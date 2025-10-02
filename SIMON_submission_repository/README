@@ -1,27 +1,27 @@
-MILP Model to find key recovery of Differential Meet-in-the-middle attack on Simon like cipher.
+# MILP Model to find key recovery of Differential Meet-in-the-middle attack on Simon like cipher.
 
-Content of the folder :
-- main.py <-- 3-LAUNCH this file to search fo an attack.
+### Content of the folder :
+- main.py <-- *3-LAUNCH* this file to search fo an attack.
 
 - MILP_model_diff_MITM_SIMONlike.py : contains the complete MILP model.
 
-- gurobi_licence.py <-- 1-COMPLETE this file with your own licence.
+- gurobi_licence.py <-- *1-COMPLETE* this file with your own licence.
 
 - display.py : contains the display funtion
 
 - parameters_folder
-    - your_parameters <-- 2-COMPLETE this file your own attack parameters
+    - your_parameters <-- *2-COMPLETE* this file your own attack parameters
     - other are provided, these are the parameters files used to found the attack described in the paper, you can use as example to complete the 'your_parameters' file. If you want to run a search for optimal attack with one of this model, change all the occurence of 'you_parameters' in the main function by the name of the file you want to test.
 
 - figure_folder : containts the generated figure pdf images, initially contains all the attack figures used in the paper.
 
-Search for an attack :
+### Search for an attack :
     Step 1 : COMPLETE the gurobi_licence file.
     Step 2 : COMPLETE the your_parameters file or change the parameters file in the main file (line 9).
     Step 3 : LAUNCH the main.py() file.
     Step 4 : The results are displayed in the terminal, a pdf picture is generated if asked in the parameter file.
 
-Version requirement :
+### Version requirement :
 All this code has been tested with the following versions of each module :
 - Python 3.10.12
 - Gurobipy 12.0.0

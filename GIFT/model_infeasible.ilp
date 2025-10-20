@@ -1,0 +1,163 @@
+\ Model _copy
+\ LP format - for model browsing. Use MPS format to capture full model detail.
+\ Signature: 0x7e19e8567eb3e50
+Minimize multi-objectives
+  OBJ0: Priority=100 Weight=1 AbsTol=1e-06 RelTol=0
+  
+  OBJ1: Priority=25 Weight=1 AbsTol=1e-06 RelTol=0
+  
+Subject To
+ fix_the_difference_to_0_in_bit_3_in_the_start_of_distinguisher:
+   state_0_2_3 = 0
+ fix_the_difference_to_0_in_bit_4_in_the_start_of_distinguisher:
+   state_0_2_4 = 0
+ fix_the_difference_to_0_in_bit_5_in_the_start_of_distinguisher:
+   state_0_2_5 = 0
+ fix_the_difference_to_0_in_bit_6_in_the_start_of_distinguisher:
+   state_0_2_6 = 0
+ fix_the_difference_to_0_in_bit_7_in_the_start_of_distinguisher:
+   state_0_2_7 = 0
+ fix_the_difference_to_0_in_bit_8_in_the_start_of_distinguisher:
+   state_0_2_8 = 0
+ fix_the_difference_to_0_in_bit_9_in_the_start_of_distinguisher:
+   state_0_2_9 = 0
+ fix_the_difference_to_0_in_bit_10_in_the_start_of_distinguisher:
+   state_0_2_10 = 0
+ fix_the_difference_to_0_in_bit_11_in_the_start_of_distinguisher:
+   state_0_2_11 = 0
+ fix_the_difference_to_0_in_bit_12_in_the_start_of_distinguisher:
+   state_0_2_12 = 0
+ fix_the_difference_to_0_in_bit_13_in_the_start_of_distinguisher:
+   state_0_2_13 = 0
+ fix_the_difference_to_0_in_bit_14_in_the_start_of_distinguisher:
+   state_0_2_14 = 0
+ fix_the_difference_to_0_in_bit_15_in_the_start_of_distinguisher:
+   state_0_2_15 = 0
+ fix_the_difference_to_0_in_bit_16_in_the_start_of_distinguisher:
+   state_0_2_16 = 0
+ fix_the_difference_to_0_in_bit_17_in_the_start_of_distinguisher:
+   state_0_2_17 = 0
+ fix_the_difference_to_0_in_bit_18_in_the_start_of_distinguisher:
+   state_0_2_18 = 0
+ fix_the_difference_to_0_in_bit_19_in_the_start_of_distinguisher:
+   state_0_2_19 = 0
+ fix_the_difference_to_0_in_bit_20_in_the_start_of_distinguisher:
+   state_0_2_20 = 0
+ fix_the_difference_to_0_in_bit_21_in_the_start_of_distinguisher:
+   state_0_2_21 = 0
+ fix_the_difference_to_0_in_bit_22_in_the_start_of_distinguisher:
+   state_0_2_22 = 0
+ fix_the_difference_to_0_in_bit_23_in_the_start_of_distinguisher:
+   state_0_2_23 = 0
+ fix_the_difference_to_0_in_bit_24_in_the_start_of_distinguisher:
+   state_0_2_24 = 0
+ fix_the_difference_to_0_in_bit_25_in_the_start_of_distinguisher:
+   state_0_2_25 = 0
+ fix_the_difference_to_0_in_bit_26_in_the_start_of_distinguisher:
+   state_0_2_26 = 0
+ fix_the_difference_to_0_in_bit_27_in_the_start_of_distinguisher:
+   state_0_2_27 = 0
+ fix_the_difference_to_0_in_bit_28_in_the_start_of_distinguisher:
+   state_0_2_28 = 0
+ fix_the_difference_to_0_in_bit_29_in_the_start_of_distinguisher:
+   state_0_2_29 = 0
+ fix_the_difference_to_0_in_bit_30_in_the_start_of_distinguisher:
+   state_0_2_30 = 0
+ fix_the_difference_to_0_in_bit_31_in_the_start_of_distinguisher:
+   state_0_2_31 = 0
+ fix_the_difference_to_0_in_bit_32_in_the_start_of_distinguisher:
+   state_0_2_32 = 0
+ fix_the_difference_to_0_in_bit_33_in_the_start_of_distinguisher:
+   state_0_2_33 = 0
+ fix_the_difference_to_0_in_bit_34_in_the_start_of_distinguisher:
+   state_0_2_34 = 0
+ fix_the_difference_to_0_in_bit_35_in_the_start_of_distinguisher:
+   state_0_2_35 = 0
+ fix_the_difference_to_0_in_bit_36_in_the_start_of_distinguisher:
+   state_0_2_36 = 0
+ fix_the_difference_to_0_in_bit_37_in_the_start_of_distinguisher:
+   state_0_2_37 = 0
+ fix_the_difference_to_0_in_bit_38_in_the_start_of_distinguisher:
+   state_0_2_38 = 0
+ fix_the_difference_to_0_in_bit_39_in_the_start_of_distinguisher:
+   state_0_2_39 = 0
+ fix_the_difference_to_0_in_bit_40_in_the_start_of_distinguisher:
+   state_0_2_40 = 0
+ fix_the_difference_to_0_in_bit_41_in_the_start_of_distinguisher:
+   state_0_2_41 = 0
+ fix_the_difference_to_0_in_bit_42_in_the_start_of_distinguisher:
+   state_0_2_42 = 0
+ fix_the_difference_to_0_in_bit_43_in_the_start_of_distinguisher:
+   state_0_2_43 = 0
+ fix_the_difference_to_0_in_bit_44_in_the_start_of_distinguisher:
+   state_0_2_44 = 0
+ fix_the_difference_to_0_in_bit_45_in_the_start_of_distinguisher:
+   state_0_2_45 = 0
+ fix_the_difference_to_0_in_bit_46_in_the_start_of_distinguisher:
+   state_0_2_46 = 0
+ fix_the_difference_to_0_in_bit_47_in_the_start_of_distinguisher:
+   state_0_2_47 = 0
+ fix_the_difference_to_0_in_bit_48_in_the_start_of_distinguisher:
+   state_0_2_48 = 0
+ fix_the_difference_to_0_in_bit_49_in_the_start_of_distinguisher:
+   state_0_2_49 = 0
+ fix_the_difference_to_0_in_bit_50_in_the_start_of_distinguisher:
+   state_0_2_50 = 0
+ fix_the_difference_to_0_in_bit_51_in_the_start_of_distinguisher:
+   state_0_2_51 = 0
+ fix_the_difference_to_0_in_bit_52_in_the_start_of_distinguisher:
+   state_0_2_52 = 0
+ fix_the_difference_to_0_in_bit_53_in_the_start_of_distinguisher:
+   state_0_2_53 = 0
+ fix_the_difference_to_0_in_bit_54_in_the_start_of_distinguisher:
+   state_0_2_54 = 0
+ fix_the_difference_to_0_in_bit_55_in_the_start_of_distinguisher:
+   state_0_2_55 = 0
+ fix_the_difference_to_0_in_bit_56_in_the_start_of_distinguisher:
+   state_0_2_56 = 0
+ fix_the_difference_to_0_in_bit_57_in_the_start_of_distinguisher:
+   state_0_2_57 = 0
+ fix_the_difference_to_0_in_bit_58_in_the_start_of_distinguisher:
+   state_0_2_58 = 0
+ fix_the_difference_to_0_in_bit_59_in_the_start_of_distinguisher:
+   state_0_2_59 = 0
+ fix_the_difference_to_0_in_bit_60_in_the_start_of_distinguisher:
+   state_0_2_60 = 0
+ fix_the_difference_to_0_in_bit_61_in_the_start_of_distinguisher:
+   state_0_2_61 = 0
+ fix_the_difference_to_0_in_bit_62_in_the_start_of_distinguisher:
+   state_0_2_62 = 0
+ fix_the_difference_to_0_in_bit_63_in_the_start_of_distinguisher:
+   state_0_2_63 = 0
+ at_least_one_active_difference_at_the_start: state_0_2_0 + state_0_2_1
+   + state_0_2_2 + state_0_2_3 + state_0_2_4 + state_0_2_5 + state_0_2_6
+   + state_0_2_7 + state_0_2_8 + state_0_2_9 + state_0_2_10 + state_0_2_11
+   + state_0_2_12 + state_0_2_13 + state_0_2_14 + state_0_2_15
+   + state_0_2_16 + state_0_2_17 + state_0_2_18 + state_0_2_19
+   + state_0_2_20 + state_0_2_21 + state_0_2_22 + state_0_2_23
+   + state_0_2_24 + state_0_2_25 + state_0_2_26 + state_0_2_27
+   + state_0_2_28 + state_0_2_29 + state_0_2_30 + state_0_2_31
+   + state_0_2_32 + state_0_2_33 + state_0_2_34 + state_0_2_35
+   + state_0_2_36 + state_0_2_37 + state_0_2_38 + state_0_2_39
+   + state_0_2_40 + state_0_2_41 + state_0_2_42 + state_0_2_43
+   + state_0_2_44 + state_0_2_45 + state_0_2_46 + state_0_2_47
+   + state_0_2_48 + state_0_2_49 + state_0_2_50 + state_0_2_51
+   + state_0_2_52 + state_0_2_53 + state_0_2_54 + state_0_2_55
+   + state_0_2_56 + state_0_2_57 + state_0_2_58 + state_0_2_59
+   + state_0_2_60 + state_0_2_61 + state_0_2_62 + state_0_2_63 >= 4
+Bounds
+Binaries
+ state_0_2_0 state_0_2_1 state_0_2_2 state_0_2_3 state_0_2_4 state_0_2_5
+ state_0_2_6 state_0_2_7 state_0_2_8 state_0_2_9 state_0_2_10 state_0_2_11
+ state_0_2_12 state_0_2_13 state_0_2_14 state_0_2_15 state_0_2_16
+ state_0_2_17 state_0_2_18 state_0_2_19 state_0_2_20 state_0_2_21
+ state_0_2_22 state_0_2_23 state_0_2_24 state_0_2_25 state_0_2_26
+ state_0_2_27 state_0_2_28 state_0_2_29 state_0_2_30 state_0_2_31
+ state_0_2_32 state_0_2_33 state_0_2_34 state_0_2_35 state_0_2_36
+ state_0_2_37 state_0_2_38 state_0_2_39 state_0_2_40 state_0_2_41
+ state_0_2_42 state_0_2_43 state_0_2_44 state_0_2_45 state_0_2_46
+ state_0_2_47 state_0_2_48 state_0_2_49 state_0_2_50 state_0_2_51
+ state_0_2_52 state_0_2_53 state_0_2_54 state_0_2_55 state_0_2_56
+ state_0_2_57 state_0_2_58 state_0_2_59 state_0_2_60 state_0_2_61
+ state_0_2_62 state_0_2_63
+End

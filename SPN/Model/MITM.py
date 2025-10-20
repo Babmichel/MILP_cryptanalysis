@@ -1,14 +1,15 @@
 from Model import model_MILP_attack
 import gurobipy as gp
-import random as rd
 
 class MITM(model_MILP_attack.Model_MILP_attack):
-    def __init__(self, cipher_parameters, licence_parameters, attack_parameters,):
-        super().__init__(cipher_parameters, licence_parameters)
+    def __init__(self, cipher_parameters, licence_parameters, attack_parameters, model=None):
+        super().__init__(cipher_parameters, licence_parameters, model)
         #Attack parameters
         self.structure_rounds = attack_parameters.get('structure_rounds', 4)
         self.corps_rounds = attack_parameters.get('corps_rounds', 2)
         self.total_rounds = self.structure_rounds + self.corps_rounds
+
+        self.model=model
 
     def getdetails(self):
         print(self.cipher_name, self.block_size, '-', self.key_size)
@@ -185,8 +186,6 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         self.model.addConstr(self.match_quantity >= 1)
 
     def attack(self):
-        self.master_key()
-        self.subkey()
         self.structure()
         self.forward_value_propagation_upper_part()
         self.bacward_value_propagation_lower_part()
@@ -208,8 +207,9 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         self.objective_for_display()
         self.complexities()
 
-        self.time_complexity_up = self.state_test_up + self.key_up
-        self.time_compleity_down =  
+        self.time_complexity_up = self.state_test_up + self.key_up_guess
+        self.time_complexity_down = self.state_test_down + self.key_down_guess
+        self.time_complexity_match = self.state_test_up + self.key_up_guess + self.state_test_down + self.key_down_guess - self.match_quantity - self.common_fix
         self.model.setObjectiveN(self.time_complexity, index=0, priority=10)
  
     def get_results(self):

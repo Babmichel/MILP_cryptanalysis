@@ -3,7 +3,7 @@ import numpy as np
 from sage.all import Matrix, GF
 
 class Model_MILP_attack():   
-    def __init__(self, cipher_parameters, licence_parameters):  
+    def __init__(self, cipher_parameters, licence_parameters, model=None):  
         
         #Cipher name
         self.cipher_name = cipher_parameters.get('Cipher_name', 'SKINNY')
@@ -30,14 +30,17 @@ class Model_MILP_attack():
             self.mix_columns_inverse.append([[int(MC_inv[i][j])for i in range(MC_inv.ncols())] for j in range(MC_inv.nrows())])
         
         #Model Creation
-        self.model = gp.Model(env=gp.Env(params={'WLSACCESSID': licence_parameters.get('WLSACCESSID'), 'WLSSECRET': licence_parameters.get('WLSSECRET'), 'LICENSEID': licence_parameters.get('LICENSEID')}))
+        if model==None:
+            self.model = gp.Model(env=gp.Env(params={'WLSACCESSID': licence_parameters.get('WLSACCESSID'), 'WLSSECRET': licence_parameters.get('WLSSECRET'), 'LICENSEID': licence_parameters.get('LICENSEID')}))
         
-        # Parameters of the Gurobi model
-        self.model.params.FeasibilityTol = 1e-9
-        self.model.params.OptimalityTol = 1e-9
-        self.model.setParam("OutputFlag", 1) 
-        self.model.setParam("LogToConsole", 1)
-        self.model.setParam("IntFeasTol", 1e-9)
+            # Parameters of the Gurobi model
+            self.model.params.FeasibilityTol = 1e-9
+            self.model.params.OptimalityTol = 1e-9
+            self.model.setParam("OutputFlag", 1) 
+            self.model.setParam("LogToConsole", 1)
+            self.model.setParam("IntFeasTol", 1e-9)
+        else :
+            self.model=model
         
         # Double Check of cipher model
         self.everything_all_right = True

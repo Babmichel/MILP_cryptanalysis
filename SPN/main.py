@@ -1,16 +1,20 @@
-from Model import model_MILP_attack
 from Cipher import SKINNY_parameters as cipher
-from SPN.Model import MITM
-from licence_parameters import *
-from attack_parameters  import *
+from Key_schedule import SKINNY_key_schedule
+from Model import MITM
+import licence_parameters 
+import attack_parameters
 
-attack = MITM.Differential_MITM_fix_distinguisher(cipher.cipher_parameters, licence_parameters, attack_parameters)
+
+attack = MITM.MITM(cipher.cipher_parameters, 
+                   licence_parameters.licence_parameters, 
+                   attack_parameters.attack_parameters)
+
+key_schedule = SKINNY_key_schedule.Model_MILP_SKINNY_key_schedule(cipher.cipher_parameters, 
+                                                                 attack.total_rounds,
+                                                                 attack.model)
 attack.getdetails()
-attack.part_initalisation()
-attack.upper_part_value_propagation()
-attack.lower_part_value_propagation()
-attack.objective_function()
+key_schedule.keyschedule()
+attack.attack()
 if attack.everything_all_right:
     attack.optimize()
-    attack.getresults()
     attack.display_console()

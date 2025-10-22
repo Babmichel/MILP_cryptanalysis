@@ -139,33 +139,6 @@ class Model_MILP_attack():
             if backward_round != part_size-1:
                 self.value_propagation_PR(part, backward_round+1, backward_round)
    
-    def complexities(self):
-        self.time_complexity = self.model.addVar(vtype= gp.GRB.CONTINUOUS, name = "time_complexity")
-        if self.block_size//self.word_size < 0 :
-            self.search_domain = range(128)
-            self.time_complexity_up = self.model.addVar(lb = 0, ub = 128,vtype= gp.GRB.INTEGER, name = "time_complexity_up")
-            self.time_complexity_down = self.model.addVar(lb = 0, ub = 128,vtype= gp.GRB.INTEGER, name = "time_complexity_down")
-            self.time_complexity_match = self.model.addVar(lb = 0, ub = 128,vtype= gp.GRB.INTEGER, name = "time_complexity_match")
-        
-            self.binary_time_complexity_up = {i: self.model.addVar(vtype=gp.GRB.BINARY, name=f"binary_time_complexity_up_{i}") for i in self.search_domain}
-            self.binary_time_complexity_down = {i: self.model.addVar(vtype=gp.GRB.BINARY, name=f"binary_time_complexity_up_{i}") for i in self.search_domain}
-            self.binary_time_complexity_match = {i: self.model.addVar(vtype=gp.GRB.BINARY, name=f"binary_time_complexity_up_{i}") for i in self.search_domain}
-        
-            self.model.addConstr(self.time_complexity_up == gp.quicksum(i * self.binary_time_complexity_up[i] for i in self.search_domain), name="link between binary and integer complexity up")
-            self.model.addConstr(self.time_complexity_down == gp.quicksum(i * self.binary_time_complexity_down[i] for i in self.search_domain), name="link between binary and integer complexity down")
-            self.model.addConstr(self.time_complexity_match == gp.quicksum(i * self.binary_time_complexity_match[i] for i in self.search_domain), name="link between binary and integer complexity match")
-
-            self.model.addConstr(self.time_complexity == gp.quicksum((2**i)*(self.binary_time_complexity_up[i] + self.binary_time_complexity_down[i] + self.binary_time_complexity_match[i]) for i in self.search_domain), name="time complexity")
-        
-        else :
-            self.time_complexity_up = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_up")
-            self.time_complexity_down = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_down")
-            self.time_complexity_match = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_match")
-
-            self.model.addConstr(self.time_complexity_down <= self.time_complexity, name="suboptimal time complexity down")
-            self.model.addConstr(self.time_complexity_up <= self.time_complexity, name="suboptimal time complexity up")
-            self.model.addConstr(self.time_complexity_match <= self.time_complexity, name="suboptimal time complexity match")
-        
     def optimize_the_model(self): 
         if self.everything_all_right:
             self.model.optimize()

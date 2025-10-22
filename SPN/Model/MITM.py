@@ -8,6 +8,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         self.structure_rounds = attack_parameters.get('structure_rounds', 4)
         self.corps_rounds = attack_parameters.get('corps_rounds', 2)
         self.total_rounds = self.structure_rounds + self.corps_rounds
+        self.optimal_complexity = attack_parameters.get('optimal_complexity', False)
 
     def getdetails(self):
         print(self.cipher_name, self.block_size)
@@ -112,9 +113,6 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                              name='fix_common_count')
         
         self.model.addConstr(self.fix_down+self.fix_up-self.common_fix<=self.block_size//self.word_size, name='cannot_fix_more_than_the_block')
-        
-
-        self.model.addConstr(self.common_fix == 16, name='test_constraint')
 
     def forward_value_propagation_upper_part(self):
         #Variable initialisation 
@@ -210,10 +208,41 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                                      + gp.quicksum(self.lower_part_values[round_index, state_index, row, column, 1] for round_index in range(self.corps_rounds) for state_index in range(self.state_number) for row in range(self.block_row_size) for column in range(self.block_column_size))
                                      + gp.quicksum(self.lower_structure_values[round_index, state_index, row, column, 1] for round_index in range(self.structure_rounds) for state_index in range(self.state_number) for row in range(self.block_row_size) for column in range(self.block_column_size))
                                      + gp.quicksum(self.upper_structure_values[round_index, state_index, row, column, 1] for round_index in range(self.structure_rounds) for state_index in range(self.state_number) for row in range(self.block_row_size) for column in range(self.block_column_size)))
-        self.model.setObjectiveN((-1)*self.for_display, index=10, priority=0)
+        self.model.setObjectiveN(self.for_display, index=10, priority=0)
     
+    def complexities(self):
+        self.time_complexity = self.model.addVar(vtype= gp.GRB.CONTINUOUS, name = "time_complexity")
+        if self.optimal_complexity :
+            self.search_domain = range(120)
+            self.time_complexity_up = self.model.addVar(lb = 0, ub = 128,vtype= gp.GRB.INTEGER, name = "time_complexity_up")
+            self.time_complexity_down = self.model.addVar(lb = 0, ub = 128,vtype= gp.GRB.INTEGER, name = "time_complexity_down")
+            self.time_complexity_match = self.model.addVar(lb = 0, ub = 128,vtype= gp.GRB.INTEGER, name = "time_complexity_match")
+        
+            self.binary_time_complexity_up = {i: self.model.addVar(vtype=gp.GRB.BINARY, name=f"binary_time_complexity_up_{i}") for i in self.search_domain}
+            self.binary_time_complexity_down = {i: self.model.addVar(vtype=gp.GRB.BINARY, name=f"binary_time_complexity_up_{i}") for i in self.search_domain}
+            self.binary_time_complexity_match = {i: self.model.addVar(vtype=gp.GRB.BINARY, name=f"binary_time_complexity_up_{i}") for i in self.search_domain}
+        
+            self.model.addConstr(self.time_complexity_up == gp.quicksum(i * self.binary_time_complexity_up[i] for i in self.search_domain), name="link between binary and integer complexity up")
+            self.model.addConstr(self.time_complexity_down == gp.quicksum(i * self.binary_time_complexity_down[i] for i in self.search_domain), name="link between binary and integer complexity down")
+            self.model.addConstr(self.time_complexity_match == gp.quicksum(i * self.binary_time_complexity_match[i] for i in self.search_domain), name="link between binary and integer complexity match")
+
+            self.model.addConstr(gp.quicksum(self.binary_time_complexity_up[i] for i in self.search_domain)==1, name="unique binary complexity up")
+            self.model.addConstr(gp.quicksum(self.binary_time_complexity_down[i] for i in self.search_domain)==1, name="unique binary complexity down")
+            self.model.addConstr(gp.quicksum(self.binary_time_complexity_match[i] for i in self.search_domain)==1, name="unique binary complexity match")
+
+            self.model.addConstr(self.time_complexity == gp.quicksum((2**i)*(self.binary_time_complexity_up[i] + self.binary_time_complexity_down[i] + self.binary_time_complexity_match[i]) for i in self.search_domain), name="time complexity")
+        
+        else :
+            self.time_complexity_up = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_up")
+            self.time_complexity_down = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_down")
+            self.time_complexity_match = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_match")
+
+            self.model.addConstr(self.time_complexity_down <= self.time_complexity, name="suboptimal time complexity down")
+            self.model.addConstr(self.time_complexity_up <= self.time_complexity, name="suboptimal time complexity up")
+            self.model.addConstr(self.time_complexity_match <= self.time_complexity, name="suboptimal time complexity match")
+        
     def objective_function(self):
-        #self.objective_for_display()
+        self.objective_for_display()
         self.complexities()
 
         self.model.addConstr(self.time_complexity_up == self.state_test_up + self.upper_key_guess + (self.block_size//self.word_size - self.fix_up))

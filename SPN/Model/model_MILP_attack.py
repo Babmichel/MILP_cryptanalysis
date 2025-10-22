@@ -3,7 +3,7 @@ import numpy as np
 from sage.all import Matrix, GF
 
 class Model_MILP_attack():   
-    def __init__(self, cipher_parameters, licence_parameters, model=None):  
+    def __init__(self, cipher_parameters, licence_parameters, model):  
         
         #Cipher name
         self.cipher_name = cipher_parameters.get('Cipher_name', 'SKINNY')
@@ -12,7 +12,7 @@ class Model_MILP_attack():
         self.block_size = cipher_parameters.get('block_size', 64)
         self.block_column_size = cipher_parameters.get('block_column_size', 4)
         self.block_row_size = cipher_parameters.get('block_row_size', 4)
-        self.word_size = int(self.block_size/(self.block_column_size+self.block_row_size))
+        self.word_size = int(self.block_size/(self.block_column_size*self.block_row_size))
         
         #Operations parameters
         self.operation_order = cipher_parameters.get('operation_order', ['AK', 'SR', 'MC0', 'SB'])
@@ -29,18 +29,18 @@ class Model_MILP_attack():
             MC_inv = MC.inverse()
             self.mix_columns_inverse.append([[int(MC_inv[i][j])for i in range(MC_inv.ncols())] for j in range(MC_inv.nrows())])
         
+        self.model=model
         #Model Creation
-        if model==None:
+        if self.model==None:
             self.model = gp.Model(env=gp.Env(params={'WLSACCESSID': licence_parameters.get('WLSACCESSID'), 'WLSSECRET': licence_parameters.get('WLSSECRET'), 'LICENSEID': licence_parameters.get('LICENSEID')}))
-        
+
             # Parameters of the Gurobi model
             self.model.params.FeasibilityTol = 1e-9
             self.model.params.OptimalityTol = 1e-9
             self.model.setParam("OutputFlag", 1) 
             self.model.setParam("LogToConsole", 1)
             self.model.setParam("IntFeasTol", 1e-9)
-        else :
-            self.model=model
+            
         
         # Double Check of cipher model
         self.everything_all_right = True
@@ -81,7 +81,7 @@ class Model_MILP_attack():
                                 ,name = 'value_propagation_SK_:_0_in_state_not_to_1')
         
         #if the key is not known, the state after AK cannot be computed
-        self.model.addConstrs((((subkey_part[round_index+subkey_index, row, column, 0]==1)
+        self.model.addConstrs((((subkey_part[round_index+subkey_index, row, column]==0)
                                 >> (part[round_index, output_state_index, row, column, 1]==0))
                                 for row in range(self.block_row_size) for column in range(self.block_column_size))
                                 ,name = 'value_propagation_SK_:_0_in_key_not_to_1')
@@ -92,18 +92,16 @@ class Model_MILP_attack():
             self.model.addConstrs(((part[input_round_index, self.state_number-1, row, column, 0]==1)
                                     >> (part[output_round_index, 0, row, column, 1]==0) for row in range(self.block_row_size) for column in range(self.block_column_size)), 
                                     name='value_propagation_NR_:_0_not_to_1')
-        elif input_round_index > output_round_index:
-            self.model.addConstrs(((part[input_round_index, 0, row, column, 0]==1)
-                                    >> (part[output_round_index, self.state_number-1, row, column, 1]==0) for row in range(self.block_row_size) for column in range(self.block_column_size)), 
-                                    name='value_propagation_NR_:_0_not_to_1')
         else :
             self.everything_all_right = False
-            print("Error in value_propagation_NR: input_round_index should be different from output_round_index")
+            print("Error in value_propagation_NR: input_round_index should be inferior from output_round_index")
         
     def value_propagation_PR(self, part, input_round_index, output_round_index):
         #an unknown value cannot lead to a value that can be computed
-        self.model.addConstrs(((part[input_round_index, self.state_number-1, row, column, 0]==1)
-                                >> (part[output_round_index, 0, row, column, 1]==0) for row in range(self.block_row_size) for column in range(self.block_column_size)), 
+        self.model.addConstrs(((part[input_round_index, 0, row, column, 0]==1)
+                                >> (part[output_round_index, self.state_number-1, row, column, 1]==0) 
+                                for row in range(self.block_row_size) 
+                                for column in range(self.block_column_size)), 
                                 name='value_propagation_NR_:_0_not_to_1')
 
     #Progation of values X-ROUND
@@ -121,10 +119,10 @@ class Model_MILP_attack():
                 else :
                     self.everything_all_right = False
                     print("One of the round operator name is not recognized in the upper part value propagation")
-            if forward_round != self.corps_rounds-1:
+            if forward_round != part_size-1:
                 self.value_propagation_NR(part, forward_round, forward_round+1)
 
-    def bacward_value_propagation(self, part, part_size, subkey, subkey_first_round_index):
+    def backward_value_propagation(self, part, part_size, subkey, subkey_first_round_index):
         for backward_round in range(part_size):
             for state_index in range(self.state_number-1):
                 if self.operation_order[state_index] == 'SR':
@@ -138,11 +136,11 @@ class Model_MILP_attack():
                 else :
                     self.everything_all_right = False
                     print("One of the round operator name is not recognized in the lower part value propagation")
-            if backward_round != self.corps_rounds-1:
-                self.value_propagation_NR(part, backward_round+1, backward_round)
+            if backward_round != part_size-1:
+                self.value_propagation_PR(part, backward_round+1, backward_round)
    
     def complexities(self):
-        self.time_complexity = self.model.addVar(vtype= gp.GRB.CONTINUOUS, name = "complexity")
+        self.time_complexity = self.model.addVar(vtype= gp.GRB.CONTINUOUS, name = "time_complexity")
         if self.block_size//self.word_size < 120 :
             self.search_domain = range(128)
             self.time_complexity_up = self.model.addVar(lb = 0, ub = 128,vtype= gp.GRB.INTEGER, name = "time_complexity_up")
@@ -158,6 +156,7 @@ class Model_MILP_attack():
             self.model.addConstr(self.time_complexity_match == gp.quicksum(i * self.binary_time_complexity_match[i] for i in self.search_domain), name="link between binary and integer complexity match")
 
             self.model.addConstr(self.time_complexity == gp.quicksum((2**i)*(self.binary_time_complexity_up[i] + self.binary_time_complexity_down[i] + self.binary_time_complexity_match[i]) for i in self.search_domain), name="time complexity")
+        
         else :
             self.time_complexity_up = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_up")
             self.time_complexity_down = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_down")
@@ -167,10 +166,14 @@ class Model_MILP_attack():
             self.model.addConstr(self.time_complexity_up <= self.time_complexity, name="suboptimal time complexity up")
             self.model.addConstr(self.time_complexity_match <= self.time_complexity, name="suboptimal time complexity match")
         
-    def optimize(self): 
+    def optimize_the_model(self): 
         if self.everything_all_right:
             self.model.optimize()
-            self.optimize=True
+            if self.model.Status != gp.GRB.INFEASIBLE :
+                self.optimized=True
+            else :
+                self.model.computeIIS()
+                self.model.write("model_infeasible.ilp")
         else : 
             print("Some error occured in assembling the model, please check the error(s) above.")
 

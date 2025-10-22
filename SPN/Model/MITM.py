@@ -213,12 +213,12 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         self.model.setObjectiveN((-1)*self.for_display, index=10, priority=0)
     
     def objective_function(self):
-        self.objective_for_display()
+        #self.objective_for_display()
         self.complexities()
 
         self.model.addConstr(self.time_complexity_up == self.state_test_up + self.upper_key_guess + (self.block_size//self.word_size - self.fix_up))
         self.model.addConstr(self.time_complexity_down == self.state_test_down + self.lower_key_guess + (self.block_size//self.word_size - self.fix_down))
-        self.model.addConstr(self.time_complexity_match == self.time_complexity_up + self.time_complexity_down - self.match_quantity - self.common_fix)
+        self.model.addConstr(self.time_complexity_match == self.time_complexity_up + self.time_complexity_down - self.match_quantity - self.common_key_guess)
         self.model.setObjectiveN(self.time_complexity, index=0, priority=10)
  
     def get_results(self):

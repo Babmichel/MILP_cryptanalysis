@@ -141,7 +141,7 @@ class Model_MILP_attack():
    
     def complexities(self):
         self.time_complexity = self.model.addVar(vtype= gp.GRB.CONTINUOUS, name = "time_complexity")
-        if self.block_size//self.word_size < 120 :
+        if self.block_size//self.word_size < 0 :
             self.search_domain = range(128)
             self.time_complexity_up = self.model.addVar(lb = 0, ub = 128,vtype= gp.GRB.INTEGER, name = "time_complexity_up")
             self.time_complexity_down = self.model.addVar(lb = 0, ub = 128,vtype= gp.GRB.INTEGER, name = "time_complexity_down")

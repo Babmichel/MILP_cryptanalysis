@@ -168,7 +168,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
 
     def match(self):
         self.match_state_index = self.operation_order.index('MC0')
-        self.match_quantity = self.model.addVar(vtype= gp.GRB.INTEGER, name = "match_quantity")
+        self.match_quantity = self.model.addVars(range(self.corps_rounds), vtype= gp.GRB.INTEGER, name = "match_quantity")
         self.match_state = self.model.addVars(range(self.corps_rounds),
                                               range(2),
                                               range(self.block_row_size), 
@@ -184,14 +184,12 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                               for column in range(self.block_column_size)), 
                               name = 'match_state_around_MC_value_known_by_upper_and_lower')
         
-        self.model.addConstr(self.match_quantity == gp.quicksum(self.match_state[round_index, state_index, row, column]
-                                                                for round_index in range(self.corps_rounds)
-                                                                for state_index in range(2)
+        self.model.addConstrs((self.match_quantity[round_index] <= gp.quicksum(self.match_state[round_index, state_index, row, column]
                                                                 for row in range(self.block_row_size)
-                                                                for column in range(self.block_column_size)), 
+                                                                for column in range(self.block_column_size)) for round_index in range(self.corps_rounds) for state_index in range(2)) , 
                                                                 name='mathc_only_around_MC')
 
-        self.model.addConstr(self.match_quantity >= 3, name='at_least_one_match')
+        self.model.addConstr(gp.quicksum(self.match_quantity[round_index] for round_index in range(self.corps_rounds)) >= 1, name='at_least_one_match')
 
     def attack(self):
         
@@ -251,7 +249,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
 
         self.model.addConstr(self.time_complexity_up == self.state_test_up + self.upper_key_guess + (self.block_size//self.word_size - self.fix_up))
         self.model.addConstr(self.time_complexity_down == self.state_test_down + self.lower_key_guess + (self.block_size//self.word_size - self.fix_down))
-        self.model.addConstr(self.time_complexity_match == self.time_complexity_up + self.time_complexity_down - self.match_quantity - self.common_key_guess)
+        self.model.addConstr(self.time_complexity_match == self.time_complexity_up + self.time_complexity_down - self.common_key_guess - gp.quicksum(self.match_quantity[round_index] for round_index in range(self.corps_rounds)))
         self.model.setObjectiveN(self.time_complexity, index=0, priority=10)
  
     def get_results(self):

@@ -214,6 +214,8 @@ class MITM(model_MILP_attack.Model_MILP_attack):
     
     def complexities(self):
         self.time_complexity = self.model.addVar(vtype= gp.GRB.CONTINUOUS, name = "time_complexity")
+        self.memory_complexity = self.model.addVar(vtype= gp.GRB.CONTINUOUS, name = "memory_complexity")
+        self.data_complexity = self.model.addVar(vtype= gp.GRB.CONTINUOUS, name = "data_complexity")
         if self.optimal_complexity :
             self.search_domain = range(120)
             self.time_complexity_up = self.model.addVar(lb = 0, ub = 128,vtype= gp.GRB.INTEGER, name = "time_complexity_up")
@@ -244,27 +246,51 @@ class MITM(model_MILP_attack.Model_MILP_attack):
             self.model.addConstr(self.time_complexity_match <= self.time_complexity, name="suboptimal time complexity match")
         
     def objective_function(self):
-        self.objective_for_display()
+        #self.objective_for_display()
         self.complexities()
 
-        self.model.addConstr(self.time_complexity_up == self.state_test_up + self.upper_key_guess + (self.block_size//self.word_size - self.fix_up))
-        self.model.addConstr(self.time_complexity_down == self.state_test_down + self.lower_key_guess + (self.block_size//self.word_size - self.fix_down))
-        self.model.addConstr(self.time_complexity_match == self.time_complexity_up + self.time_complexity_down - self.common_key_guess - gp.quicksum(self.match_quantity[round_index] for round_index in range(self.corps_rounds)))
+        self.model.addConstr(self.time_complexity_up == self.state_test_up + self.upper_key_guess + (self.block_size//self.word_size - self.fix_up), name='time_complexity_up_definition')
+        self.model.addConstr(self.time_complexity_down == self.state_test_down + self.lower_key_guess + (self.block_size//self.word_size - self.fix_down), name='time_complexity_down_definition')
+        self.model.addConstr(self.time_complexity_match == self.time_complexity_up + self.time_complexity_down - self.common_key_guess - gp.quicksum(self.match_quantity[round_index] for round_index in range(self.corps_rounds)), name='time_complexity_match_definition')
+        
+        self.model.addConstr(self.memory_complexity >= self.upper_key_guess + self.state_test_up - self.common_fix + (self.block_size//self.word_size - self.fix_up), name='memory_complexity_up_definition')
+        self.model.addConstr(self.memory_complexity >= self.lower_key_guess + self.state_test_down - self.common_fix + (self.block_size//self.word_size - self.fix_down), name='memory_complexity_down_definition')
+        
+        self.model.addConstr(self.data_complexity >= self.block_size - gp.quicksum(self.lower_structure_values[0, 0, row, column, 2] for row in range(self.block_row_size) for column in range(self.block_column_size)), name='data_definition')
+        
         self.model.setObjectiveN(self.time_complexity, index=0, priority=10)
+        self.model.setObjectiveN(self.data_complexity, index=0, priority=8)
+        self.model.setObjectiveN(self.memory_complexity, index=0, priority=5)
  
     def get_results(self):
         if self.optimized:
-            print(self.state_test_up)
-            print(self.state_test_down)
-            print(self.upper_key_guess)
-            print(self.lower_key_guess)
-            print(self.fix_up)
-            print(self.fix_down)
-            print(self.common_fix)
-            print(self.time_complexity_up)
-            print(self.time_complexity_down)
-            print(self.time_complexity_match)
-            print(self.time_complexity)
+            print("----- RESULTS -----")
+            print('number of rounds :', self.total_rounds)
+            print('\n')
+            print("UPPER PART :")
+            print("Fix up :", self.fix_up.X)
+            print("State tested up :", self.state_test_up.X)
+            print("Key bits guessed up :", self.upper_key_guess.X)
+            print("Complexity up :", self.time_complexity_up.X)
+            print("\n")
+            print("LOWER PART :")
+            print("Fix down :", self.fix_down.X)
+            print("State tested down :", self.state_test_down.X)
+            print("Key bits guessed down :", self.lower_key_guess.X)
+            print("Complexity down :", self.time_complexity_down.X)
+            print("\n")
+            print("MATHC PART :")
+            print("Common fix :", self.common_fix.X)
+            print("Common key bits guessed :", self.common_key_guess.X)
+            print("Match quantity :", sum(self.match_quantity[round_index].X for round_index in range(self.corps_rounds)))
+            print("Complexity match :", self.time_complexity_match.X)
+            print("\n")
+            print("OVERALL :")
+            print("Time complexity :", self.time_complexity.X)
+            print("Memory complexity :", self.memory_complexity.X)
+            print("Data complexity :", self.data_complexity.X)
+            print("\n")
+
         else :
             print('The Model at no been optimize yet')
 

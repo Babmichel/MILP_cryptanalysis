@@ -170,29 +170,33 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         self.match_state_index = self.operation_order.index('MC0')
         self.match_quantity = self.model.addVar(vtype= gp.GRB.INTEGER, name = "match_quantity")
         self.match_state = self.model.addVars(range(self.corps_rounds),
+                                              range(2),
                                               range(self.block_row_size), 
                                               range(self.block_column_size), 
                                               vtype = gp.GRB.BINARY, 
                                               name='match_state')
 
-        self.model.addConstrs((self.match_state[round_index, row, column] 
-                              == gp.and_(self.upper_part_values[round_index, self.match_state_index, row, column, 1], self.lower_part_values[round_index, self.match_state_index, row, column, 1])
+        self.model.addConstrs((self.match_state[round_index, state_index, row, column] 
+                              == gp.and_(self.upper_part_values[round_index, self.match_state_index + state_index, row, column, 1], self.lower_part_values[round_index, self.match_state_index + state_index, row, column, 1])
                               for round_index in range(self.corps_rounds)
+                              for state_index in range(2)
                               for row in range(self.block_row_size)
                               for column in range(self.block_column_size)), 
                               name = 'match_state_around_MC_value_known_by_upper_and_lower')
         
-        self.model.addConstr(self.match_quantity == gp.quicksum(self.match_state[round_index, row, column]
+        self.model.addConstr(self.match_quantity == gp.quicksum(self.match_state[round_index, state_index, row, column]
                                                                 for round_index in range(self.corps_rounds)
+                                                                for state_index in range(2)
                                                                 for row in range(self.block_row_size)
                                                                 for column in range(self.block_column_size)), 
                                                                 name='mathc_only_around_MC')
 
-        self.model.addConstr(self.match_quantity >= 1, name='at_least_one_match')
+        self.model.addConstr(self.match_quantity >= 3, name='at_least_one_match')
 
     def attack(self):
         
         self.structure()
+        self.model.addConstr(self.common_fix == 16)
         self.forward_value_propagation_upper_part()
         self.backward_value_propagation_lower_part()
         self.match()

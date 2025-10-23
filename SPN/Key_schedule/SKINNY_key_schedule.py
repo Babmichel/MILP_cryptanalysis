@@ -18,7 +18,7 @@ class Model_MILP_SKINNY_key_schedule(Model_MILP_attack):
         return([input_list[self.key_schedule_permutation[i]] for i in range(len(input_list))])
 
     def x_permutation(self, input_list, x):
-        output_permutation = self.one_permutation(input_list)
+        output_permutation = input_list
         for _ in range(x):
             output_permutation = self.one_permutation(output_permutation)
         return(output_permutation)

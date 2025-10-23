@@ -89,16 +89,18 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         
         self.model.addConstr(self.active_start_down==self.fix_down, name='each_down_fix_leads_to_a_known_value_in_first_state')
 
+        
         #Contrainst
         self.model.addConstrs((self.upper_structure_values[0, 0, row, column, 1] == 0
                             for row in range(self.block_row_size)
                             for column in range(self.block_column_size)),
-                            name='no_initial_known_value_upper_structure')
+                            name='no_initial_known_value_upper_structure') 
         
-        self.model.addConstrs((self.lower_structure_values[self.block_size-1, self.state_number-1, row, column, 1] == 0
+        self.model.addConstrs((self.lower_structure_values[self.structure_rounds-1, self.state_number-1, row, column, 1] == 0
                             for row in range(self.block_row_size)
                             for column in range(self.block_column_size)),
                             name='no_initial_known_value_upper_structure')
+         
         #Common fix
         self.common_fix = self.model.addVar(vtype= gp.GRB.INTEGER, name = "fix_common")
         self.fix_state = self.model.addVars(range(self.structure_rounds), 
@@ -195,8 +197,10 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                               name = 'match_state_around_MC_value_known_by_upper_and_lower')
         
         self.model.addConstrs((self.match_quantity[round_index] <= gp.quicksum(self.match_state[round_index, state_index, row, column]
-                                                                for row in range(self.block_row_size)
-                                                                for column in range(self.block_column_size)) for round_index in range(self.corps_rounds) for state_index in range(2)) , 
+                                                                                for row in range(self.block_row_size)
+                                                                                for column in range(self.block_column_size))
+                                                                for round_index in range(self.corps_rounds)
+                                                                for state_index in range(2)) , 
                                                                 name='mathc_only_around_MC')
 
         self.model.addConstr(gp.quicksum(self.match_quantity[round_index] for round_index in range(self.corps_rounds)) >= 1, name='at_least_one_match')
@@ -204,6 +208,28 @@ class MITM(model_MILP_attack.Model_MILP_attack):
     def attack(self):
         
         self.structure()
+        """ self.model.addConstr(self.upper_structure_values[0, 0, 0, 2, 2] == 1)
+        self.model.addConstr(self.upper_structure_values[0, 0, 2, 0, 2] == 1)
+        self.model.addConstr(self.upper_structure_values[0, 0, 3, 0, 2] == 1)
+        self.model.addConstr(self.upper_structure_values[0, 0, 3, 1, 2] == 1)
+
+        self.model.addConstr(self.upper_structure_values[0, 3, 0, 0, 2] == 1)
+        self.model.addConstr(self.upper_structure_values[0, 3, 0, 1, 2] == 1)
+        self.model.addConstr(self.upper_structure_values[0, 3, 0, 2, 2] == 1)
+        self.model.addConstr(self.upper_structure_values[0, 3, 2, 1, 2] == 1)
+        self.model.addConstr(self.upper_structure_values[0, 3, 2, 3, 2] == 1)
+
+        self.model.addConstr(self.upper_structure_values[1, 3, 0, 2, 2] == 1)
+        self.model.addConstr(self.upper_structure_values[1, 3, 2, 0, 2] == 1)
+        self.model.addConstr(self.upper_structure_values[1, 3, 2, 2, 2] == 1)
+        
+        self.model.addConstr(self.upper_structure_values[2, 1, 0, 0, 2] == 1)
+
+        self.model.addConstr(self.upper_structure_values[3, 3, 0, 3, 2] == 1)
+        self.model.addConstr(self.upper_structure_values[3, 3, 2, 3, 2] == 1)
+
+        self.model.addConstr(self.upper_structure_values[4, 1, 0, 2, 2] == 1) """
+
         self.model.addConstr(self.common_fix == 16)
         self.forward_value_propagation_upper_part()
         self.backward_value_propagation_lower_part()
@@ -220,7 +246,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                                      + gp.quicksum(self.lower_part_values[round_index, state_index, row, column, 1] for round_index in range(self.corps_rounds) for state_index in range(self.state_number) for row in range(self.block_row_size) for column in range(self.block_column_size))
                                      + gp.quicksum(self.lower_structure_values[round_index, state_index, row, column, 1] for round_index in range(self.structure_rounds) for state_index in range(self.state_number) for row in range(self.block_row_size) for column in range(self.block_column_size))
                                      + gp.quicksum(self.upper_structure_values[round_index, state_index, row, column, 1] for round_index in range(self.structure_rounds) for state_index in range(self.state_number) for row in range(self.block_row_size) for column in range(self.block_column_size)))
-        self.model.setObjectiveN(self.for_display, index=10, priority=0)
+        self.model.setObjectiveN(-self.for_display, index=10, priority=0)
     
     def complexities(self):
         self.time_complexity = self.model.addVar(vtype= gp.GRB.CONTINUOUS, name = "time_complexity")

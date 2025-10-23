@@ -27,8 +27,9 @@ class Model_MILP_attack():
         for element in self.mix_columns : #Computing the inverse of the matrixes
             MC = Matrix(GF(2), element)
             MC_inv = MC.inverse()
-            self.mix_columns_inverse.append([[int(MC_inv[i][j])for i in range(MC_inv.ncols())] for j in range(MC_inv.nrows())])
-        
+            self.mix_columns_inverse.append([[int(MC_inv[j][i])for i in range(MC_inv.ncols())] for j in range(MC_inv.nrows())])
+        print(self.mix_columns_inverse)
+        print(self.shift_rows_inverse)
         self.model=model
         #Model Creation
         if self.model==None:

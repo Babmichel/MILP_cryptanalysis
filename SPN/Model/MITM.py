@@ -256,7 +256,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         self.model.addConstr(self.memory_complexity >= self.upper_key_guess + self.state_test_up - self.common_fix + (self.block_size//self.word_size - self.fix_up), name='memory_complexity_up_definition')
         self.model.addConstr(self.memory_complexity >= self.lower_key_guess + self.state_test_down - self.common_fix + (self.block_size//self.word_size - self.fix_down), name='memory_complexity_down_definition')
         
-        self.model.addConstr(self.data_complexity >= self.block_size - gp.quicksum(self.lower_structure_values[0, 0, row, column, 2] for row in range(self.block_row_size) for column in range(self.block_column_size)), name='data_definition')
+        self.model.addConstr(self.data_complexity >= self.block_size//self.word_size - gp.quicksum(self.lower_structure_values[0, 0, row, column, 2] for row in range(self.block_row_size) for column in range(self.block_column_size)), name='data_definition')
         
         self.model.setObjectiveN(self.time_complexity, index=0, priority=10)
         self.model.setObjectiveN(self.data_complexity, index=0, priority=8)
@@ -286,9 +286,9 @@ class MITM(model_MILP_attack.Model_MILP_attack):
             print("Complexity match :", self.time_complexity_match.X)
             print("\n")
             print("OVERALL :")
-            print("Time complexity :", self.time_complexity.X)
-            print("Memory complexity :", self.memory_complexity.X)
-            print("Data complexity :", self.data_complexity.X)
+            print("Time complexity :", self.word_size*self.time_complexity.X)
+            print("Memory complexity :", self.word_size*self.memory_complexity.X)
+            print("Data complexity :", self.word_size*self.data_complexity.X)
             print("\n")
 
         else :

@@ -89,6 +89,16 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         
         self.model.addConstr(self.active_start_down==self.fix_down, name='each_down_fix_leads_to_a_known_value_in_first_state')
 
+        #Contrainst
+        self.model.addConstrs((self.upper_structure_values[0, 0, row, column, 1] == 0
+                            for row in range(self.block_row_size)
+                            for column in range(self.block_column_size)),
+                            name='no_initial_known_value_upper_structure')
+        
+        self.model.addConstrs((self.lower_structure_values[self.block_size-1, self.state_number-1, row, column, 1] == 0
+                            for row in range(self.block_row_size)
+                            for column in range(self.block_column_size)),
+                            name='no_initial_known_value_upper_structure')
         #Common fix
         self.common_fix = self.model.addVar(vtype= gp.GRB.INTEGER, name = "fix_common")
         self.fix_state = self.model.addVars(range(self.structure_rounds), 

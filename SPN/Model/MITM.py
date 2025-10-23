@@ -246,7 +246,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
             self.model.addConstr(self.time_complexity_match <= self.time_complexity, name="suboptimal time complexity match")
         
     def objective_function(self):
-        #self.objective_for_display()
+        self.objective_for_display()
         self.complexities()
 
         self.model.addConstr(self.time_complexity_up == self.state_test_up + self.upper_key_guess + (self.block_size//self.word_size - self.fix_up), name='time_complexity_up_definition')

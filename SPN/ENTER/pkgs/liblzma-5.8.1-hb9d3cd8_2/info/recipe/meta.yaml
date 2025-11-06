@@ -1,0 +1,68 @@
+# This file created by conda-build 25.5.0
+# ------------------------------------------------
+
+package:
+  name: liblzma
+  version: 5.8.1
+source:
+  url: https://github.com/tukaani-project/xz/releases/download/v5.8.1/xz-5.8.1.tar.gz
+  sha256: 507825b599356c10dca1cd720c9d0d0c9d5400b9de300af00e4d1ea150795543
+build:
+  run_exports:
+    - liblzma >=5.8.1,<6.0a0
+  number: 2
+  string: hb9d3cd8_2
+requirements:
+  build:
+    - _libgcc_mutex 0.1 conda_forge
+    - _openmp_mutex 4.5 2_gnu
+    - binutils_impl_linux-64 2.43 h4bf12b8_4
+    - binutils_linux-64 2.43 h4852527_4
+    - gcc_impl_linux-64 13.3.0 h1e990d8_2
+    - gcc_linux-64 13.3.0 h6f18a23_11
+    - kernel-headers_linux-64 3.10.0 he073ed8_18
+    - ld_impl_linux-64 2.43 h712a8e2_4
+    - libgcc 15.1.0 h767d61c_2
+    - libgcc-devel_linux-64 13.3.0 hc03c837_102
+    - libgomp 15.1.0 h767d61c_2
+    - libsanitizer 13.3.0 he8ea267_2
+    - libstdcxx 15.1.0 h8f9b012_2
+    - make 4.4.1 hb9d3cd8_2
+    - sysroot_linux-64 2.17 h0157908_18
+    - tzdata 2025b h78e105d_0
+  run_constrained:
+    - xz 5.8.1.*
+  host:
+    - _libgcc_mutex 0.1 conda_forge
+    - _openmp_mutex 4.5 2_gnu
+    - libgcc 15.1.0 h767d61c_2
+    - libgomp 15.1.0 h767d61c_2
+  run:
+    - __glibc >=2.17,<3.0.a0
+    - libgcc >=13
+test:
+  commands:
+    - test ! -f ${PREFIX}/lib/liblzma.a
+    - test ! -f ${PREFIX}/lib/liblzma${SHLIB_EXT}
+    - test -f ${PREFIX}/lib/liblzma.so.*.*
+about:
+  home: http://tukaani.org/xz/
+  dev_url: http://git.tukaani.org/
+  summary: a compression library with an API similar to that of zlib
+  license: 0BSD
+  license_file:
+    - COPYING
+    - COPYING.0BSD
+extra:
+  recipe-maintainers:
+    - mingwandroid
+    - msarahan
+    - nehaljwani
+    - ocefpaf
+    - scopatz
+    - xhochy
+  final: true
+  copy_test_source_files: true
+  flow_run_id: azure_20250606.2.1
+  remote_url: https://github.com/conda-forge/xz-feedstock
+  sha: 86438a1d2bb4ba8a6e6c8cbb4add9c33b8110f64

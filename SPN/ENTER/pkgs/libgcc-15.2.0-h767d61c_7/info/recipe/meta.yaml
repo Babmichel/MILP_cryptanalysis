@@ -1,0 +1,59 @@
+# This file created by conda-build 25.9.0
+# ------------------------------------------------
+
+package:
+  name: libgcc
+  version: 15.2.0
+source:
+  - url:
+      - https://ftp.gnu.org/gnu/gcc/gcc-15.2.0/gcc-15.2.0.tar.gz
+      - https://mirrors.ocf.berkeley.edu/gnu/gcc/gcc-15.2.0/gcc-15.2.0.tar.gz
+    sha256: 7294d65cc1a0558cb815af0ca8c7763d86f7a31199794ede3f630c0d1b0a5723
+    patches:
+      - patches/0001-allow-commands-in-main-specfile.patch
+      - patches/0002-patch-zoneinfo_dir_override-to-point-to-our-tzdata.patch
+      - patches/0003-add-ldl-to-libstdc___la_LDFLAGS.patch
+      - patches/0004-Hardcode-HAVE_ALIGNED_ALLOC-1-in-libstdc-v3-configur.patch
+build:
+  number: 7
+  detect_binary_files_with_prefix: false
+  missing_dso_whitelist:
+    - '*'
+  rpaths_patcher: patchelf
+  string: h767d61c_7
+requirements:
+  host:
+    - _openmp_mutex 4.5 3_gnu
+    - kernel-headers_linux-64 3.10.0 he581ecd_18
+    - libgomp 15.2.0 h767d61c_7
+    - sysroot_linux-64 2.17 hb09d241_18
+    - tzdata 2025b h78e105d_0
+  run:
+    - __glibc >=2.17,<3.0.a0
+    - _openmp_mutex >=4.5
+  run_constrained:
+    - libgcc-ng ==15.2.0=*_7
+    - libgomp 15.2.0 h767d61c_7
+test:
+  requires:
+    - sysroot_linux-64
+  commands:
+    - test -f ${PREFIX}/lib/libgcc_s.so
+    - test -f ${PREFIX}/lib/libgomp.so.1
+    - test `readlink ${PREFIX}/lib/libgomp.so.1` == "libgomp.so.1.0.0"
+about:
+  summary: The GCC low-level runtime library
+  home: https://gcc.gnu.org/onlinedocs/gccint/Libgcc.html
+  license: GPL-3.0-only WITH GCC-exception-3.1
+extra:
+  feedstock-name: ctng-compilers-feedstock
+  recipe-maintainers:
+    - beckermr
+    - isuruf
+    - timsnyder
+    - xhochy
+  final: true
+  copy_test_source_files: true
+  flow_run_id: azure_20251008.2.1
+  remote_url: https://github.com/conda-forge/ctng-compilers-feedstock
+  sha: 75d69d32b4266eef9808c20157cc4af1ef9705ca

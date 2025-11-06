@@ -1,0 +1,119 @@
+{
+  "paths": [
+    {
+      "_path": "site-packages/conda_libmamba_solver-25.4.0.dist-info/INSTALLER",
+      "path_type": "hardlink",
+      "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+      "size_in_bytes": 5
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver-25.4.0.dist-info/METADATA",
+      "path_type": "hardlink",
+      "sha256": "5b9a6c0f8e856404d6477cbea471401b64480c5cda59be17344c628dc6120a2c",
+      "size_in_bytes": 5564
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver-25.4.0.dist-info/RECORD",
+      "path_type": "hardlink",
+      "sha256": "37fd9e6049bfb3e226876bf38adda96ffa34d2cd16b1d94f9797c02271dbda04",
+      "size_in_bytes": 2444
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver-25.4.0.dist-info/REQUESTED",
+      "path_type": "hardlink",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_in_bytes": 0
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver-25.4.0.dist-info/WHEEL",
+      "path_type": "hardlink",
+      "sha256": "aad0b0a12256807936d52d4a6f88a1773236ae527564a688bab4e3fe780e8724",
+      "size_in_bytes": 87
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver-25.4.0.dist-info/direct_url.json",
+      "path_type": "hardlink",
+      "sha256": "2b3442fb65265bac82c1f03c9ee76403f3f381596ac278202e616d020db61d36",
+      "size_in_bytes": 121
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver-25.4.0.dist-info/entry_points.txt",
+      "path_type": "hardlink",
+      "sha256": "24703165ad1fd520140a056ab8e75450e1aa49170ccb3deb9298972f53e5a1cf",
+      "size_in_bytes": 61
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver-25.4.0.dist-info/licenses/AUTHORS.md",
+      "path_type": "hardlink",
+      "sha256": "0660e264a4b1684e9a65b1a4b006ebdc08081dcff3dc89af59c61e8d9bad0acb",
+      "size_in_bytes": 426
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver-25.4.0.dist-info/licenses/LICENSE",
+      "path_type": "hardlink",
+      "sha256": "b3973794ccbf1601c348aee5b4bfe0345c3bcd21dc0dc80a38441b99405febb0",
+      "size_in_bytes": 1663
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver/__init__.py",
+      "path_type": "hardlink",
+      "sha256": "12bd7767da49a50275a599daed60568d2daaf9958fe8c6d346f35bb6e13c195b",
+      "size_in_bytes": 564
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver/conda_build_exceptions.py",
+      "path_type": "hardlink",
+      "sha256": "b8f73b3ca9fd20df95e38c04a4a7991d9a688e21f6870b9029d07309f64710ad",
+      "size_in_bytes": 1396
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver/exceptions.py",
+      "path_type": "hardlink",
+      "sha256": "02a1129199a1bde44ac547d14e8f9048f11615bd4321e5fa5bcfb0619f6a86f3",
+      "size_in_bytes": 485
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver/index.py",
+      "path_type": "hardlink",
+      "sha256": "409ea9a698375ce2e21f913b7a64ef45e18e26e1aac0352f472a59e6436e2b76",
+      "size_in_bytes": 25454
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver/mamba_utils.py",
+      "path_type": "hardlink",
+      "sha256": "6962fe217a8fc7d6a46e493b8e039e2608e177360e059aa5b84cab47d2c9c421",
+      "size_in_bytes": 6879
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver/plugin.py",
+      "path_type": "hardlink",
+      "sha256": "a18d185a3650b23285af3ff581066af91bfc81544813f47cf8d277e3ecc03793",
+      "size_in_bytes": 718
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver/repoquery.py",
+      "path_type": "hardlink",
+      "sha256": "d88af30c171f78ce86abbbcdd1f92624de5329630cf13befa5d1f57486e139ff",
+      "size_in_bytes": 7610
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver/solver.py",
+      "path_type": "hardlink",
+      "sha256": "311c562c52156cc4ec0d99637205b94176a531d3361373cad3032e3e733ef01a",
+      "size_in_bytes": 47311
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver/state.py",
+      "path_type": "hardlink",
+      "sha256": "cab8548210140ba540737c740736d44d2dedcf4d72f871bbdc0ad17edd238ab4",
+      "size_in_bytes": 33424
+    },
+    {
+      "_path": "site-packages/conda_libmamba_solver/utils.py",
+      "path_type": "hardlink",
+      "sha256": "428a2b69fa6eaad05b9f860f8668e9ac07a522ca7ed9222703ce33d10873b56d",
+      "size_in_bytes": 3833
+    }
+  ],
+  "paths_version": 1
+}

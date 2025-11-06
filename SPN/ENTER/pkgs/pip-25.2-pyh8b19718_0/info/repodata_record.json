@@ -1,0 +1,24 @@
+{
+    "arch": null,
+    "build": "pyh8b19718_0",
+    "build_number": 0,
+    "channel": "https://conda.anaconda.org/conda-forge",
+    "depends": [
+        "python >=3.9,<3.13.0a0",
+        "setuptools",
+        "wheel"
+    ],
+    "fn": "pip-25.2-pyh8b19718_0.conda",
+    "license": "MIT",
+    "license_family": "MIT",
+    "md5": "dfce4b2af4bfe90cdcaf56ca0b28ddf5",
+    "name": "pip",
+    "noarch": "python",
+    "platform": null,
+    "sha256": "ec9ed3cef137679f3e3a68e286c6efd52144684e1be0b05004d9699882dadcdd",
+    "size": 1177168,
+    "subdir": "noarch",
+    "timestamp": 1753924973872,
+    "url": "https://conda.anaconda.org/conda-forge/noarch/pip-25.2-pyh8b19718_0.conda",
+    "version": "25.2"
+}

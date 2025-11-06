@@ -1,0 +1,14 @@
+{
+  "arch": "x86_64",
+  "build": "h4852527_7",
+  "build_number": 7,
+  "depends": [
+    "libstdcxx 15.2.0 h8f9b012_7"
+  ],
+  "license": "GPL-3.0-only WITH GCC-exception-3.1",
+  "name": "libstdcxx-ng",
+  "platform": "linux",
+  "subdir": "linux-64",
+  "timestamp": 1759968157195,
+  "version": "15.2.0"
+}

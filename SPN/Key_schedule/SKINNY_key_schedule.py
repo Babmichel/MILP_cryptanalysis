@@ -23,7 +23,7 @@ class Model_MILP_SKINNY_key_schedule(Model_MILP_attack):
             output_permutation = self.one_permutation(output_permutation)
         return(output_permutation)
 
-    def master_key_initialisation(self):
+    def master_key_initialisation(self): 
         self.master_key = self.model.addVars(range(self.block_row_size), 
                                              range(self.block_column_size), 
                                              range(3),
@@ -108,35 +108,37 @@ class Model_MILP_SKINNY_key_schedule(Model_MILP_attack):
         self.model.addConstrs(((gp.quicksum((1-(self.x_permutation(self.intial_permutation, round_index).index(row*4+column))//(self.block_column_size*self.block_row_size/2))
                                             *self.upper_subkey[round_index, 
                                                             (self.x_permutation(self.intial_permutation, round_index).index(row*4+column))//self.block_row_size, 
-                                                            (self.x_permutation(self.intial_permutation, round_index).index(row*4+column))%self.block_row_size] 
+                                                            (self.x_permutation(self.intial_permutation, round_index).index(row*4+column))%self.block_column_size] 
                                             for round_index in range(self.total_round))
                                             == self.master_key_count_guess[row, column, 1])
                                     for row in range(self.block_row_size)
                                     for column in range(self.block_column_size)), 
-                                    name = '3_subkey_activity_induce_upper_master_key_active')
+                                    name = 'key_count_for_upper_master_key_active')
                               
         self.model.addConstrs(((gp.quicksum((1-(self.x_permutation(self.intial_permutation, round_index).index(row*4+column))//(self.block_column_size*self.block_row_size/2))
                                             *self.lower_subkey[round_index, 
                                                             (self.x_permutation(self.intial_permutation, round_index).index(row*4+column))//self.block_row_size, 
-                                                            (self.x_permutation(self.intial_permutation, round_index).index(row*4+column))%self.block_row_size] 
+                                                            (self.x_permutation(self.intial_permutation, round_index).index(row*4+column))%self.block_column_size] 
                                             for round_index in range(self.total_round))
                                             == self.master_key_count_guess[row, column, 2])
                                     for row in range(self.block_row_size)
                                     for column in range(self.block_column_size)), 
-                                    name = '3_subkey_activity_induce_upper_master_key_active')
+                                    name = 'key_count_for_lower_master_key_active')
         
         #if a subkey is guess more than three time then all the master key bits are known
-        self.model.addConstrs((self.master_key_count_guess[row, column, 1] <= 2 + self.total_round*self.master_key[row, column, 1]
+        self.model.addConstrs((self.master_key_count_guess[row, column, attack_part] >= self.tweakey_number*self.master_key[row, column, attack_part]
                          for row in range(self.block_row_size)
-                         for column in range(self.block_column_size)), 
-                         name = 'more than three guess on a same subkey bit induce master key is known')
+                         for column in range(self.block_column_size)
+                         for attack_part in [1,2]), 
+                         name = 'known master key bits imply more than three guess on a same subkey bit')
         
-        self.model.addConstrs((self.master_key_count_guess[row, column, 2] <= 2 + self.total_round*self.master_key[row, column, 2]
-                    for row in range(self.block_row_size)
-                    for column in range(self.block_column_size)), 
-                    name = 'more than three guess on a same subkey bit induce master key is known')
-        
-        self.model.addConstrs((self.master_key_count_guess[row, column, 1] + self.master_key_count_guess[row, column, 2] <= 3 + self.total_round*self.master_key_count_guess_match[row, column]
+        self.model.addConstrs((self.master_key_count_guess[row, column, attack_part] <= 2 + self.total_round*self.master_key[row, column, attack_part]
+                                for row in range(self.block_row_size)
+                                for column in range(self.block_column_size)
+                                for attack_part in [1,2]), 
+                                name = 'more than three guess on a same subkey bit imply known master key bits')   
+
+        self.model.addConstrs((self.master_key_count_guess[row, column, 1] + self.master_key_count_guess[row, column, 2] <= 3+self.total_round*self.master_key_count_guess_match[row, column]
                               for row in range(self.block_row_size)
                               for column in range(self.block_column_size)), 
                               name = 'count of match in the match')

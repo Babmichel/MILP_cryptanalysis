@@ -1,0 +1,9 @@
+libdir=/home/bamichel/Documents/MILP_cryptanalysis/SPN/ENTER/lib
+includedir=/home/bamichel/Documents/MILP_cryptanalysis/SPN/ENTER/include
+
+Name: libsolvext
+Description: Library for reading repositories
+Version: 0.7.35
+Requires: libsolv
+Libs: -L${libdir} -lsolvext
+Cflags: -I${includedir}

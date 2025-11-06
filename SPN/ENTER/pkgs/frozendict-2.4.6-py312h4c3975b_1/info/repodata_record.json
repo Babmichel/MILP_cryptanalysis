@@ -1,0 +1,24 @@
+{
+    "arch": "x86_64",
+    "build": "py312h4c3975b_1",
+    "build_number": 1,
+    "channel": "https://conda.anaconda.org/conda-forge",
+    "depends": [
+        "__glibc >=2.17,<3.0.a0",
+        "libgcc >=14",
+        "python >=3.12,<3.13.0a0",
+        "python_abi 3.12.* *_cp312"
+    ],
+    "fn": "frozendict-2.4.6-py312h4c3975b_1.conda",
+    "license": "LGPL-3.0-only",
+    "license_family": "LGPL",
+    "md5": "61b9cc4bc7a93aec29886b95a3c68950",
+    "name": "frozendict",
+    "platform": "linux",
+    "sha256": "8a8f891211b0706e9e5f19b702f8f3c103c83b82c878832dcfee7524189a66c5",
+    "size": 31281,
+    "subdir": "linux-64",
+    "timestamp": 1756048056756,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/frozendict-2.4.6-py312h4c3975b_1.conda",
+    "version": "2.4.6"
+}

@@ -22,7 +22,10 @@ attack.lower_subkey = key_schedule.lower_subkey
 attack.upper_key_guess = key_schedule.upper_key_guess
 attack.lower_key_guess = key_schedule.lower_key_guess
 attack.common_key_guess = key_schedule.common_key_guess
+
 key_schedule.model.addConstrs((key_schedule.master_key[0, 0, value] == 1 for value in [1,2]),
+                              name='master_key_fixed_values_from_attack')
+key_schedule.model.addConstrs((key_schedule.master_key[0, 1, value] == 0 for value in [1]),
                               name='master_key_fixed_values_from_attack')
 key_schedule.model.addConstrs((key_schedule.master_key[0, 2, value] == 1 for value in [1,2]),
                               name='master_key_fixed_values_from_attack')
@@ -44,9 +47,13 @@ key_schedule.model.addConstrs((key_schedule.master_key[2, 2, value] == 1 for val
                               name='master_key_fixed_values_from_attack')
 key_schedule.model.addConstrs((key_schedule.master_key[2, 3, value] == 1 for value in [1,2]),
                               name='master_key_fixed_values_from_attack')
+key_schedule.model.addConstrs((key_schedule.master_key[3, 0, value] == 0 for value in [2]),
+                              name='master_key_fixed_values_from_attack')
 key_schedule.model.addConstrs((key_schedule.master_key[3, 1, value] == 1 for value in [1,2]),
                               name='master_key_fixed_values_from_attack')
 key_schedule.model.addConstrs((key_schedule.master_key[3, 2, value] == 1 for value in [1,2]),
+                              name='master_key_fixed_values_from_attack')
+key_schedule.model.addConstrs((key_schedule.master_key[3, 3, value] == 0 for value in [2]),
                               name='master_key_fixed_values_from_attack')
 
 attack.attack()

@@ -1,0 +1,76 @@
+# This file created by conda-build 25.7.0
+# meta.yaml template originally from:
+# /home/conda/recipe_root, last modified Tue Sep 23 11:23:29 2025
+# ------------------------------------------------
+
+package:
+  name: libuuid
+  version: 2.41.2
+source:
+  url: https://github.com/util-linux/util-linux/archive/refs/tags/v2.41.2.tar.gz
+  sha256: 534aa113a323d6866c5f46baf909618dcc60c391ad24a91814e5d21511cefd30
+  patches:
+    - darwin_libtoolize.patch
+build:
+  number: '0'
+  run_exports:
+    - libuuid >=2.41.2,<3.0a0
+  string: he9a06e4_0
+requirements:
+  build:
+    - _libgcc_mutex 0.1 conda_forge
+    - _openmp_mutex 4.5 2_gnu
+    - autoconf 2.72 pl5321hbb4ee43_1
+    - automake 1.17 pl5321ha770c72_0
+    - binutils_impl_linux-64 2.44 h4bf12b8_1
+    - binutils_linux-64 2.44 h4852527_1
+    - bison 3.8.2 h59595ed_0
+    - flex 2.6.4 h58526e2_1004
+    - gcc_impl_linux-64 14.3.0 hd9e9e21_5
+    - gcc_linux-64 14.3.0 h1382650_11
+    - gettext-tools 0.25.1 h3f43e3d_1
+    - gnuconfig 2020.11.07 hd8ed1ab_0
+    - kernel-headers_linux-64 3.10.0 he073ed8_18
+    - ld_impl_linux-64 2.44 h1423503_1
+    - libgcc 15.1.0 h767d61c_5
+    - libgcc-devel_linux-64 14.3.0 h85bb3a7_105
+    - libgcc-ng 15.1.0 h69a702a_5
+    - libgomp 15.1.0 h767d61c_5
+    - libiconv 1.18 h3b78370_2
+    - libltdl 2.4.3a h5888daf_0
+    - libsanitizer 14.3.0 hd08acf3_5
+    - libstdcxx 15.1.0 h8f9b012_5
+    - libstdcxx-ng 15.1.0 h4852527_5
+    - libtool 2.5.4 h5888daf_0
+    - libxcrypt 4.4.36 hd590300_1
+    - m4 1.4.20 hb9d3cd8_0
+    - make 4.4.1 hb9d3cd8_2
+    - perl 5.32.1 7_hd590300_perl5
+    - sysroot_linux-64 2.17 h0157908_18
+    - tzdata 2025b h78e105d_0
+  host:
+    - _libgcc_mutex 0.1 conda_forge
+    - _openmp_mutex 4.5 2_gnu
+    - libgcc 15.1.0 h767d61c_5
+    - libgomp 15.1.0 h767d61c_5
+  run:
+    - __glibc >=2.17,<3.0.a0
+    - libgcc >=14
+test:
+  commands:
+    - test -f ${PREFIX}/lib/libuuid.a
+    - test -f ${PREFIX}/lib/libuuid${SHLIB_EXT}
+about:
+  home: http://sourceforge.net/projects/libuuid/
+  license: BSD-3-Clause
+  license_file: COPYING
+  summary: Portable uuid C library.
+extra:
+  recipe-maintainers:
+    - hmaarrfk
+    - ocefpaf
+  final: true
+  copy_test_source_files: true
+  flow_run_id: azure_20250923.2.1
+  remote_url: https://github.com/conda-forge/libuuid-feedstock
+  sha: 90e86fbf97cbe3012dfb647e2d4c921e2592cb97

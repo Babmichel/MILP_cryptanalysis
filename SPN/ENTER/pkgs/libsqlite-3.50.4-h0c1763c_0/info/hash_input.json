@@ -1,0 +1,12 @@
+{
+  "c_compiler_version": "14",
+  "libsqlite": "3",
+  "zlib": "1",
+  "c_compiler": "gcc",
+  "channel_targets": "conda-forge main",
+  "target_platform": "linux-64",
+  "c_stdlib_version": "2.17",
+  "with_icu": "false",
+  "c_stdlib": "sysroot",
+  "__glibc": "__glibc >=2.17,<3.0.a0"
+}

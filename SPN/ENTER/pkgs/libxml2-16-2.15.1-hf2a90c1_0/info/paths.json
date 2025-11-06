@@ -1,0 +1,25 @@
+{
+  "paths": [
+    {
+      "_path": "etc/conda/activate.d/libxml2-split_activate.sh",
+      "path_type": "hardlink",
+      "sha256": "631478a9cfbd337b86ee1df94497c21821cd561312c94892d156e43f499cf5c4",
+      "size_in_bytes": 872
+    },
+    {
+      "_path": "lib/libxml2.so.16",
+      "path_type": "softlink",
+      "sha256": "b7172847b8a1ac5ccf24660cf6e41f15a25ad79c8cc5348a3eea0321831da680",
+      "size_in_bytes": 1439920
+    },
+    {
+      "_path": "lib/libxml2.so.16.1.1",
+      "file_mode": "binary",
+      "path_type": "hardlink",
+      "prefix_placeholder": "/home/conda/feedstock_root/build_artifacts/libxml2-split_1761015493995/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho",
+      "sha256": "b7172847b8a1ac5ccf24660cf6e41f15a25ad79c8cc5348a3eea0321831da680",
+      "size_in_bytes": 1439920
+    }
+  ],
+  "paths_version": 1
+}

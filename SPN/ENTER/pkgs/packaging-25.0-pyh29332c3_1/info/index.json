@@ -1,0 +1,14 @@
+{
+  "build": "pyh29332c3_1",
+  "build_number": 1,
+  "depends": [
+    "python >=3.8",
+    "python"
+  ],
+  "license": "Apache-2.0",
+  "name": "packaging",
+  "noarch": "python",
+  "subdir": "noarch",
+  "timestamp": 1745345660407,
+  "version": "25.0"
+}

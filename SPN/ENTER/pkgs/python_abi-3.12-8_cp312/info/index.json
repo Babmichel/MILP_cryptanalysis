@@ -1,0 +1,17 @@
+{
+  "arch": null,
+  "build": "8_cp312",
+  "build_number": 8,
+  "constrains": [
+    "python 3.12.* *_cpython"
+  ],
+  "depends": [],
+  "license": "BSD-3-Clause",
+  "license_family": "BSD",
+  "name": "python_abi",
+  "noarch": "generic",
+  "platform": null,
+  "subdir": "noarch",
+  "timestamp": 1752805918820,
+  "version": "3.12"
+}

@@ -1,0 +1,25 @@
+{
+    "arch": "x86_64",
+    "build": "py312h4c3975b_0",
+    "build_number": 0,
+    "channel": "https://conda.anaconda.org/conda-forge",
+    "depends": [
+        "__glibc >=2.17,<3.0.a0",
+        "libgcc >=14",
+        "python >=3.12,<3.13.0a0",
+        "python_abi 3.12.* *_cp312",
+        "ruamel.yaml.clib >=0.1.2"
+    ],
+    "fn": "ruamel.yaml-0.18.16-py312h4c3975b_0.conda",
+    "license": "MIT",
+    "license_family": "MIT",
+    "md5": "04c3560d6229bdfc73fc97586d8fe1a6",
+    "name": "ruamel.yaml",
+    "platform": "linux",
+    "sha256": "c792402cccee6a6dc01ad1451621e3ca002d72208ee28a33dc8594a19e3f7504",
+    "size": 269849,
+    "subdir": "linux-64",
+    "timestamp": 1761160693733,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/ruamel.yaml-0.18.16-py312h4c3975b_0.conda",
+    "version": "0.18.16"
+}

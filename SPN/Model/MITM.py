@@ -1,12 +1,17 @@
 from Model import model_MILP_attack
 import gurobipy as gp
+from itertools import product
 
 class MITM(model_MILP_attack.Model_MILP_attack):
     def __init__(self, cipher_parameters, licence_parameters, attack_parameters, model):
         super().__init__(cipher_parameters, licence_parameters, model)
         #Attack parameters
         self.structure_rounds = attack_parameters.get('structure_rounds', 4)
+        self.struture_first_round_index = 0
+        self.struture_last_round_index = self.structure_rounds - 1
         self.corps_rounds = attack_parameters.get('corps_rounds', 2)
+        self.corps_first_round_index = self.structure_rounds
+        self.corps_last_round_index = self.structure_rounds + self.corps_rounds - 1
         self.total_rounds = self.structure_rounds + self.corps_rounds
         self.optimal_complexity = attack_parameters.get('optimal_complexity', False)
 
@@ -14,42 +19,70 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         print(self.cipher_name, self.block_size)
         #Structure 
 
+    def variables_initialisation(self):
+        self.values = self.model.addVars(range(2), range(self.total_rounds),
+                                                range(self.state_number),
+                                                range(self.block_row_size),
+                                                range(self.block_column_size),
+                                                range(3), #valeur{0=unknown, 1=can be computed, 2=fixed}
+                                                vtype=gp.GRB.BINARY,
+                                                name='state')
+        
+        self.model.addConstrs((gp.quicksum(self.values[part, round_index, state_index, row, column, value] for value in range(3)) == 1 
+                              for part in range(2)
+                              for round_index in range(self.total_rounds)
+                              for state_index in range(self.state_number) 
+                              for row in range(self.block_row_size) 
+                              for column in range(self.block_column_size)), 
+                              name='unique_value_in_state_constraints')
+
+        
+        #MC fix values
+        self.XOR_in_mc_values = self.model.addVars(range(2), 
+                                            range(self.total_rounds), 
+                                            range(self.block_row_size),
+                                            range(self.block_column_size),
+                                            *self.column_range,
+                                            range(3), #valeur{0=unknown, 1=can be computed, 2=fixed}
+                                            vtype= gp.GRB.INTEGER, name = "fix_in_mc")
+        
+        self.model.addConstrs((gp.quicksum(self.XOR_in_mc_values[(part, round_index, row, column) + (tuple(column_xor)) + (value,)] for value in range(3)) == 1 
+                                for part in range(2)
+                                for round_index in range(self.total_rounds)
+                                for row in range(self.block_row_size)
+                                for column in range(self.block_column_size)
+                                for column_xor in product(*(range(2) for _ in range(self.block_column_size)))),
+                                name='unique_value_in_mc_fix_constraints')
+
     def structure(self):
         ###Upper values 
         #Variable initialisation
         self.fix_up = self.model.addVar(vtype= gp.GRB.INTEGER, name = "fix_up")
+        
         self.active_start_up = self.model.addVar(vtype= gp.GRB.INTEGER, name = "active_start_up")
-        self.upper_structure_values = self.model.addVars(range(self.structure_rounds),
-                                                         range(self.state_number), 
-                                                         range(self.block_row_size), 
-                                                         range(self.block_column_size), 
-                                                         range(3), #{0=unknown, 1=can be computed, 2=Fix}
-                                                         vtype=gp.GRB.BINARY, 
-                                                         name='upper_structure_values')
-        self.model.addConstrs((gp.quicksum(self.upper_structure_values[round_index, state_index, row, column, value] for value in range(3)) == 1 
-                              for round_index in range(self.structure_rounds)
-                              for state_index in range(self.state_number) 
-                              for row in range(self.block_row_size) 
-                              for column in range(self.block_column_size)), 
-                              name='unique_value_in_upper_state_value_constraints')
 
         #Constraints
-        self.forward_value_propagation(self.upper_structure_values, self.structure_rounds, self.upper_subkey, 0)
+        self.forward_value_propagation(self.values, 0,self.struture_first_round_index, self.struture_last_round_index, self.upper_subkey)
         
-        self.model.addConstr(self.fix_up == gp.quicksum(self.upper_structure_values[round_index, state_index, row, column, 2]
-                                                        for round_index in range(self.structure_rounds)
+        self.model.addConstr(self.fix_up == gp.quicksum(self.values[0, round_index, state_index, row, column, 2]
+                                                        for round_index in range(self.struture_first_round_index, self.struture_last_round_index+1)
                                                         for state_index in range(self.state_number)
                                                         for row in range(self.block_row_size)
-                                                        for column in range(self.block_column_size)),
+                                                        for column in range(self.block_column_size))
+                                                          + gp.quicksum(self.XOR_in_mc_values[(0, round_index, row, column)+(column_xor)+(2,)]
+                                                        for round_index in range(self.struture_first_round_index, self.struture_last_round_index+1)
+                                                        for row in range(self.block_row_size)
+                                                        for column in range(self.block_column_size)
+                                                        for column_xor in product(*(range(2) for _ in range(self.block_column_size)))),
                             name='fix_up_count')
         
         self.model.addConstr(self.active_start_up == (self.block_size//self.word_size
-                                                    - gp.quicksum(self.upper_structure_values[self.structure_rounds-1, self.state_number-1, row, column , 0]
+                                                    - gp.quicksum(self.values[0, self.struture_last_round_index, self.state_number-1, row, column , 0]
                                                                   for row in range(self.block_row_size) 
                                                                   for column in range(self.block_column_size))), 
                             name='active_last_state_structure')
         
-        self.model.addConstr(self.active_start_up==self.fix_up, name='each_up_fix_leads_to_a_known_value_in_last_state')
+        #self.model.addConstr(self.active_start_up==self.fix_up, name='each_up_fix_leads_to_a_known_value_in_last_state')
         
         ###Lower values
         #Variable initialisation
@@ -57,60 +90,47 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         
         self.active_start_down =  self.model.addVar(vtype= gp.GRB.INTEGER, name = "active_start_down")
         
-        self.lower_structure_values = self.model.addVars(range(self.structure_rounds), 
-                                                         range(self.state_number), 
-                                                         range(self.block_row_size), 
-                                                         range(self.block_column_size), 
-                                                         range(3), #{0=unknown, 1=can be computed, 2=Fix}
-                                                         vtype=gp.GRB.BINARY, 
-                                                         name='lower_structure_values')
-        self.model.addConstrs((gp.quicksum(self.lower_structure_values[round_index, state_index, row, column, value] for value in range(3)) == 1 
-                              for round_index in range(self.structure_rounds) 
-                              for state_index in range(self.state_number) 
-                              for row in range(self.block_row_size) 
-                              for column in range(self.block_column_size)), 
-                              'unique_value_in_upper_state_value_constraints')
-        
         #Constraints
-        self.backward_value_propagation(self.lower_structure_values, self.structure_rounds, self.lower_subkey, 0)
+        # self.backward_value_propagation(self.values, 1, self.struture_first_round_index, self.struture_last_round_index, self.lower_subkey)
         
-        self.model.addConstr(self.fix_down == gp.quicksum(self.lower_structure_values[round_index, state_index, row, column, 2]
-                                                        for round_index in range(self.structure_rounds) 
-                                                        for state_index in range(self.state_number) 
-                                                        for row in range(self.block_row_size) 
-                                                        for column in range(self.block_column_size)),
-                            name='fix_down_count')
+        # self.model.addConstr(self.fix_down == gp.quicksum(self.values[1, round_index, state_index, row, column, 2]
+        #                                                  for round_index in range(self.struture_first_round_index, self.struture_last_round_index+1) 
+        #                                                  for state_index in range(self.state_number) 
+        #                                                  for row in range(self.block_row_size) 
+        #                                                  for column in range(self.block_column_size)),
+        #                     name='fix_down_count')
         
-        self.model.addConstr(self.active_start_down == self.block_column_size*self.block_row_size
-                                                     - gp.quicksum(self.lower_structure_values[0, 0, row, column , 0]
-                                                                  for row in range(self.block_row_size) 
-                                                                  for column in range(self.block_column_size)), 
-                            name='active_last_state_structure')
+        # self.model.addConstr(self.active_start_down == self.block_column_size*self.block_row_size
+        #                                              - gp.quicksum(self.values[1, self.structure_first_round_index, 0, row, column , 0]
+        #                                                           for row in range(self.block_row_size) 
+        #                                                           for column in range(self.block_column_size)), 
+        #                     name='active_last_state_structure')
         
-        self.model.addConstr(self.active_start_down==self.fix_down, name='each_down_fix_leads_to_a_known_value_in_first_state')
-
+        #self.model.addConstr(self.active_start_down==self.fix_down, name='each_down_fix_leads_to_a_known_value_in_first_state')
+        
         
         #Contrainst
-        self.model.addConstrs((self.upper_structure_values[0, 0, row, column, 1] == 0
-                            for row in range(self.block_row_size)
-                            for column in range(self.block_column_size)),
-                            name='no_initial_known_value_upper_structure') 
         
-        self.model.addConstrs((self.lower_structure_values[self.structure_rounds-1, self.state_number-1, row, column, 1] == 0
+        self.model.addConstrs((self.values[0, 0, 0, row, column, 1] == 0
                             for row in range(self.block_row_size)
                             for column in range(self.block_column_size)),
                             name='no_initial_known_value_upper_structure')
-         
-        #Common fix
+        
+        self.model.addConstrs((self.values[1, self.structure_rounds-1, self.state_number-1, row, column, 1] == 0
+                            for row in range(self.block_row_size)
+                            for column in range(self.block_column_size)),
+                            name='no_initial_known_value_upper_structure')
+                        
         self.common_fix = self.model.addVar(vtype= gp.GRB.INTEGER, name = "fix_common")
+        
         self.fix_state = self.model.addVars(range(self.structure_rounds), 
                                                          range(self.state_number), 
                                                          range(self.block_row_size), 
                                                          range(self.block_column_size),
                                                          vtype=gp.GRB.BINARY, 
                                                          name='fix_state')
-        self.model.addConstrs((self.fix_state[round_index, state_index, row, column] == gp.and_(self.lower_structure_values[round_index, state_index, row, column, 2], self.upper_structure_values[round_index, state_index, row, column, 2])
-                             for round_index in range(self.structure_rounds) 
+        self.model.addConstrs((self.fix_state[round_index, state_index, row, column] == gp.and_(self.values[1, round_index, state_index, row, column, 2], self.values[0, round_index, state_index, row, column, 2])
+                             for round_index in range(self.struture_first_round_index, self.struture_last_round_index+1) 
                              for state_index in range(self.state_number) 
                              for row in range(self.block_row_size) 
                              for column in range(self.block_column_size)),
@@ -118,7 +138,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         
         
         self.model.addConstr(self.common_fix == (gp.quicksum(self.fix_state[round_index, state_index, row, column] 
-                             for round_index in range(self.structure_rounds) 
+                             for round_index in range(self.struture_first_round_index, self.struture_last_round_index+1) 
                              for state_index in range(self.state_number) 
                              for row in range(self.block_row_size) 
                              for column in range(self.block_column_size))),
@@ -129,50 +149,30 @@ class MITM(model_MILP_attack.Model_MILP_attack):
     def forward_value_propagation_upper_part(self):
         #Variable initialisation 
         self.state_test_up = self.model.addVar(vtype= gp.GRB.INTEGER, name = "state_test_up")
-        self.upper_part_values = self.model.addVars(range(self.corps_rounds), #
-                                                    range(self.state_number), 
-                                                    range(self.block_row_size), 
-                                                    range(self.block_column_size), 
-                                                    range(3), #valeur{0=unknown, 1=can be computed, 2=state_tested}
-                                                    vtype=gp.GRB.BINARY, 
-                                                    name='upper_state_values')                        
-        self.model.addConstrs((gp.quicksum(self.upper_part_values[round_index, state_index, row, column, value] for value in range(3)) == 1 
-                              for round_index in range(self.corps_rounds)
-                              for state_index in range(self.state_number)
-                              for row in range(self.block_row_size)
-                              for column in range(self.block_column_size)),
-                              name='unique_value_in_upper_state_value_constraints')
 
         #Constraints :
-        self.forward_value_propagation(self.upper_part_values, self.corps_rounds, self.upper_subkey, self.structure_rounds)
-        self.model.addConstr(self.state_test_up == gp.quicksum(self.upper_part_values[round_index, state_index, row, column, 2]
-                                                               for round_index in range(self.corps_rounds)
+        self.forward_value_propagation(self.values, 0, self.corps_first_round_index, self.corps_last_round_index, self.upper_subkey)
+        
+        self.model.addConstr(self.state_test_up == gp.quicksum(self.values[0, round_index, state_index, row, column, 2]
+                                                               for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
                                                                for state_index in range(self.state_number)
                                                                for row in range(self.block_row_size)
-                                                               for column in range(self.block_column_size)),
+                                                               for column in range(self.block_column_size))
+                                                                 + gp.quicksum(self.XOR_in_mc_values[(0, round_index, row, column)+(column_xor)+(2,)]
+                                                                for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
+                                                                for row in range(self.block_row_size)
+                                                                for column in range(self.block_column_size)
+                                                                for column_xor in product(*(range(2) for _ in range(self.block_column_size)))),
                                                                name='state_test_up_count')
     
     def backward_value_propagation_lower_part(self):
         #Variable initialisation
         self.state_test_down = self.model.addVar(vtype= gp.GRB.INTEGER, name = "state_test_down")
-        self.lower_part_values = self.model.addVars(range(self.corps_rounds), 
-                                                    range(self.state_number), 
-                                                    range(self.block_row_size), 
-                                                    range(self.block_column_size), 
-                                                    range(3), #{0=unknown, 1=can be computed, 2=state_tested}
-                                                    vtype=gp.GRB.BINARY, 
-                                                    name='lower_state_values')
-        self.model.addConstrs((gp.quicksum(self.lower_part_values[round_index, state_index, row, column, value] for value in range(3)) == 1 
-                              for round_index in range(self.corps_rounds) 
-                              for state_index in range(self.state_number) 
-                              for row in range(self.block_row_size) 
-                              for column in range(self.block_column_size)), 
-                              'unique_value_in_lower_state_value_constraints')
         
         #Constraints
-        self.backward_value_propagation(self.lower_part_values, self.corps_rounds, self.lower_subkey, self.structure_rounds)
-        self.model.addConstr(self.state_test_down == gp.quicksum(self.lower_part_values[round_index, state_index, row, column, 2]
-                                                               for round_index in range(self.corps_rounds)
+        self.backward_value_propagation(self.values, 1, self.corps_first_round_index, self.corps_last_round_index, self.lower_subkey)
+        self.model.addConstr(self.state_test_down == gp.quicksum(self.values[1, round_index, state_index, row, column, 2]
+                                                               for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
                                                                for state_index in range(self.state_number)
                                                                for row in range(self.block_row_size)
                                                                for column in range(self.block_column_size)),
@@ -189,7 +189,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                                               name='match_state')
 
         self.model.addConstrs((self.match_state[round_index, state_index, row, column] 
-                              == gp.and_(self.upper_part_values[round_index, self.match_state_index + state_index, row, column, 1], self.lower_part_values[round_index, self.match_state_index + state_index, row, column, 1])
+                              == gp.and_(self.values[0, round_index + self.corps_first_round_index, self.match_state_index + state_index, row, column, 1], self.values[1, round_index + self.corps_first_round_index, self.match_state_index + state_index, row, column, 1])
                               for round_index in range(self.corps_rounds)
                               for state_index in range(2)
                               for row in range(self.block_row_size)
@@ -207,29 +207,32 @@ class MITM(model_MILP_attack.Model_MILP_attack):
 
     def attack(self):
         
-        self.structure()
-        """ self.model.addConstr(self.upper_structure_values[0, 0, 0, 2, 2] == 1)
-        self.model.addConstr(self.upper_structure_values[0, 0, 2, 0, 2] == 1)
-        self.model.addConstr(self.upper_structure_values[0, 0, 3, 0, 2] == 1)
-        self.model.addConstr(self.upper_structure_values[0, 0, 3, 1, 2] == 1)
-
-        self.model.addConstr(self.upper_structure_values[0, 3, 0, 0, 2] == 1)
-        self.model.addConstr(self.upper_structure_values[0, 3, 0, 1, 2] == 1)
-        self.model.addConstr(self.upper_structure_values[0, 3, 0, 2, 2] == 1)
-        self.model.addConstr(self.upper_structure_values[0, 3, 2, 1, 2] == 1)
-        self.model.addConstr(self.upper_structure_values[0, 3, 2, 3, 2] == 1)
-
-        self.model.addConstr(self.upper_structure_values[1, 3, 0, 2, 2] == 1)
-        self.model.addConstr(self.upper_structure_values[1, 3, 2, 0, 2] == 1)
-        self.model.addConstr(self.upper_structure_values[1, 3, 2, 2, 2] == 1)
+        self.variables_initialisation()
         
-        self.model.addConstr(self.upper_structure_values[2, 1, 0, 0, 2] == 1)
+        self.structure()
+        
+        # self.model.addConstr(self.values[0, 0, 0, 0, 2, 2] == 1)
+        # self.model.addConstr(self.values[0, 0, 0, 2, 0, 2] == 1)
+        # self.model.addConstr(self.values[0, 0, 0, 3, 0, 2] == 1)
+        # self.model.addConstr(self.values[0, 0, 0, 3, 1, 2] == 1)
 
-        self.model.addConstr(self.upper_structure_values[3, 3, 0, 3, 2] == 1)
-        self.model.addConstr(self.upper_structure_values[3, 3, 2, 3, 2] == 1)
+        # self.model.addConstr(self.values[0, 0, 3, 0, 0, 2] == 1)
+        # self.model.addConstr(self.values[0, 0, 3, 0, 1, 2] == 1)
+        # self.model.addConstr(self.values[0, 0, 3, 0, 3, 2] == 1)
+        # self.model.addConstr(self.values[0, 0, 3, 2, 1, 2] == 1)
+        # self.model.addConstr(self.values[0, 0, 3, 2, 3, 2] == 1)
 
-        self.model.addConstr(self.upper_structure_values[4, 1, 0, 2, 2] == 1) """
+        # self.model.addConstr(self.values[0, 1, 3, 0, 2, 2] == 1)
+        # self.model.addConstr(self.values[0, 1, 3, 2, 0, 2] == 1)
+        # self.model.addConstr(self.values[0, 1, 3, 2, 2, 2] == 1)
+        
+        # self.model.addConstr(self.values[0, 2, 1, 0, 0, 2] == 1)
 
+        # self.model.addConstr(self.values[0, 3, 3, 0, 3, 2] == 1)
+        # self.model.addConstr(self.values[0, 3, 3, 2, 3, 2] == 1)
+
+        # self.model.addConstr(self.values[0, 4, 1, 0, 2, 2] == 1)
+        
         self.model.addConstr(self.common_fix == 16)
         self.forward_value_propagation_upper_part()
         self.backward_value_propagation_lower_part()
@@ -242,10 +245,12 @@ class MITM(model_MILP_attack.Model_MILP_attack):
     def objective_for_display(self):
         self.for_display = self.model.addVar(vtype= gp.GRB.INTEGER, name = "for_display")
 
-        self.model.addConstr(self.for_display == gp.quicksum(self.upper_part_values[round_index, state_index, row, column, 1] for round_index in range(self.corps_rounds) for state_index in range(self.state_number) for row in range(self.block_row_size) for column in range(self.block_column_size))
-                                     + gp.quicksum(self.lower_part_values[round_index, state_index, row, column, 1] for round_index in range(self.corps_rounds) for state_index in range(self.state_number) for row in range(self.block_row_size) for column in range(self.block_column_size))
-                                     + gp.quicksum(self.lower_structure_values[round_index, state_index, row, column, 1] for round_index in range(self.structure_rounds) for state_index in range(self.state_number) for row in range(self.block_row_size) for column in range(self.block_column_size))
-                                     + gp.quicksum(self.upper_structure_values[round_index, state_index, row, column, 1] for round_index in range(self.structure_rounds) for state_index in range(self.state_number) for row in range(self.block_row_size) for column in range(self.block_column_size)))
+        self.model.addConstr(self.for_display == gp.quicksum(self.values[attack_part, round_index, state_index, row, column, 1]
+                                                             for attack_part in range(2)
+                                                             for round_index in range(self.total_rounds)
+                                                             for state_index in range(self.state_number) 
+                                                             for row in range(self.block_row_size) 
+                                                             for column in range(self.block_column_size)))
         self.model.setObjectiveN(-self.for_display, index=10, priority=0)
     
     def complexities(self):
@@ -292,7 +297,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         self.model.addConstr(self.memory_complexity >= self.upper_key_guess + self.state_test_up - self.common_fix + (self.block_size//self.word_size - self.fix_up), name='memory_complexity_up_definition')
         self.model.addConstr(self.memory_complexity >= self.lower_key_guess + self.state_test_down - self.common_fix + (self.block_size//self.word_size - self.fix_down), name='memory_complexity_down_definition')
         
-        self.model.addConstr(self.data_complexity >= self.block_size//self.word_size - gp.quicksum(self.lower_structure_values[0, 0, row, column, 2] for row in range(self.block_row_size) for column in range(self.block_column_size)), name='data_definition')
+        self.model.addConstr(self.data_complexity >= self.block_size//self.word_size - gp.quicksum(self.values[1, 0, 0, row, column, 2] for row in range(self.block_row_size) for column in range(self.block_column_size)), name='data_definition')
         
         self.model.setObjectiveN(self.time_complexity, index=0, priority=10)
         self.model.setObjectiveN(self.data_complexity, index=0, priority=8)
@@ -331,95 +336,72 @@ class MITM(model_MILP_attack.Model_MILP_attack):
             print('The Model at no been optimize yet')
 
     def display_console(self):
-        for global_round_index in range(self.total_rounds):
+        for round_index in range(self.total_rounds):
             
-            print("ROUND ", global_round_index)
+            print("ROUND ", round_index)
             key_line = ""
             for row in range(self.block_row_size):
                 key_line += "        |"
                 for column in range(self.block_column_size):
-                    if self.upper_subkey[global_round_index, row, column].X == 0 and self.lower_subkey[global_round_index, row, column].X == 0:
+                    if self.upper_subkey[round_index, row, column].X == 0 and self.lower_subkey[round_index, row, column].X == 0:
                         key_line += "\033[90m ■ \033[0m"
-                    elif self.upper_subkey[global_round_index, row, column].X == 1 and self.lower_subkey[global_round_index, row, column].X == 0:
+                    elif self.upper_subkey[round_index, row, column].X == 1 and self.lower_subkey[round_index, row, column].X == 0:
                         key_line += "\033[91m ■ \033[0m"
-                    elif self.upper_subkey[global_round_index, row, column].X == 0 and self.lower_subkey[global_round_index, row, column].X == 1:
+                    elif self.upper_subkey[round_index, row, column].X == 0 and self.lower_subkey[round_index, row, column].X == 1:
                         key_line += "\033[94m ■ \033[0m"
-                    elif self.upper_subkey[global_round_index, row, column].X == 1 and self.lower_subkey[global_round_index, row, column].X == 1:
+                    elif self.upper_subkey[round_index, row, column].X == 1 and self.lower_subkey[round_index, row, column].X == 1:
                         key_line += "\033[95m ■ \033[0m"
                     else :
                         key_line += " ? "
                 key_line += "|\n"
             print(key_line)
             
-            if global_round_index < self.structure_rounds :
-                round_index = global_round_index
-                for row in range(self.block_row_size):
-                    line = ""
-                    for state_index in range(self.state_number):
-                        line += "|"
-                        for column in range(self.block_column_size):
-                            if self.upper_structure_values[round_index, state_index, row, column, 0].X == 1 and self.lower_structure_values[round_index, state_index, row, column, 0].X == 1:
-                                line += "\033[90m ■ \033[0m"
-                            elif self.upper_structure_values[round_index, state_index, row, column, 1].X == 1 and self.lower_structure_values[round_index, state_index, row, column, 0].X == 1:
-                                line += "\033[91m ■ \033[0m"
-                            elif self.upper_structure_values[round_index, state_index, row, column, 2].X == 1 and self.lower_structure_values[round_index, state_index, row, column, 0].X == 1:
-                                line += "\033[91m F \033[0m"
-                            elif self.upper_structure_values[round_index, state_index, row, column, 0].X == 1 and self.lower_structure_values[round_index, state_index, row, column, 1].X == 1:
-                                line += "\033[94m ■ \033[0m"
-                            elif self.upper_structure_values[round_index, state_index, row, column, 0].X == 1 and self.lower_structure_values[round_index, state_index, row, column, 2].X == 1:
-                                line += "\033[94m F \033[0m"
-                            elif self.upper_structure_values[round_index, state_index, row, column, 1].X == 1 and self.lower_structure_values[round_index, state_index, row, column, 1].X == 1:
-                                line += "\033[95m ■ \033[0m"
-                            elif self.upper_structure_values[round_index, state_index, row, column, 2].X == 1 and self.lower_structure_values[round_index, state_index, row, column, 2].X == 1:
-                                line += "\033[95m F \033[0m"
-                            else :
-                                print(self.upper_structure_values[round_index, state_index, row, column, 0])
-                                print(self.upper_structure_values[round_index, state_index, row, column, 1])
-                                print(self.upper_structure_values[round_index, state_index, row, column, 2])
-                                print(self.lower_structure_values[round_index, state_index, row, column, 0])
-                                print(self.lower_structure_values[round_index, state_index, row, column, 1])
-                                print(self.lower_structure_values[round_index, state_index, row, column, 2])
-                                line += " ? "
-                        line += "|"
-                        if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                            line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                        elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                            line += "->"
+
+            for row in range(self.block_row_size):
+                line = ""
+                for state_index in range(self.state_number):
+                    line += "|"
+                    for column in range(self.block_column_size):
+                        if self.values[0, round_index, state_index, row, column, 0].X == 1 and self.values[1, round_index, state_index, row, column, 0].X == 1:
+                            line += "\033[90m ■ \033[0m"
+                        elif self.values[0, round_index, state_index, row, column, 1].X == 1 and self.values[1, round_index, state_index, row, column, 0].X == 1:
+                            line += "\033[91m ■ \033[0m"
+                        elif self.values[0, round_index, state_index, row, column, 2].X == 1 and self.values[1, round_index, state_index, row, column, 0].X == 1:
+                            line += "\033[91m F \033[0m"
+                        elif self.values[0, round_index, state_index, row, column, 0].X == 1 and self.values[1, round_index, state_index, row, column, 1].X == 1:
+                            line += "\033[94m ■ \033[0m"
+                        elif self.values[0, round_index, state_index, row, column, 0].X == 1 and self.values[1, round_index, state_index, row, column, 2].X == 1:
+                            line += "\033[94m F \033[0m"
+                        elif self.values[0, round_index, state_index, row, column, 1].X == 1 and self.values[1, round_index, state_index, row, column, 1].X == 1:
+                            line += "\033[95m ■ \033[0m"
+                        elif self.values[0, round_index, state_index, row, column, 2].X == 1 and self.values[1, round_index, state_index, row, column, 2].X == 1:
+                            line += "\033[95m F \033[0m"
                         else :
-                            line += "  "
-                    print(line)
-                print("\n")
-            
-            else : 
-                round_index = global_round_index - self.structure_rounds
-                for row in range(self.block_row_size):
-                    line = ""
-                    for state_index in range(self.state_number):
-                        line += "|"
-                        for column in range(self.block_column_size):
-                            if self.upper_part_values[round_index, state_index, row, column, 0].X == 1 and self.lower_part_values[round_index, state_index, row, column, 0].X == 1:
-                                line += "\033[90m ■ \033[0m"
-                            elif self.upper_part_values[round_index, state_index, row, column, 1].X == 1 and self.lower_part_values[round_index, state_index, row, column, 0].X == 1:
-                                line += "\033[91m ■ \033[0m"
-                            elif self.upper_part_values[round_index, state_index, row, column, 2].X == 1 and self.lower_part_values[round_index, state_index, row, column, 0].X == 1:
-                                line += "\033[92m ■ \033[0m"
-                            elif self.upper_part_values[round_index, state_index, row, column, 0].X == 1 and self.lower_part_values[round_index, state_index, row, column, 1].X == 1:
-                                line += "\033[94m ■ \033[0m"
-                            elif self.upper_part_values[round_index, state_index, row, column, 0].X == 1 and self.lower_part_values[round_index, state_index, row, column, 2].X == 1:
-                                line += "\033[92m ■ \033[0m"
-                            elif self.upper_part_values[round_index, state_index, row, column, 1].X == 1 and self.lower_part_values[round_index, state_index, row, column, 1].X == 1:
-                                line += "\033[95m ■ \033[0m"
-                            else :
-                                line += " ? "
-                        line += "|"
-                        if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                            line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                        elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                            line += "->"
+                            line += " ? "
+                            print(self.values[0, round_index, state_index, row, column, 2])
+                            print(self.values[1, round_index, state_index, row, column, 1])
+                    line += "|"
+                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
+                        line += "->"
+                    else :
+                        line += "  "
+                line += " "
+                print(line)
+                line=""
+            for row in range(self.block_row_size):
+                for column in range(self.block_column_size):
+                    for colonne in product(*(range(2) for _ in range(self.block_column_size))):
+                        if self.XOR_in_mc_values[(0, round_index, row, column)+colonne+(1,)].X == 1 :
+                            line += f"{column} / {colonne} : 1 "
+                        elif self.XOR_in_mc_values[(0, round_index, row, column)+colonne+(2,)].X == 1 :
+                            line += f"{column} / {colonne} : F "
                         else :
-                            line += "  "
-                    print(line)
-                print("\n")
+                            line+=""
+                    print(line, '\n')
+                    line=""
+            print("\n")
+
     
-        
-    
+

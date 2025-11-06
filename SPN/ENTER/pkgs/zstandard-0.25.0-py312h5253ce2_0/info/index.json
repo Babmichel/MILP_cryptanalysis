@@ -1,0 +1,20 @@
+{
+  "arch": "x86_64",
+  "build": "py312h5253ce2_0",
+  "build_number": 0,
+  "depends": [
+    "python",
+    "cffi >=1.11",
+    "zstd >=1.5.7,<1.5.8.0a0",
+    "__glibc >=2.17,<3.0.a0",
+    "libgcc >=14",
+    "zstd >=1.5.7,<1.6.0a0",
+    "python_abi 3.12.* *_cp312"
+  ],
+  "license": "BSD-3-Clause",
+  "name": "zstandard",
+  "platform": "linux",
+  "subdir": "linux-64",
+  "timestamp": 1757930116600,
+  "version": "0.25.0"
+}

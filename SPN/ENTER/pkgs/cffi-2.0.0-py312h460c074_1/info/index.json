@@ -1,0 +1,19 @@
+{
+  "arch": "x86_64",
+  "build": "py312h460c074_1",
+  "build_number": 1,
+  "depends": [
+    "__glibc >=2.17,<3.0.a0",
+    "libffi >=3.5.2,<3.6.0a0",
+    "libgcc >=14",
+    "pycparser",
+    "python >=3.12,<3.13.0a0",
+    "python_abi 3.12.* *_cp312"
+  ],
+  "license": "MIT",
+  "name": "cffi",
+  "platform": "linux",
+  "subdir": "linux-64",
+  "timestamp": 1761202958833,
+  "version": "2.0.0"
+}

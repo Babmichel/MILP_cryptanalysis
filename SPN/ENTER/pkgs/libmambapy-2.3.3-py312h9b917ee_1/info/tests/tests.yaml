@@ -1,6 +1,0 @@
-- python:
-    imports:
-    - libmambapy
-    - libmambapy.bindings
-- script:
-    content: python -c "import libmambapy; assert libmambapy.__version__ == '2.3.3'"

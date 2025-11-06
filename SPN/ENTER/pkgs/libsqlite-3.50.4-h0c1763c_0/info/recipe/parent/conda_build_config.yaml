@@ -1,6 +1,0 @@
-# currently windows build does not work with icu.
-# if support is added, add a conflict with icu for the non-icu
-# build by updating run_constrained
-with_icu:
-- true     # [not win]
-- false

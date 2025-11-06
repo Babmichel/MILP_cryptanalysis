@@ -1,5 +1,0 @@
-{
-  "weak": [
-    "nlohmann_json-abi ==3.12.0"
-  ]
-}

@@ -20,13 +20,6 @@ class Model_MILP_attack():
         self.mix_columns = cipher_parameters.get('mix_columns')
         self.sbox_sizes = cipher_parameters.get('sbox_sizes', [1, 1])   
         
-        #MC objects
-        self.column_range = [range(2)] * self.block_column_size
-        self.column_possible_index = product(*(range(2) for _ in range(self.block_column_size)))
-        self.possible_XORs_MC = []
-        for mc in self.mix_columns:
-            self.possible_XORs_MC.append(self.unpack_possible_XORs_MC(mc))
-
         #Extension of the given parameters
         self.state_number = len(self.shift_rows)+1
         self.shift_rows_inverse = [(self.block_column_size - shift) % self.block_column_size for shift in self.shift_rows]
@@ -36,6 +29,16 @@ class Model_MILP_attack():
             MC_inv = MC.inverse()
             self.mix_columns_inverse.append([[int(MC_inv[j][i])for i in range(MC_inv.ncols())] for j in range(MC_inv.nrows())])
         self.model=model
+
+        #MC objects
+        self.column_range = [range(2)] * self.block_column_size
+        self.column_possible_index = product(*(range(2) for _ in range(self.block_column_size)))
+        self.possible_XORs_MC = [[],[]]
+        for mc in self.mix_columns:
+            self.possible_XORs_MC[0].append(self.unpack_possible_XORs_MC(mc))
+        for mc in self.mix_columns_inverse:
+            self.possible_XORs_MC[1].append(self.unpack_possible_XORs_MC(mc))
+
         #Model Creation
         if self.model==None:
             self.model = gp.Model(env=gp.Env(params={'WLSACCESSID': licence_parameters.get('WLSACCESSID'), 'WLSSECRET': licence_parameters.get('WLSSECRET'), 'LICENSEID': licence_parameters.get('LICENSEID')}))
@@ -126,33 +129,35 @@ class Model_MILP_attack():
                 possible_XOR_list[row]=self.unpack_possible_XORs_vector(mix_columns[row])
         return possible_XOR_list
     
-    def value_propagation_MC(self, part, attack_side_index, round_index, input_state_index, output_state_index, mix_columns_index):
+    def value_propagation_MC(self, part, attack_side_index, round_index, input_state_index, output_state_index, mix_columns_index, sens):
         
         #if you have an unknow value in the input of the MC, all the possible XOR combinations included this value cannot be computed
         for row in range(self.block_row_size):
             for column in range(self.block_column_size):
                 c_vector = []
-                for bits in product([0, 1], repeat=self.block_column_size):
-                    print(self.possible_XORs_MC[mix_columns_index][row])
-                    if self.possible_XORs_MC[mix_columns_index][row] == 1:
-                        c_vector.append(tuple(bits))
-                print(c_vector)
+                for vector in product(*(range(2) for _ in range(self.block_column_size))):
+                        if vector[row] == 1:
+                            c_vector.append(tuple(vector))
                 self.model.addConstrs(((part[attack_side_index, round_index, input_state_index, row, column, 0] == 1) >> 
-                                        (self.XOR_in_mc_values[(attack_side_index, round_index, row, column) + tuple(c_vector_element) + (1,)] == 0)
+                                        (self.XOR_in_mc_values[(attack_side_index, round_index, column) + c_vector_element + (1,)] == 0)
                                         for c_vector_element in c_vector),
                                         name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+                self.model.addConstrs(((part[attack_side_index, round_index, input_state_index, row, column, 1] == 1) >> 
+                                        (self.XOR_in_mc_values[(attack_side_index, round_index, column) + c_vector_element + (2,)] == 0)
+                                        for c_vector_element in c_vector),
+                                        name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_1_not_to_fix")
                 
         #An output value in known if one of the possible XOR combinations leading to it is known
         for row in range(self.block_row_size):
             for column in range(self.block_column_size):
                 or_vars = []
-                for element in self.possible_XORs_MC[mix_columns_index][row]:
+                for combination in self.possible_XORs_MC[sens][mix_columns_index][row]:
                     or_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"and_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
                     not_or_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"and_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
-                    if len(element) >= 1:
-                        self.model.addGenConstrOr(or_var, [self.XOR_in_mc_values[(attack_side_index, round_index, row, column)+tuple(index)+(0,)] for index in element], name = f"AND_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
+                    if len(combination) >= 1:
+                        self.model.addGenConstrOr(or_var, [self.XOR_in_mc_values[(attack_side_index, round_index, column)+tuple(index)+(0,)] for index in combination], name = f"AND_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
                     else :
-                        self.model.addConstr(or_var == self.XOR_in_mc_values[(attack_side_index, round_index, row, column)+tuple(element[0])+(0,)])
+                        self.model.addConstr(or_var == self.XOR_in_mc_values[(attack_side_index, round_index, column)+tuple(combination[0])+(0,)])
                     self.model.addConstr(not_or_var == 1-or_var)
                     or_vars.append(not_or_var)  
                 self.model.addGenConstrOr(part[attack_side_index, round_index, output_state_index, row, column, 1], or_vars, name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
@@ -207,7 +212,7 @@ class Model_MILP_attack():
                 if self.operation_order[state_index] == 'SR':
                     self.value_propagation_SR(part, attack_side_index, forward_round, state_index, state_index + 1, self.shift_rows)
                 elif self.operation_order[state_index][0]+self.operation_order[state_index][1] == 'MC':
-                    self.value_propagation_MC(part, attack_side_index, forward_round, state_index, state_index + 1, int(self.operation_order[state_index][2]))
+                    self.value_propagation_MC(part, attack_side_index, forward_round, state_index, state_index + 1, int(self.operation_order[state_index][2]), 0)
                 elif self.operation_order[state_index] == 'SB':
                     self.value_propagation_SB(part, attack_side_index, forward_round, state_index, state_index + 1, self.sbox_sizes)
                 elif self.operation_order[state_index] == 'AK':
@@ -224,7 +229,7 @@ class Model_MILP_attack():
                 if self.operation_order[state_index] == 'SR':
                     self.value_propagation_SR(part, attack_side_index, backward_round, state_index + 1, state_index, self.shift_rows_inverse)
                 elif self.operation_order[state_index][0]+self.operation_order[state_index][1] == 'MC':
-                    self.value_propagation_MC(part, attack_side_index, backward_round, state_index + 1, state_index, int(self.operation_order[state_index][2]))
+                    self.value_propagation_MC(part, attack_side_index, backward_round, state_index + 1, state_index, int(self.operation_order[state_index][2]), 1)
                 elif self.operation_order[state_index] == 'SB':
                     self.value_propagation_SB(part, attack_side_index, backward_round, state_index + 1, state_index, self.sbox_sizes)
                 elif self.operation_order[state_index] == 'AK':

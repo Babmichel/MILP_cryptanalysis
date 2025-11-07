@@ -1,5 +1,6 @@
 from Model import model_MILP_attack
 import gurobipy as gp
+import numpy as np
 from itertools import product
 
 class MITM(model_MILP_attack.Model_MILP_attack):
@@ -7,8 +8,8 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         super().__init__(cipher_parameters, licence_parameters, model)
         #Attack parameters
         self.structure_rounds = attack_parameters.get('structure_rounds', 4)
-        self.struture_first_round_index = 0
-        self.struture_last_round_index = self.structure_rounds - 1
+        self.structure_first_round_index = 0
+        self.structure_last_round_index = self.structure_rounds - 1
         self.corps_rounds = attack_parameters.get('corps_rounds', 2)
         self.corps_first_round_index = self.structure_rounds
         self.corps_last_round_index = self.structure_rounds + self.corps_rounds - 1
@@ -40,16 +41,14 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         #MC fix values
         self.XOR_in_mc_values = self.model.addVars(range(2), 
                                             range(self.total_rounds), 
-                                            range(self.block_row_size),
                                             range(self.block_column_size),
                                             *self.column_range,
                                             range(3), #valeur{0=unknown, 1=can be computed, 2=fixed}
                                             vtype= gp.GRB.INTEGER, name = "fix_in_mc")
         
-        self.model.addConstrs((gp.quicksum(self.XOR_in_mc_values[(part, round_index, row, column) + (tuple(column_xor)) + (value,)] for value in range(3)) == 1 
+        self.model.addConstrs((gp.quicksum(self.XOR_in_mc_values[(part, round_index, column) + (tuple(column_xor)) + (value,)] for value in range(3)) == 1 
                                 for part in range(2)
                                 for round_index in range(self.total_rounds)
-                                for row in range(self.block_row_size)
                                 for column in range(self.block_column_size)
                                 for column_xor in product(*(range(2) for _ in range(self.block_column_size)))),
                                 name='unique_value_in_mc_fix_constraints')
@@ -62,27 +61,26 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         self.active_start_up = self.model.addVar(vtype= gp.GRB.INTEGER, name = "active_start_up")
 
         #Constraints
-        self.forward_value_propagation(self.values, 0,self.struture_first_round_index, self.struture_last_round_index, self.upper_subkey)
+        self.forward_value_propagation(self.values, 0,self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
         
         self.model.addConstr(self.fix_up == gp.quicksum(self.values[0, round_index, state_index, row, column, 2]
-                                                        for round_index in range(self.struture_first_round_index, self.struture_last_round_index+1)
+                                                        for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
                                                         for state_index in range(self.state_number)
                                                         for row in range(self.block_row_size)
                                                         for column in range(self.block_column_size))
-                                                          + gp.quicksum(self.XOR_in_mc_values[(0, round_index, row, column)+(column_xor)+(2,)]
-                                                        for round_index in range(self.struture_first_round_index, self.struture_last_round_index+1)
-                                                        for row in range(self.block_row_size)
+                                                          + gp.quicksum(self.XOR_in_mc_values[(0, round_index, column)+(column_xor)+(2,)]
+                                                        for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
                                                         for column in range(self.block_column_size)
                                                         for column_xor in product(*(range(2) for _ in range(self.block_column_size)))),
                             name='fix_up_count')
         
         self.model.addConstr(self.active_start_up == (self.block_size//self.word_size
-                                                    - gp.quicksum(self.values[0, self.struture_last_round_index, self.state_number-1, row, column , 0]
+                                                    - gp.quicksum(self.values[0, self.structure_last_round_index, self.state_number-1, row, column , 0]
                                                                   for row in range(self.block_row_size) 
                                                                   for column in range(self.block_column_size))), 
                             name='active_last_state_structure')
         
-        #self.model.addConstr(self.active_start_up==self.fix_up, name='each_up_fix_leads_to_a_known_value_in_last_state')
+        self.model.addConstr(self.active_start_up==self.fix_up, name='each_up_fix_leads_to_a_known_value_in_last_state')
         
         ###Lower values
         #Variable initialisation
@@ -91,22 +89,27 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         self.active_start_down =  self.model.addVar(vtype= gp.GRB.INTEGER, name = "active_start_down")
         
         #Constraints
-        # self.backward_value_propagation(self.values, 1, self.struture_first_round_index, self.struture_last_round_index, self.lower_subkey)
+        self.backward_value_propagation(self.values, 1, self.structure_first_round_index, self.structure_last_round_index, self.lower_subkey)
         
-        # self.model.addConstr(self.fix_down == gp.quicksum(self.values[1, round_index, state_index, row, column, 2]
-        #                                                  for round_index in range(self.struture_first_round_index, self.struture_last_round_index+1) 
-        #                                                  for state_index in range(self.state_number) 
-        #                                                  for row in range(self.block_row_size) 
-        #                                                  for column in range(self.block_column_size)),
-        #                     name='fix_down_count')
+        self.model.addConstr(self.fix_down == gp.quicksum(self.values[1, round_index, state_index, row, column, 2]
+                                                        for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
+                                                        for state_index in range(self.state_number)
+                                                        for row in range(self.block_row_size)
+                                                        for column in range(self.block_column_size))
+                                                          + gp.quicksum(self.XOR_in_mc_values[(1, round_index, column)+(column_xor)+(2,)]
+                                                        for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
+                                                        for column in range(self.block_column_size)
+                                                        for column_xor in product(*(range(2) for _ in range(self.block_column_size)))),
+                        
+                            name='fix_down_count')
         
-        # self.model.addConstr(self.active_start_down == self.block_column_size*self.block_row_size
-        #                                              - gp.quicksum(self.values[1, self.structure_first_round_index, 0, row, column , 0]
-        #                                                           for row in range(self.block_row_size) 
-        #                                                           for column in range(self.block_column_size)), 
-        #                     name='active_last_state_structure')
+        self.model.addConstr(self.active_start_down == self.block_column_size*self.block_row_size
+                                                     - gp.quicksum(self.values[1, self.structure_first_round_index, 0, row, column , 0]
+                                                                  for row in range(self.block_row_size) 
+                                                                  for column in range(self.block_column_size)), 
+                            name='active_last_state_structure')
         
-        #self.model.addConstr(self.active_start_down==self.fix_down, name='each_down_fix_leads_to_a_known_value_in_first_state')
+        self.model.addConstr(self.active_start_down==self.fix_down, name='each_down_fix_leads_to_a_known_value_in_first_state')
         
         
         #Contrainst
@@ -123,25 +126,16 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                         
         self.common_fix = self.model.addVar(vtype= gp.GRB.INTEGER, name = "fix_common")
         
-        self.fix_state = self.model.addVars(range(self.structure_rounds), 
-                                                         range(self.state_number), 
-                                                         range(self.block_row_size), 
-                                                         range(self.block_column_size),
-                                                         vtype=gp.GRB.BINARY, 
-                                                         name='fix_state')
-        self.model.addConstrs((self.fix_state[round_index, state_index, row, column] == gp.and_(self.values[1, round_index, state_index, row, column, 2], self.values[0, round_index, state_index, row, column, 2])
-                             for round_index in range(self.struture_first_round_index, self.struture_last_round_index+1) 
-                             for state_index in range(self.state_number) 
-                             for row in range(self.block_row_size) 
-                             for column in range(self.block_column_size)),
-                             name='fix_are_known_upper_and_lower')
         
-        
-        self.model.addConstr(self.common_fix == (gp.quicksum(self.fix_state[round_index, state_index, row, column] 
-                             for round_index in range(self.struture_first_round_index, self.struture_last_round_index+1) 
-                             for state_index in range(self.state_number) 
-                             for row in range(self.block_row_size) 
-                             for column in range(self.block_column_size))),
+        self.model.addConstr(self.common_fix == gp.quicksum(self.values[1, round_index, state_index, row, column, 2]*self.values[0, round_index, state_index, row, column, 2]
+                                                            for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
+                                                            for state_index in range(self.state_number) 
+                                                            for row in range(self.block_row_size) 
+                                                            for column in range(self.block_column_size) )
+                                                + gp.quicksum(self.XOR_in_mc_values[(0, round_index, column)+xor_combination+(2,)]*self.XOR_in_mc_values[(1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.mix_columns_inverse[0]), axis=0))) +(2,)]
+                                                            for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
+                                                            for column in range(self.block_column_size)
+                                                            for xor_combination in product(*(range(2) for _ in range(self.block_column_size)))),
                              name='fix_common_count')
         
         self.model.addConstr(self.fix_down+self.fix_up-self.common_fix<=self.block_size//self.word_size, name='cannot_fix_more_than_the_block')
@@ -158,9 +152,8 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                                                                for state_index in range(self.state_number)
                                                                for row in range(self.block_row_size)
                                                                for column in range(self.block_column_size))
-                                                                 + gp.quicksum(self.XOR_in_mc_values[(0, round_index, row, column)+(column_xor)+(2,)]
+                                                                 + gp.quicksum(self.XOR_in_mc_values[(0, round_index, column)+(column_xor)+(2,)]
                                                                 for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
-                                                                for row in range(self.block_row_size)
                                                                 for column in range(self.block_column_size)
                                                                 for column_xor in product(*(range(2) for _ in range(self.block_column_size)))),
                                                                name='state_test_up_count')
@@ -175,7 +168,11 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                                                                for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
                                                                for state_index in range(self.state_number)
                                                                for row in range(self.block_row_size)
-                                                               for column in range(self.block_column_size)),
+                                                               for column in range(self.block_column_size))
+                                                               + gp.quicksum(self.XOR_in_mc_values[(1, round_index, column)+(column_xor)+(2,)]
+                                                                for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
+                                                                for column in range(self.block_column_size)
+                                                                for column_xor in product(*(range(2) for _ in range(self.block_column_size)))),
                                                                name='state_test_down_count')
 
     def match(self):
@@ -210,30 +207,20 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         self.variables_initialisation()
         
         self.structure()
-        
-        # self.model.addConstr(self.values[0, 0, 0, 0, 2, 2] == 1)
-        # self.model.addConstr(self.values[0, 0, 0, 2, 0, 2] == 1)
-        # self.model.addConstr(self.values[0, 0, 0, 3, 0, 2] == 1)
-        # self.model.addConstr(self.values[0, 0, 0, 3, 1, 2] == 1)
+        self.model.addConstr(self.values[0, 0, 0, 0, 2, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 2, 0, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 3, 0, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 3, 1, 2]==1)
 
-        # self.model.addConstr(self.values[0, 0, 3, 0, 0, 2] == 1)
-        # self.model.addConstr(self.values[0, 0, 3, 0, 1, 2] == 1)
-        # self.model.addConstr(self.values[0, 0, 3, 0, 3, 2] == 1)
-        # self.model.addConstr(self.values[0, 0, 3, 2, 1, 2] == 1)
-        # self.model.addConstr(self.values[0, 0, 3, 2, 3, 2] == 1)
+        self.model.addConstr(self.XOR_in_mc_values[0, 0, 0, 1, 0, 1, 0, 2] == 1)
+        self.model.addConstr(self.XOR_in_mc_values[0, 0, 3, 1, 0, 1, 0, 2] == 1)
 
-        # self.model.addConstr(self.values[0, 1, 3, 0, 2, 2] == 1)
-        # self.model.addConstr(self.values[0, 1, 3, 2, 0, 2] == 1)
-        # self.model.addConstr(self.values[0, 1, 3, 2, 2, 2] == 1)
-        
-        # self.model.addConstr(self.values[0, 2, 1, 0, 0, 2] == 1)
+        self.model.addConstr(self.values[0, 0, 3, 0, 1, 2]==1)
+        self.model.addConstr(self.values[0, 0, 3, 2, 1, 2]==1)
+        self.model.addConstr(self.values[0, 0, 3, 2, 3, 2]==1)
 
-        # self.model.addConstr(self.values[0, 3, 3, 0, 3, 2] == 1)
-        # self.model.addConstr(self.values[0, 3, 3, 2, 3, 2] == 1)
-
-        # self.model.addConstr(self.values[0, 4, 1, 0, 2, 2] == 1)
-        
         self.model.addConstr(self.common_fix == 16)
+
         self.forward_value_propagation_upper_part()
         self.backward_value_propagation_lower_part()
         self.match()
@@ -246,6 +233,12 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         self.for_display = self.model.addVar(vtype= gp.GRB.INTEGER, name = "for_display")
 
         self.model.addConstr(self.for_display == gp.quicksum(self.values[attack_part, round_index, state_index, row, column, 1]
+                                                             for attack_part in range(2)
+                                                             for round_index in range(self.total_rounds)
+                                                             for state_index in range(self.state_number) 
+                                                             for row in range(self.block_row_size) 
+                                                             for column in range(self.block_column_size)) 
+                                                             + gp.quicksum(self.values[attack_part, round_index, state_index, row, column, 2]
                                                              for attack_part in range(2)
                                                              for round_index in range(self.total_rounds)
                                                              for state_index in range(self.state_number) 
@@ -390,18 +383,20 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                 line += " "
                 print(line)
                 line=""
-            for row in range(self.block_row_size):
-                for column in range(self.block_column_size):
-                    for colonne in product(*(range(2) for _ in range(self.block_column_size))):
-                        if self.XOR_in_mc_values[(0, round_index, row, column)+colonne+(1,)].X == 1 :
-                            line += f"{column} / {colonne} : 1 "
-                        elif self.XOR_in_mc_values[(0, round_index, row, column)+colonne+(2,)].X == 1 :
-                            line += f"{column} / {colonne} : F "
-                        else :
-                            line+=""
-                    print(line, '\n')
-                    line=""
+            for column in range(self.block_column_size):
+                for vector in product(*(range(2) for _ in range(self.block_column_size))):
+                        vector = tuple(vector)
+                        if self.XOR_in_mc_values[(0, round_index, column)+vector+(2,)].X == 1 and self.XOR_in_mc_values[(1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mix_columns_inverse[0]), axis=0))) +(2,)].X == 0:
+                            line += f"\033[91m c:{column} / {vector} : F\033[0m "
+                        elif self.XOR_in_mc_values[(0, round_index, column)+vector+(2,)].X == 0 and self.XOR_in_mc_values[(1, round_index, column)+tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mix_columns_inverse[0]), axis=0)))+(2,)].X == 1:
+                            line += f"\033[94m c:{column} / {vector} - {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mix_columns_inverse[0]), axis=0)))} : F\033[0m "
+                        elif self.XOR_in_mc_values[(0, round_index, column)+vector+(2,)].X == 1 and self.XOR_in_mc_values[(1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mix_columns_inverse[0]), axis=0))) +(2,)].X == 1:
+                            line += f"\033[95m c:{column} / {vector} et {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mix_columns_inverse[0]), axis=0)))} : F \033[0m"
+                line+="\n"
+            print(line)
+            line=""
             print("\n")
+            
 
     
 

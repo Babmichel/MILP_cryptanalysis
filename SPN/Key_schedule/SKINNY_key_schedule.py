@@ -54,8 +54,8 @@ class Model_MILP_SKINNY_key_schedule(Model_MILP_attack):
         self.lower_key_guess = self.model.addVar(vtype = gp.GRB.INTEGER, name = 'lower_key_guess')
         self.common_key_guess = self.model.addVar(vtype = gp.GRB.INTEGER, name = 'lower_key_guess')
         
-        self.model.addConstr(self.upper_key_guess <= self.key_size//self.word_size-1)
-        self.model.addConstr(self.lower_key_guess <= self.key_size//self.word_size-1)
+        #self.model.addConstr(self.upper_key_guess <= self.key_size//self.word_size-1)
+        #self.model.addConstr(self.lower_key_guess <= self.key_size//self.word_size-1)
 
 
         self.model.addConstr(self.upper_key_guess == gp.quicksum(self.tweakey_number*self.master_key[row, column, 1] + (1-self.master_key[row, column, 1])*self.master_key_count_guess[row, column, 1]

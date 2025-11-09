@@ -139,11 +139,11 @@ class Model_MILP_attack():
                         if vector[row] == 1:
                             c_vector.append(tuple(vector))
                 self.model.addConstrs(((part[attack_side_index, round_index, input_state_index, row, column, 0] == 1) >> 
-                                        (self.XOR_in_mc_values[(attack_side_index, round_index, column) + c_vector_element + (1,)] == 0)
+                                        (self.XOR_in_mc_values[(attack_side_index, sens, round_index, column) + c_vector_element + (1,)] == 0)
                                         for c_vector_element in c_vector),
                                         name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
                 self.model.addConstrs(((part[attack_side_index, round_index, input_state_index, row, column, 1] == 1) >> 
-                                        (self.XOR_in_mc_values[(attack_side_index, round_index, column) + c_vector_element + (2,)] == 0)
+                                        (self.XOR_in_mc_values[(attack_side_index, sens, round_index, column) + c_vector_element + (2,)] == 0)
                                         for c_vector_element in c_vector),
                                         name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_1_not_to_fix")
                 
@@ -155,9 +155,9 @@ class Model_MILP_attack():
                     or_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"and_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
                     not_or_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"and_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
                     if len(combination) >= 1:
-                        self.model.addGenConstrOr(or_var, [self.XOR_in_mc_values[(attack_side_index, round_index, column)+tuple(index)+(0,)] for index in combination], name = f"AND_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
+                        self.model.addGenConstrOr(or_var, [self.XOR_in_mc_values[(attack_side_index, sens, round_index, column)+tuple(index)+(0,)] for index in combination], name = f"AND_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
                     else :
-                        self.model.addConstr(or_var == self.XOR_in_mc_values[(attack_side_index, round_index, column)+tuple(combination[0])+(0,)])
+                        self.model.addConstr(or_var == self.XOR_in_mc_values[(attack_side_index, sens, round_index, column)+tuple(combination[0])+(0,)])
                     self.model.addConstr(not_or_var == 1-or_var)
                     or_vars.append(not_or_var)  
                 self.model.addGenConstrOr(part[attack_side_index, round_index, output_state_index, row, column, 1], or_vars, name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")

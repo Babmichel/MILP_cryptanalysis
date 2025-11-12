@@ -78,8 +78,8 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         self.active_start_up = self.model.addVar(vtype= gp.GRB.INTEGER, name = "active_start_up")
 
         #Constraints
-        #self.forward_value_propagation(self.values, 0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
-        #self.backward_value_propagation(self.values, 0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
+        self.forward_value_propagation(self.values, 0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
+        self.backward_value_propagation(self.values, 0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
         
         self.model.addConstr(self.fix_up == gp.quicksum(self.values[0, 0, round_index, state_index, row, column, 2]
                                                         for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
@@ -128,7 +128,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                                                                   for column in range(self.block_column_size)), 
                             name='active_last_state_structure')
         
-        #self.model.addConstr(self.active_start_down==self.fix_down, name='each_down_fix_leads_to_a_known_value_in_first_state')
+        self.model.addConstr(self.active_start_down==self.fix_down, name='each_down_fix_leads_to_a_known_value_in_first_state')
         
         
         #Contrainst
@@ -139,11 +139,6 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                             name='no_initial_known_value_upper_structure')
 
         self.model.addConstrs((self.values[1, 0, 0, 0, row, column, 1] == 0
-                            for row in range(self.block_row_size)
-                            for column in range(self.block_column_size)),
-                            name='no_initial_known_value_lower_structure')
-        
-        self.model.addConstrs((self.values[1, 1, 0, 0, row, column, 1] == 0
                             for row in range(self.block_row_size)
                             for column in range(self.block_column_size)),
                             name='no_initial_known_value_lower_structure')
@@ -182,6 +177,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
 
         #Constraints :
         self.forward_value_propagation(self.values, 0, self.corps_first_round_index, self.corps_last_round_index, self.upper_subkey)
+        self.backward_value_propagation(self.values, 0, self.corps_first_round_index, self.corps_last_round_index, self.upper_subkey)
         
         self.model.addConstr(self.state_test_up == gp.quicksum(self.values[0, 0, round_index, state_index, row, column, 2]
                                                                for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
@@ -193,13 +189,18 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                                                                 for column in range(self.block_column_size)
                                                                 for column_xor in product(*(range(2) for _ in range(self.block_column_size)))),
                                                                name='state_test_up_count')
-    
+
+        self.model.addConstrs(self.values[0, 1, self.corps_last_round_index, self.state_number-1, row, column, 0]==1 
+                              for row in range(self.block_row_size) 
+                              for column in range(self.block_column_size))
+        
     def backward_value_propagation_lower_part(self):
         #Variable initialisation
         self.state_test_down = self.model.addVar(vtype= gp.GRB.INTEGER, name = "state_test_down")
         
         #Constraints
         self.backward_value_propagation(self.values, 1, self.corps_first_round_index, self.corps_last_round_index, self.lower_subkey)
+        self.forward_value_propagation(self.values, 1, self.corps_first_round_index, self.corps_last_round_index, self.lower_subkey)
         
         self.model.addConstr(self.state_test_down == gp.quicksum(self.values[1, 1, round_index, state_index, row, column, 2]
                                                                for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
@@ -212,6 +213,10 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                                                                 for column_xor in product(*(range(2) for _ in range(self.block_column_size)))),
                                                                name='state_test_down_count')
 
+        self.model.addConstrs(self.values[1, 0, self.corps_first_round_index, 0, row, column, 0]==1
+                              for row in range(self.block_row_size) 
+                              for column in range(self.block_column_size))
+        
     def match(self):
         self.match_state_index = self.operation_order.index('MC0')
         self.match_quantity = self.model.addVars(range(self.corps_rounds), vtype= gp.GRB.INTEGER, name = "match_quantity")
@@ -275,20 +280,13 @@ class MITM(model_MILP_attack.Model_MILP_attack):
     def objective_for_display(self):
         self.for_display = self.model.addVar(vtype= gp.GRB.INTEGER, name = "for_display")
 
-        self.model.addConstr(self.for_display == -gp.quicksum(self.values[0, sens, round_index, state_index, row, column, 1]
+        self.model.addConstr(self.for_display == gp.quicksum(self.values[attack_part, sens, round_index, state_index, row, column, 1]
                                                              for attack_part in range(2)
                                                              for sens in range(2)
                                                              for round_index in range(self.total_rounds)
                                                              for state_index in range(self.state_number) 
                                                              for row in range(self.block_row_size) 
-                                                             for column in range(self.block_column_size)) 
-                                                             + gp.quicksum(self.values[1, sens, round_index, state_index, row, column, 1]
-                                                             for attack_part in range(2)
-                                                             for sens in range(2)
-                                                             for round_index in range(self.total_rounds)
-                                                             for state_index in range(self.state_number) 
-                                                             for row in range(self.block_row_size) 
-                                                             for column in range(self.block_column_size)))                   
+                                                             for column in range(self.block_column_size)))
 
         self.model.setObjectiveN(-self.for_display, index=10, priority=0)
     
@@ -327,20 +325,20 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         
     def objective_function(self):
         self.objective_for_display()
-        # self.complexities()
+        self.complexities()
 
-        # self.model.addConstr(self.time_complexity_up == self.state_test_up + self.upper_key_guess + (self.block_size//self.word_size - self.fix_up), name='time_complexity_up_definition')
-        # self.model.addConstr(self.time_complexity_down == self.state_test_down + self.lower_key_guess + (self.block_size//self.word_size - self.fix_down), name='time_complexity_down_definition')
-        # self.model.addConstr(self.time_complexity_match == self.time_complexity_up + self.time_complexity_down - self.common_key_guess - gp.quicksum(self.match_quantity[round_index] for round_index in range(self.corps_rounds)), name='time_complexity_match_definition')
+        self.model.addConstr(self.time_complexity_up == self.state_test_up + self.upper_key_guess + (self.block_size//self.word_size - self.fix_up), name='time_complexity_up_definition')
+        self.model.addConstr(self.time_complexity_down == self.state_test_down + self.lower_key_guess + (self.block_size//self.word_size - self.fix_down), name='time_complexity_down_definition')
+        self.model.addConstr(self.time_complexity_match == self.time_complexity_up + self.time_complexity_down - self.common_key_guess - gp.quicksum(self.match_quantity[round_index] for round_index in range(self.corps_rounds)), name='time_complexity_match_definition')
         
-        # self.model.addConstr(self.memory_complexity >= self.upper_key_guess + self.state_test_up - self.common_fix + (self.block_size//self.word_size - self.fix_up), name='memory_complexity_up_definition')
-        # self.model.addConstr(self.memory_complexity >= self.lower_key_guess + self.state_test_down - self.common_fix + (self.block_size//self.word_size - self.fix_down), name='memory_complexity_down_definition')
+        self.model.addConstr(self.memory_complexity >= self.upper_key_guess + self.state_test_up - self.common_fix + (self.block_size//self.word_size - self.fix_up), name='memory_complexity_up_definition')
+        self.model.addConstr(self.memory_complexity >= self.lower_key_guess + self.state_test_down - self.common_fix + (self.block_size//self.word_size - self.fix_down), name='memory_complexity_down_definition')
         
-        # self.model.addConstr(self.data_complexity >= self.block_size//self.word_size - gp.quicksum(self.values[1, 1, 0, 0, row, column, 2] for row in range(self.block_row_size) for column in range(self.block_column_size)), name='data_definition')
+        self.model.addConstr(self.data_complexity >= self.block_size//self.word_size - gp.quicksum(self.values[1, 1, 0, 0, row, column, 2] for row in range(self.block_row_size) for column in range(self.block_column_size)), name='data_definition')
         
-        # self.model.setObjectiveN(self.time_complexity, index=0, priority=10)
-        # self.model.setObjectiveN(self.data_complexity, index=0, priority=8)
-        # self.model.setObjectiveN(self.memory_complexity, index=0, priority=5)
+        self.model.setObjectiveN(self.time_complexity, index=0, priority=10)
+        self.model.setObjectiveN(self.data_complexity, index=0, priority=8)
+        self.model.setObjectiveN(self.memory_complexity, index=0, priority=5)
  
     def get_results(self):
         if self.optimized:
@@ -401,7 +399,9 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                 for state_index in range(self.state_number):
                     line += "|"
                     for column in range(self.block_column_size):
-                        if (self.values[0, 0, round_index, state_index, row, column, 0].X == 1 and self.values[0, 1, round_index, state_index, row, column, 0].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 0].X == 1 and self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
+                        if (self.values[0, 0, round_index, state_index, row, column, 1].X == 1 or self.values[0, 1, round_index, state_index, row, column, 1].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 1].X == 1 or self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
+                            line += "\033[95m ■ \033[0m"
+                        elif (self.values[0, 0, round_index, state_index, row, column, 0].X == 1 and self.values[0, 1, round_index, state_index, row, column, 0].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 0].X == 1 and self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
                             line += "\033[90m ■ \033[0m"
                         elif (self.values[0, 0, round_index, state_index, row, column, 1].X == 1 or self.values[0, 1, round_index, state_index, row, column, 1].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 0].X == 1 or self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
                             line += "\033[91m ■ \033[0m"
@@ -411,8 +411,6 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                             line += "\033[94m ■ \033[0m"
                         elif (self.values[0, 0, round_index, state_index, row, column, 0].X == 1 or self.values[0, 1, round_index, state_index, row, column, 0].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 2].X == 1 or self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
                             line += "\033[94m F \033[0m"
-                        elif (self.values[0, 0, round_index, state_index, row, column, 1].X == 1 or self.values[0, 1, round_index, state_index, row, column, 1].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 1].X == 1 or self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
-                            line += "\033[95m ■ \033[0m"
                         elif (self.values[0, 0, round_index, state_index, row, column, 2].X == 1 or self.values[0, 1, round_index, state_index, row, column, 2].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 2].X == 1 or self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
                             line += "\033[95m F \033[0m"
                         else :
@@ -429,58 +427,99 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                 line += " "
                 print(line)
                 line=""
-            print("\n")
-            for row in range(self.block_row_size):
-                line = ""
-                for state_index in range(self.state_number):
-                    line += "|"
-                    for column in range(self.block_column_size):
-                        if (self.values[1, 0, round_index, state_index, row, column, 0].X == 1):
-                            line += "\033[90m ■ \033[0m"
-                        elif (self.values[1, 0, round_index, state_index, row, column, 1].X == 1):
-                            line += "\033[94m ■ \033[0m"
-                        elif (self.values[1, 0, round_index, state_index, row, column, 2].X == 1):
-                            line += "\033[94m F \033[0m"
-                        else :
-                            line += " ? "
-                            print(self.values[0, 0, round_index, state_index, row, column, 2])
-                            print(self.values[1, 1, round_index, state_index, row, column, 1])
-                    line += "|"
-                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                        line += "->"
-                    else :
-                        line += "  "
-                line += " "
-                print(line)
-                line=""
-            print("\n")
-            for row in range(self.block_row_size):
-                line = ""
-                for state_index in range(self.state_number):
-                    line += "|"
-                    for column in range(self.block_column_size):
-                        if (self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
-                            line += "\033[90m ■ \033[0m"
-                        elif (self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
-                            line += "\033[94m ■ \033[0m"
-                        elif (self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
-                            line += "\033[94m F \033[0m"
-                        else :
-                            line += " ? "
-                            print(self.values[0, 0, round_index, state_index, row, column, 2])
-                            print(self.values[1, 1, round_index, state_index, row, column, 1])
-                    line += "|"
-                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                        line += "->"
-                    else :
-                        line += "  "
-                line += " "
-                print(line)
-                line=""
+
+            # print("\n lower backward propagation")
+            # for row in range(self.block_row_size):
+            #     line = ""
+            #     for state_index in range(self.state_number):
+            #         line += "|"
+            #         for column in range(self.block_column_size):
+            #             if (self.values[1, 0, round_index, state_index, row, column, 0].X == 1):
+            #                 line += "\033[90m ■ \033[0m"
+            #             elif (self.values[1, 0, round_index, state_index, row, column, 1].X == 1):
+            #                 line += "\033[94m ■ \033[0m"
+            #             elif (self.values[1, 0, round_index, state_index, row, column, 2].X == 1):
+            #                 line += "\033[94m F \033[0m"
+            #             else :
+            #                 line += " ? "
+            #                 print(self.values[0, 0, round_index, state_index, row, column, 2])
+            #                 print(self.values[1, 1, round_index, state_index, row, column, 1])
+            #         line += "|"
+            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #             line += "->"
+            #         else :
+            #             line += "  "
+            #     line += " "
+            #     print(line)
+            #     line=""
+            # print("\n lower direct propagation")
+            # for row in range(self.block_row_size):
+            #     line = ""
+            #     for state_index in range(self.state_number):
+            #         line += "|"
+            #         for column in range(self.block_column_size):
+            #             if (self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
+            #                 line += "\033[90m ■ \033[0m"
+            #             elif (self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
+            #                 line += "\033[94m ■ \033[0m"
+            #             elif (self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
+            #                 line += "\033[94m F \033[0m"
+            #         line += "|"
+            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #             line += "->"
+            #         else :
+            #             line += "  "
+            #     line += " "
+            #     print(line)
+            #     line=""
+            # print("\n upper backward propagation")
+            # for row in range(self.block_row_size):
+            #     line = ""
+            #     for state_index in range(self.state_number):
+            #         line += "|"
+            #         for column in range(self.block_column_size):
+            #             if (self.values[0, 1, round_index, state_index, row, column, 0].X == 1):
+            #                 line += "\033[90m ■ \033[0m"
+            #             elif (self.values[0, 1, round_index, state_index, row, column, 1].X == 1):
+            #                 line += "\033[91m ■ \033[0m"
+            #             elif (self.values[0, 1, round_index, state_index, row, column, 2].X == 1):
+            #                 line += "\033[91m F \033[0m"
+            #         line += "|"
+            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #             line += "->"
+            #         else :
+            #             line += "  "
+            #     line += " "
+            #     print(line)
+            #     line=""
+            # print("\n upper direct propagation :")
+            # for row in range(self.block_row_size):
+            #     line = ""
+            #     for state_index in range(self.state_number):
+            #         line += "|"
+            #         for column in range(self.block_column_size):
+            #             if (self.values[0, 0, round_index, state_index, row, column, 0].X == 1):
+            #                 line += "\033[90m ■ \033[0m"
+            #             elif (self.values[0, 0, round_index, state_index, row, column, 1].X == 1):
+            #                 line += "\033[91m ■ \033[0m"
+            #             elif (self.values[0, 0, round_index, state_index, row, column, 2].X == 1):
+            #                 line += "\033[91m F \033[0m"
+            #         line += "|"
+            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #             line += "->"
+            #         else :
+            #             line += "  "
+            #     line += " "
+            #     print(line)
+            #     line=""
             for column in range(self.block_column_size):
                 for vector in product(*(range(2) for _ in range(self.block_column_size))):
                         vector = tuple(vector)
@@ -494,10 +533,5 @@ class MITM(model_MILP_attack.Model_MILP_attack):
             print(line)
             line=""
             print("\n")
-        print(self.XOR_in_mc_values[1, 1, 3, 2, 1, 0, 0, 1, 1])
-        print(self.XOR_in_mc_values[1, 0, 3, 2, 1, 0, 0, 1, 1])
-        print(self.values[1, 1, 3, 3, 0, 2, 1])
-        print(self.values[1, 1, 3, 3, 3, 2, 1])
-        print(self.values[1, 0, 3, 3, 0, 2, 1])
-        print(self.values[1, 0, 3, 3, 3, 2, 1])
+
 

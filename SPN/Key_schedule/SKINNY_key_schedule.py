@@ -69,10 +69,10 @@ class Model_MILP_SKINNY_key_schedule(Model_MILP_attack):
                                                                    name = 'lower_key_guess_counter')
         
         self.model.addConstr(self.common_key_guess == gp.quicksum(self.tweakey_number*self.master_key[row, column, 2]*self.master_key[row, column, 1]
-                                                                  + (1 - self.master_key[row, column, 2]*self.master_key[row, column, 1])*self.master_key_count_guess_match[row, column]*(self.master_key_count_guess[row, column, 1] + self.master_key_count_guess[row, column, 2] -3)
+                                                                  + (1 - self.master_key[row, column, 2]*self.master_key[row, column, 1])*(self.master_key_count_guess[row, column, 1] + self.master_key_count_guess[row, column, 2] -3)
                                                                   for row in range(self.block_row_size)
                                                                   for column in range(self.block_column_size)),
-                                                                  name = 'lower_key_guess_counter')
+                                                                  name = 'match_key_guess_counter')
 
     def subkey_initialisation(self):
         self.upper_subkey = self.model.addVars(range(self.total_round), 

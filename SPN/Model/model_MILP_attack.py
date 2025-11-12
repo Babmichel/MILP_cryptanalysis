@@ -139,6 +139,7 @@ class Model_MILP_attack():
             sens = 1
         else :
             sens = 0
+        
         #if you have an unknow value in the input of the MC, all the possible XOR combinations included this value cannot be computed
         for row in range(self.block_row_size):
             for column in range(self.block_column_size):
@@ -147,13 +148,25 @@ class Model_MILP_attack():
                         if vector[row] == 1:
                             c_vector.append(tuple(vector))
                 if attack_side_index == sens :
-                    self.model.addConstrs(((part[attack_side_index, sens, round_index, input_state_index, row, column, 0] == 1) >> 
-                                            (self.XOR_in_mc_values[(attack_side_index, sens, round_index, column) + c_vector_element + (1,)] == 0)
-                                            for c_vector_element in c_vector),
-                                            name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+                    if sens == 1:
+                        opposite_sens = 0
+                    else :
+                        opposite_sens = 1
+                    for c_vector_element in c_vector :
+                        if list(c_vector_element) in self.mc[sens][round_index%len(self.mc[sens])]:
+                            and_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"and_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
+                            self.model.addConstr(and_var == gp.and_([part[attack_side_index, _ , round_index, input_state_index, row, column, 0] for _ in range(2)]+[part[attack_side_index, opposite_sens, round_index, output_state_index, self.mc[sens][round_index%len(self.mc[sens])].index(list(c_vector_element)), column, 0]]))
+                            self.model.addConstr((and_var == 1) >>
+                                                    (self.XOR_in_mc_values[(attack_side_index, sens, round_index, column) + c_vector_element + (1,)] == 0),
+                                                    name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+                        else : 
+                            and_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"and_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
+                            self.model.addConstr(and_var == gp.and_([part[attack_side_index, _ , round_index, input_state_index, row, column, 0] for _ in range(2)]))
+                            self.model.addConstr((and_var == 1) >>
+                                                    (self.XOR_in_mc_values[(attack_side_index, sens, round_index, column) + c_vector_element + (1,)] == 0),
+                                                    name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+                       
 
-
-                
                 else :
                     self.model.addConstrs(((part[attack_side_index, sens, round_index, input_state_index, row, column, 0] == 1) >> 
                                             (self.XOR_in_mc_values[(attack_side_index, sens, round_index, column) + c_vector_element + (1,)] == 0)

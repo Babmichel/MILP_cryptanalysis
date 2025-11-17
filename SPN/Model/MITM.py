@@ -48,14 +48,15 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                              name='same fix elements in both propagation')
         
         #MC fix values
-        self.XOR_in_mc_values = self.model.addVars(((part, sens, round_index, column, xor_combination, value) for part in range(2)
-                                                                              for sens in range(2)
-                                                                              for round_index in range(self.total_rounds)
-                                                                              for column in range(self.block_column_size)
-                                                                              for xor_combination in self.column_range   
-                                                                              for value in range(3)), vtype=gp.GRB.INTEGER, name="fix_in_mc")
+        self.XOR_in_mc_values = self.model.addVars((((part, sens, round_index, column) + (xor_combination) + (value,)) 
+                                                    for part in range(2)
+                                                    for sens in range(2)
+                                                    for round_index in range(self.total_rounds)
+                                                    for column in range(self.block_column_size)
+                                                    for xor_combination in self.column_range   
+                                                    for value in range(3)), vtype=gp.GRB.INTEGER, name="fix_in_mc")
         
-        self.model.addConstrs((gp.quicksum(self.XOR_in_mc_values[(part, sens, round_index, column) + (tuple(xor_combination)) + (value,)] for value in range(3)) == 1 
+        self.model.addConstrs((gp.quicksum(self.XOR_in_mc_values[(part, sens, round_index, column) + (xor_combination) + (value,)] for value in range(3)) == 1 
                                 for part in range(2)
                                 for sens in range(2)
                                 for round_index in range(self.total_rounds)
@@ -218,7 +219,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                               for column in range(self.block_column_size))
         
     def match(self):
-        self.match_state_index = self.operation_order.index('MC0')
+        self.match_state_index = self.operation_order.index('MC')
         self.match_quantity = self.model.addVars(range(self.corps_rounds), vtype= gp.GRB.INTEGER, name = "match_quantity")
         self.match_state = self.model.addVars(range(self.corps_rounds),
                                               range(2),
@@ -356,7 +357,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
             print('The Model at no been optimize yet')
 
     def display_console(self):
-        for round_index in range(self.total_rounds):
+        for round_index in range(self.structure_rounds):
             
             print("ROUND ", round_index)
             key_line = ""
@@ -411,98 +412,98 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                 print(line)
                 line=""
 
-            # print("\n lower backward propagation")
-            # for row in range(self.block_row_size):
-            #     line = ""
-            #     for state_index in range(self.state_number):
-            #         line += "|"
-            #         for column in range(self.block_column_size):
-            #             if (self.values[1, 0, round_index, state_index, row, column, 0].X == 1):
-            #                 line += "\033[90m ■ \033[0m"
-            #             elif (self.values[1, 0, round_index, state_index, row, column, 1].X == 1):
-            #                 line += "\033[94m ■ \033[0m"
-            #             elif (self.values[1, 0, round_index, state_index, row, column, 2].X == 1):
-            #                 line += "\033[94m F \033[0m"
-            #             else :
-            #                 line += " ? "
-            #                 print(self.values[0, 0, round_index, state_index, row, column, 2])
-            #                 print(self.values[1, 1, round_index, state_index, row, column, 1])
-            #         line += "|"
-            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
-            #             line += "->"
-            #         else :
-            #             line += "  "
-            #     line += " "
-            #     print(line)
-            #     line=""
-            # print("\n lower direct propagation")
-            # for row in range(self.block_row_size):
-            #     line = ""
-            #     for state_index in range(self.state_number):
-            #         line += "|"
-            #         for column in range(self.block_column_size):
-            #             if (self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
-            #                 line += "\033[90m ■ \033[0m"
-            #             elif (self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
-            #                 line += "\033[94m ■ \033[0m"
-            #             elif (self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
-            #                 line += "\033[94m F \033[0m"
-            #         line += "|"
-            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
-            #             line += "->"
-            #         else :
-            #             line += "  "
-            #     line += " "
-            #     print(line)
-            #     line=""
-            # print("\n upper backward propagation")
-            # for row in range(self.block_row_size):
-            #     line = ""
-            #     for state_index in range(self.state_number):
-            #         line += "|"
-            #         for column in range(self.block_column_size):
-            #             if (self.values[0, 1, round_index, state_index, row, column, 0].X == 1):
-            #                 line += "\033[90m ■ \033[0m"
-            #             elif (self.values[0, 1, round_index, state_index, row, column, 1].X == 1):
-            #                 line += "\033[91m ■ \033[0m"
-            #             elif (self.values[0, 1, round_index, state_index, row, column, 2].X == 1):
-            #                 line += "\033[91m F \033[0m"
-            #         line += "|"
-            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
-            #             line += "->"
-            #         else :
-            #             line += "  "
-            #     line += " "
-            #     print(line)
-            #     line=""
-            # print("\n upper direct propagation :")
-            # for row in range(self.block_row_size):
-            #     line = ""
-            #     for state_index in range(self.state_number):
-            #         line += "|"
-            #         for column in range(self.block_column_size):
-            #             if (self.values[0, 0, round_index, state_index, row, column, 0].X == 1):
-            #                 line += "\033[90m ■ \033[0m"
-            #             elif (self.values[0, 0, round_index, state_index, row, column, 1].X == 1):
-            #                 line += "\033[91m ■ \033[0m"
-            #             elif (self.values[0, 0, round_index, state_index, row, column, 2].X == 1):
-            #                 line += "\033[91m F \033[0m"
-            #         line += "|"
-            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
-            #             line += "->"
-            #         else :
-            #             line += "  "
-            #     line += " "
-            #     print(line)
-            #     line=""
+            print("\n lower backward propagation")
+            for row in range(self.block_row_size):
+                line = ""
+                for state_index in range(self.state_number):
+                    line += "|"
+                    for column in range(self.block_column_size):
+                        if (self.values[1, 0, round_index, state_index, row, column, 0].X == 1):
+                            line += "\033[90m ■ \033[0m"
+                        elif (self.values[1, 0, round_index, state_index, row, column, 1].X == 1):
+                            line += "\033[94m ■ \033[0m"
+                        elif (self.values[1, 0, round_index, state_index, row, column, 2].X == 1):
+                            line += "\033[94m F \033[0m"
+                        else :
+                            line += " ? "
+                            print(self.values[0, 0, round_index, state_index, row, column, 2])
+                            print(self.values[1, 1, round_index, state_index, row, column, 1])
+                    line += "|"
+                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
+                        line += "->"
+                    else :
+                        line += "  "
+                line += " "
+                print(line)
+                line=""
+            print("\n lower direct propagation")
+            for row in range(self.block_row_size):
+                line = ""
+                for state_index in range(self.state_number):
+                    line += "|"
+                    for column in range(self.block_column_size):
+                        if (self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
+                            line += "\033[90m ■ \033[0m"
+                        elif (self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
+                            line += "\033[94m ■ \033[0m"
+                        elif (self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
+                            line += "\033[94m F \033[0m"
+                    line += "|"
+                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
+                        line += "->"
+                    else :
+                        line += "  "
+                line += " "
+                print(line)
+                line=""
+            print("\n upper backward propagation")
+            for row in range(self.block_row_size):
+                line = ""
+                for state_index in range(self.state_number):
+                    line += "|"
+                    for column in range(self.block_column_size):
+                        if (self.values[0, 1, round_index, state_index, row, column, 0].X == 1):
+                            line += "\033[90m ■ \033[0m"
+                        elif (self.values[0, 1, round_index, state_index, row, column, 1].X == 1):
+                            line += "\033[91m ■ \033[0m"
+                        elif (self.values[0, 1, round_index, state_index, row, column, 2].X == 1):
+                            line += "\033[91m F \033[0m"
+                    line += "|"
+                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
+                        line += "->"
+                    else :
+                        line += "  "
+                line += " "
+                print(line)
+                line=""
+            print("\n upper direct propagation :")
+            for row in range(self.block_row_size):
+                line = ""
+                for state_index in range(self.state_number):
+                    line += "|"
+                    for column in range(self.block_column_size):
+                        if (self.values[0, 0, round_index, state_index, row, column, 0].X == 1):
+                            line += "\033[90m ■ \033[0m"
+                        elif (self.values[0, 0, round_index, state_index, row, column, 1].X == 1):
+                            line += "\033[91m ■ \033[0m"
+                        elif (self.values[0, 0, round_index, state_index, row, column, 2].X == 1):
+                            line += "\033[91m F \033[0m"
+                    line += "|"
+                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
+                        line += "->"
+                    else :
+                        line += "  "
+                line += " "
+                print(line)
+                line=""
             for column in range(self.block_column_size):
                 for vector in self.column_range:
                         vector = tuple(vector)
@@ -516,5 +517,10 @@ class MITM(model_MILP_attack.Model_MILP_attack):
             print(line)
             line=""
             print("\n")
-
+        print("END OF THE ATTACK")
+        for vector in self.column_range:
+            print(self.XOR_in_mc_values[(1, 0, 0, 0)+vector+(0,)], end=' ')
+            print(self.XOR_in_mc_values[(1, 0, 0, 0)+vector+(1,)], end=' ')
+            print(self.XOR_in_mc_values[(1, 0, 0, 0)+vector+(2,)], end=' ')
+            print("\n")
 

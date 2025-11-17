@@ -123,26 +123,29 @@ class Model_MILP_attack():
                 possible_XOR_list[row]=self.unpack_possible_XORs_vector(mix_columns[row])
         return possible_XOR_list
     
-    def vectors_with_bit_set_and_limit(self, n, row, x): #a refaire car fait avec le chat GPT
+    def vectors_with_bit_set_and_limit(self, n, row, x):
         """
-        Génère tous les vecteurs binaires de taille n
+        Génère tous les vecteurs binaires de taille n :
         - avec vector[row] = 1
-        - avec exactement x bits à 1 au total
+        - avec AU PLUS x bits à 1 (donc 1, 2, ..., x)
         """
-
-        # Les positions disponibles pour les 1 supplémentaires
+        
+        # positions possibles sauf 'row'
         others = [i for i in range(n) if i != row]
 
-        # On doit choisir (x - 1) positions parmi "others"
         if x < 1 or x > n:
-            return  # aucun vecteur possible
+            return  # impossible, aucun vecteur
 
-        for combo in combinations(others, x - 1):
-            vector = [0] * n
-            vector[row] = 1              # bit obligatoire
-            for pos in combo:
-                vector[pos] = 1          # bits supplémentaires
-            yield tuple(vector)
+        # nombre total de bits à 1 = k + 1 (car row=1 est obligatoire)
+        for k in range(0, min(x-1, n-1) + 1):  # k = nb de 1 supplémentaires (0 .. x-1)
+            for combo in combinations(others, k):
+                vector = [0] * n
+                vector[row] = 1
+                for pos in combo:
+                    vector[pos] = 1
+                vector = tuple(vector)
+                if any(vector):
+                    yield vector
 
     def generate_binary_vectors_with_limit(self, n, max_ones):  #a refaire car fait avec le chat GPT
         """
@@ -151,10 +154,12 @@ class Model_MILP_attack():
         """
         for k in range(max_ones + 1):
             for positions in combinations(range(n), k):
-                vec = [0] * n
+                vector = [0] * n
                 for pos in positions:
-                    vec[pos] = 1
-                yield tuple(vec)
+                    vector[pos] = 1
+                vector = tuple(vector)
+                if any(vector):
+                    yield vector
             
     #Propagation of values OPERATORS
     def value_propagation_SR(self, part, attack_side_index, round_index, input_state_index, output_state_index, shift_rows):
@@ -171,7 +176,7 @@ class Model_MILP_attack():
         #if you have an unknow value in the input of the MC, all the possible XOR combinations included this value cannot be computed
         for row in range(self.block_row_size):
             for column in range(self.block_column_size):
-                c_vector = list(self.vectors_with_bit_set_and_limit(self.block_column_size, row, self.mc[sens][round_index%len(self.mc[sens])][row].count(1)))
+                c_vector = list(self.vectors_with_bit_set_and_limit(self.block_column_size, row, self.max_1_MC))
                 if attack_side_index == sens :
                     opposite_sens = int(not sens)
                     for c_vector_element in c_vector :

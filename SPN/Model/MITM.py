@@ -48,26 +48,26 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                              name='same fix elements in both propagation')
         
         #MC fix values
-        self.XOR_in_mc_values = self.model.addVars(range(2), range(2),
-                                            range(self.total_rounds), 
-                                            range(self.block_column_size),
-                                            *self.column_range,
-                                            range(3), #valeur{0=unknown, 1=can be computed, 2=fixed}
-                                            vtype= gp.GRB.INTEGER, name = "fix_in_mc")
+        self.XOR_in_mc_values = self.model.addVars(((part, sens, round_index, column, xor_combination, value) for part in range(2)
+                                                                              for sens in range(2)
+                                                                              for round_index in range(self.total_rounds)
+                                                                              for column in range(self.block_column_size)
+                                                                              for xor_combination in self.column_range   
+                                                                              for value in range(3)), vtype=gp.GRB.INTEGER, name="fix_in_mc")
         
         self.model.addConstrs((gp.quicksum(self.XOR_in_mc_values[(part, sens, round_index, column) + (tuple(xor_combination)) + (value,)] for value in range(3)) == 1 
                                 for part in range(2)
                                 for sens in range(2)
                                 for round_index in range(self.total_rounds)
                                 for column in range(self.block_column_size)
-                                for xor_combination in product(*(range(2) for _ in range(self.block_column_size)))),
+                                for xor_combination in self.column_range),
                                 name='unique_value_in_mc_fix_constraints')
 
-        self.model.addConstrs((self.XOR_in_mc_values[(part, 0, round_index, column) + (tuple(xor_combination)) + (2,)] == self.XOR_in_mc_values[(part, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.mix_columns_inverse[round_index%len(self.mix_columns)]), axis=0))) + (2,)]
+        self.model.addConstrs((self.XOR_in_mc_values[(part, 0, round_index, column) + (tuple(xor_combination)) + (2,)] == self.XOR_in_mc_values[(part, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0))) + (2,)]
                                 for part in range(2)
                                 for round_index in range(self.total_rounds)
                                 for column in range(self.block_column_size)
-                                for xor_combination in product(*(range(2) for _ in range(self.block_column_size)))),
+                                for xor_combination in self.column_range),
                                 name='same fix for backward and forward propagation')
 
     def structure(self):
@@ -89,7 +89,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                                                           + gp.quicksum(self.XOR_in_mc_values[(0, 0, round_index, column)+(column_xor)+(2,)]
                                                         for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
                                                         for column in range(self.block_column_size)
-                                                        for column_xor in product(*(range(2) for _ in range(self.block_column_size)))),
+                                                        for column_xor in self.column_range),
                             name='fix_up_count')
         
         self.model.addConstr(self.active_start_up == (self.block_size//self.word_size
@@ -118,7 +118,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                                                           + gp.quicksum(self.XOR_in_mc_values[(1, 1, round_index, column)+(column_xor)+(2,)]
                                                         for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
                                                         for column in range(self.block_column_size)
-                                                        for column_xor in product(*(range(2) for _ in range(self.block_column_size)))),
+                                                        for column_xor in self.column_range),
                         
                             name='fix_down_count')
         
@@ -163,10 +163,10 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                                                             for state_index in range(self.state_number) 
                                                             for row in range(self.block_row_size) 
                                                             for column in range(self.block_column_size) )
-                                                + gp.quicksum(self.XOR_in_mc_values[(0, 0, round_index, column)+xor_combination+(2,)]*self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.mix_columns_inverse[0]), axis=0))) +(2,)]
+                                                + gp.quicksum(self.XOR_in_mc_values[(0, 0, round_index, column)+xor_combination+(2,)]*self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0))) +(2,)]
                                                             for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
                                                             for column in range(self.block_column_size)
-                                                            for xor_combination in product(*(range(2) for _ in range(self.block_column_size)))),
+                                                            for xor_combination in self.column_range),
                              name='fix_common_count')
         
         self.model.addConstr(self.fix_down+self.fix_up-self.common_fix<=self.block_size//self.word_size, name='cannot_fix_more_than_the_block')
@@ -187,7 +187,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                                                                  + gp.quicksum(self.XOR_in_mc_values[(0, 0, round_index, column)+(column_xor)+(2,)]
                                                                 for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
                                                                 for column in range(self.block_column_size)
-                                                                for column_xor in product(*(range(2) for _ in range(self.block_column_size)))),
+                                                                for column_xor in self.column_range),
                                                                name='state_test_up_count')
 
         self.model.addConstrs(self.values[0, 1, self.corps_last_round_index, self.state_number-1, row, column, 0]==1 
@@ -210,7 +210,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                                                                + gp.quicksum(self.XOR_in_mc_values[(1, 1, round_index, column)+(column_xor)+(2,)]
                                                                 for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
                                                                 for column in range(self.block_column_size)
-                                                                for column_xor in product(*(range(2) for _ in range(self.block_column_size)))),
+                                                                for column_xor in self.column_range),
                                                                name='state_test_down_count')
 
         self.model.addConstrs(self.values[1, 0, self.corps_first_round_index, 0, row, column, 0]==1
@@ -504,14 +504,14 @@ class MITM(model_MILP_attack.Model_MILP_attack):
             #     print(line)
             #     line=""
             for column in range(self.block_column_size):
-                for vector in product(*(range(2) for _ in range(self.block_column_size))):
+                for vector in self.column_range:
                         vector = tuple(vector)
-                        if self.XOR_in_mc_values[(0, 0, round_index, column)+vector+(2,)].X == 1 and self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mix_columns_inverse[0]), axis=0))) +(2,)].X == 0:
+                        if self.XOR_in_mc_values[(0, 0, round_index, column)+vector+(2,)].X == 1 and self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0))) +(2,)].X == 0:
                             line += f"\033[91m c:{column} / {vector} : F\033[0m "
-                        elif self.XOR_in_mc_values[(0, 0, round_index, column)+vector+(2,)].X == 0 and self.XOR_in_mc_values[(1, 1, round_index, column)+tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mix_columns_inverse[0]), axis=0)))+(2,)].X == 1:
-                            line += f"\033[94m c:{column} / {vector} - {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mix_columns_inverse[0]), axis=0)))} : F\033[0m "
-                        elif self.XOR_in_mc_values[(0, 0, round_index, column)+vector+(2,)].X == 1 and self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mix_columns_inverse[0]), axis=0))) +(2,)].X == 1:
-                            line += f"\033[95m c:{column} / {vector} et {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mix_columns_inverse[0]), axis=0)))} : F \033[0m"
+                        elif self.XOR_in_mc_values[(0, 0, round_index, column)+vector+(2,)].X == 0 and self.XOR_in_mc_values[(1, 1, round_index, column)+tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0)))+(2,)].X == 1:
+                            line += f"\033[94m c:{column} / {vector} - {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0)))} : F\033[0m "
+                        elif self.XOR_in_mc_values[(0, 0, round_index, column)+vector+(2,)].X == 1 and self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0))) +(2,)].X == 1:
+                            line += f"\033[95m c:{column} / {vector} et {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0)))} : F \033[0m"
                 line+="\n"
             print(line)
             line=""

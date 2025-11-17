@@ -9,11 +9,10 @@ import gurobipy as gp
 attack = MITM.MITM(cipher.cipher_parameters, 
                    licence_parameters.licence_parameters, 
                    attack_parameters.attack_parameters, None)
-print(attack.model)
+
 key_schedule = SKINNY_key_schedule.Model_MILP_SKINNY_key_schedule(cipher.cipher_parameters, 
                                                                  attack.total_rounds,
                                                                  attack.model)
-attack.getdetails()
 
 key_schedule.keyschedule()
 

@@ -357,7 +357,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
             print('The Model at no been optimize yet')
 
     def display_console(self):
-        for round_index in range(self.structure_rounds):
+        for round_index in range(self.total_rounds):
             
             print("ROUND ", round_index)
             key_line = ""
@@ -518,9 +518,5 @@ class MITM(model_MILP_attack.Model_MILP_attack):
             line=""
             print("\n")
         print("END OF THE ATTACK")
-        for vector in self.column_range:
-            print(self.XOR_in_mc_values[(1, 0, 0, 0)+vector+(0,)], end=' ')
-            print(self.XOR_in_mc_values[(1, 0, 0, 0)+vector+(1,)], end=' ')
-            print(self.XOR_in_mc_values[(1, 0, 0, 0)+vector+(2,)], end=' ')
-            print("\n")
+
 

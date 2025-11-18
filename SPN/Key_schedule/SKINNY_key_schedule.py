@@ -2,7 +2,7 @@ from Model.model_MILP_attack import Model_MILP_attack
 import gurobipy as gp
 from itertools import product
 
-class Model_MILP_SKINNY_key_schedule(Model_MILP_attack):
+class Model_MILP_key_schedule(Model_MILP_attack):
     def __init__(self, cipher_parameters, total_round, model):
         super().__init__(cipher_parameters, None, model)
         #Key parameters

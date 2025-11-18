@@ -1,6 +1,6 @@
 import gurobipy as gp
 from sage.all import Matrix, GF
-from itertools import combinations, product
+from itertools import combinations
 
 class Model_MILP_attack():   
     def __init__(self, cipher_parameters, licence_parameters, model):  
@@ -13,7 +13,7 @@ class Model_MILP_attack():
         self.block_column_size = cipher_parameters.get('block_column_size', 4)
         self.block_row_size = cipher_parameters.get('block_row_size', 4)
         self.word_size = int(self.block_size/(self.block_column_size*self.block_row_size))
-        
+
         #Operations parameters
         self.operation_order = cipher_parameters.get('operation_order', ['AK', 'SR', 'MC0', 'SB'])
         self.shift_rows = cipher_parameters.get('shift_rows', [0, 1, 2, 3])

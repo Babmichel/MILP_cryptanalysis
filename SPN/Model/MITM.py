@@ -1,7 +1,6 @@
 from Model import model_MILP_attack
 import gurobipy as gp
 import numpy as np
-from itertools import product
 
 class MITM(model_MILP_attack.Model_MILP_attack):
     def __init__(self, cipher_parameters, licence_parameters, attack_parameters, model):
@@ -56,7 +55,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                                                     for xor_combination in self.column_range   
                                                     for value in range(3)), vtype=gp.GRB.INTEGER, name="fix_in_mc")
         
-        self.model.addConstrs((gp.quicksum(self.XOR_in_mc_values[(part, sens, round_index, column) + (xor_combination) + (value,)] for value in range(3)) == 1 
+        self.model.addConstrs((gp.quicksum(self.XOR_in_mc_values[(part, sens, round_index, column) + xor_combination + (value,)] for value in range(3)) == 1 
                                 for part in range(2)
                                 for sens in range(2)
                                 for round_index in range(self.total_rounds)
@@ -64,7 +63,7 @@ class MITM(model_MILP_attack.Model_MILP_attack):
                                 for xor_combination in self.column_range),
                                 name='unique_value_in_mc_fix_constraints')
 
-        self.model.addConstrs((self.XOR_in_mc_values[(part, 0, round_index, column) + (tuple(xor_combination)) + (2,)] == self.XOR_in_mc_values[(part, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0))) + (2,)]
+        self.model.addConstrs((self.XOR_in_mc_values[(part, 0, round_index, column) + xor_combination + (2,)] == self.XOR_in_mc_values[(part, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0))) + (2,)]
                                 for part in range(2)
                                 for round_index in range(self.total_rounds)
                                 for column in range(self.block_column_size)
@@ -276,8 +275,8 @@ class MITM(model_MILP_attack.Model_MILP_attack):
     
     def complexities(self):
         self.time_complexity = self.model.addVar(vtype= gp.GRB.CONTINUOUS, name = "time_complexity")
-        self.memory_complexity = self.model.addVar(vtype= gp.GRB.CONTINUOUS, name = "memory_complexity")
-        self.data_complexity = self.model.addVar(vtype= gp.GRB.CONTINUOUS, name = "data_complexity")
+        self.memory_complexity = self.model.addVar(vtype= gp.GRB.INTEGER, name = "memory_complexity")
+        self.data_complexity = self.model.addVar(vtype= gp.GRB.INTEGER, name = "data_complexity")
         if self.optimal_complexity :
             self.search_domain = range(120)
             self.time_complexity_up = self.model.addVar(lb = 0, ub = 128,vtype= gp.GRB.INTEGER, name = "time_complexity_up")
@@ -315,14 +314,14 @@ class MITM(model_MILP_attack.Model_MILP_attack):
         self.model.addConstr(self.time_complexity_down == self.state_test_down + self.lower_key_guess + (self.block_size//self.word_size - self.fix_down), name='time_complexity_down_definition')
         self.model.addConstr(self.time_complexity_match == self.time_complexity_up + self.time_complexity_down - self.common_key_guess - gp.quicksum(self.match_quantity[round_index] for round_index in range(self.corps_rounds)), name='time_complexity_match_definition')
         
-        self.model.addConstr(self.memory_complexity >= self.upper_key_guess + self.state_test_up - self.common_fix + (self.block_size//self.word_size - self.fix_up), name='memory_complexity_up_definition')
-        self.model.addConstr(self.memory_complexity >= self.lower_key_guess + self.state_test_down - self.common_fix + (self.block_size//self.word_size - self.fix_down), name='memory_complexity_down_definition')
+        self.model.addConstr(self.memory_complexity == self.upper_key_guess + self.state_test_up - self.common_fix + (self.block_size//self.word_size - self.fix_up), name='memory_complexity_up_definition')
+        self.model.addConstr(self.memory_complexity == self.lower_key_guess + self.state_test_down - self.common_fix + (self.block_size//self.word_size - self.fix_down), name='memory_complexity_down_definition')
         
-        self.model.addConstr(self.data_complexity >= self.block_size//self.word_size - gp.quicksum(self.values[1, 1, 0, 0, row, column, 2] for row in range(self.block_row_size) for column in range(self.block_column_size)), name='data_definition')
+        self.model.addConstr(self.data_complexity == self.block_size//self.word_size - gp.quicksum(self.values[1, 1, 0, 0, row, column, 2] for row in range(self.block_row_size) for column in range(self.block_column_size)), name='data_definition')
         
         self.model.setObjectiveN(self.time_complexity, index=0, priority=10)
-        self.model.setObjectiveN(self.data_complexity, index=0, priority=8)
-        self.model.setObjectiveN(self.memory_complexity, index=0, priority=5)
+        self.model.setObjectiveN(self.data_complexity, index=1, priority=8)
+        self.model.setObjectiveN(self.memory_complexity, index=2, priority=5)
  
     def get_results(self):
         if self.optimized:

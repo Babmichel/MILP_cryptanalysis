@@ -46,7 +46,6 @@ class MILP_bricks():
                         for vector in vector_combination:
                             self.column_range[i][mc_index].add(tuple(vector))
                             self.column_range[not(i)][mc_index].add(tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mc[not(i)][mc_index]), axis=0))))
-        print(self.column_range[0][0])
         #Model Creation
         self.model=model
         if self.model==None:

@@ -1,7 +1,7 @@
-from Model.model_MILP_attack import Model_MILP_attack
+from Model.Common_bricks_for_attacks import MILP_bricks
 import gurobipy as gp
 
-class Model_MILP_key_schedule(Model_MILP_attack):
+class Model_MILP_key_schedule(MILP_bricks):
     def __init__(self, cipher_parameters, total_round, model):
         super().__init__(cipher_parameters, None, model)
         #Key parameters

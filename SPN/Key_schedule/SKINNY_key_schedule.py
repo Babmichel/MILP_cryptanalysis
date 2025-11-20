@@ -1,8 +1,8 @@
-from Model.model_MILP_attack import Model_MILP_attack
+from Model.Common_bricks_for_attacks import MILP_bricks
 import gurobipy as gp
 from itertools import product
 
-class Model_MILP_key_schedule(Model_MILP_attack):
+class Model_MILP_key_schedule(MILP_bricks):
     def __init__(self, cipher_parameters, total_round, model):
         super().__init__(cipher_parameters, None, model)
         #Key parameters
@@ -175,13 +175,6 @@ class Model_MILP_key_schedule(Model_MILP_attack):
             line += '|'
             for column in range(self.block_column_size):
                 line += f' {int(self.master_key_count_guess[row, column, 2].X)} '
-            line += '| '
-            print(line)
-        for row in range(self.block_row_size):
-            line=''
-            line += '|'
-            for column in range(self.block_column_size):
-                line += f' {int(self.master_key_count_guess_match[row, column].X)} '
             line += '| '
             print(line)
 

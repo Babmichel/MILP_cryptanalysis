@@ -1,6 +1,7 @@
 import gurobipy as gp
 from sage.all import Matrix, GF
 from itertools import combinations
+import numpy as np
 
 class MILP_bricks():   
     def __init__(self, cipher_parameters, licence_parameters, model):  
@@ -32,28 +33,20 @@ class MILP_bricks():
         self.max_1_MC = max([max([sum(row) for row in mc]) for mc in self.matrixes + self.matrixes_inverses])
 
         #MC objects
-        self.column_range = [[[] for i in range(len(self.matrixes))],[[] for i in range(len(self.matrixes))]]
+        self.column_range = [[set() for _ in range(len(self.matrixes))], [set() for _ in range(len(self.matrixes))]]
         self.possible_XORs_MC = [[],[]]
         for mc in self.matrixes:
             self.possible_XORs_MC[0].append(self.unpack_possible_XORs_MC(mc))
         for mc in self.matrixes_inverses:
             self.possible_XORs_MC[1].append(self.unpack_possible_XORs_MC(mc))
-
-
-        for mc in self.possible_XORs_MC[0]:
-            for row in mc:
-                for vector_combination in row:
-                    for vector in vector_combination:
-                        self.column_range[0, mc].add(tuple(vector))
-        for mc in self.possible_XORs_MC[1]:
-            for row in mc:
-                for vector_combination in row:
-                    for vector in vector_combination:
-                        self.column_range[1, mc].add(tuple(vector))
-
-        print(self.column_range[0, 0])
-
-
+        for i in range(2):
+            for mc_index, mc in enumerate(self.possible_XORs_MC[i]):
+                for row in mc:
+                    for vector_combination in row:
+                        for vector in vector_combination:
+                            self.column_range[i][mc_index].add(tuple(vector))
+                            self.column_range[not(i)][mc_index].add(tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mc[not(i)][mc_index]), axis=0))))
+        print(self.column_range[0][0])
         #Model Creation
         self.model=model
         if self.model==None:
@@ -144,7 +137,7 @@ class MILP_bricks():
                 possible_XOR_list[row]=self.unpack_possible_XORs_vector(matrixe[row])
         return possible_XOR_list
     
-    def vectors_with_bit_set_and_limit(self, size, active_position, active_max):
+    def vectors_with_bit_set_and_limit(self, n, row, x):
         """
         Génère tous les vecteurs binaires de taille n :
         - avec vector[row] = 1
@@ -152,19 +145,20 @@ class MILP_bricks():
         """
         
         # positions possibles sauf 'row'
-        others = [i for i in range(size) if i != active_position]
+        others = [i for i in range(n) if i != row]
 
-        if active_max < 1 or active_max > size:
+        if x < 1 or x > n:
             return  # impossible, aucun vecteur
 
         # nombre total de bits à 1 = k + 1 (car row=1 est obligatoire)
-        for k in range(0, min(active_max-1, size-1) + 1):  # k = nb de 1 supplémentaires (0 .. x-1)
+        for k in range(0, min(x-1, n-1) + 1):  # k = nb de 1 supplémentaires (0 .. x-1)
             for combo in combinations(others, k):
-                vector = [0] * size
-                vector[active_position] = 1
+                vector = [0] * n
+                vector[row] = 1
                 for pos in combo:
                     vector[pos] = 1
                 vector = tuple(vector)
+                
                 if any(vector):
                     yield vector
 
@@ -197,19 +191,17 @@ class MILP_bricks():
         #if you have an unknow value in the input of the MC, all the possible XOR combinations included this value cannot be computed
         for row in range(self.block_row_size):
             for column in range(self.block_column_size):
-                c_vector = list(self.vectors_with_bit_set_and_limit(self.block_column_size, row, self.max_1_MC))
                 if attack_side_index == sens :
-                    opposite_sens = int(not sens)
-                    for c_vector_element in c_vector :
-                        if list(c_vector_element) in self.mc[sens][round_index%len(self.mc[sens])]:
+                    for c_vector_element in self.column_range[sens][round_index%len(self.mc[sens])]:
+                        if c_vector_element in self.mc[sens][round_index%len(self.mc[sens])]:
                             and_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"and_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
-                            self.model.addConstr(and_var == gp.and_([part[attack_side_index, _ , round_index, input_state_index, row, column, 0] for _ in range(2)]+[part[attack_side_index, opposite_sens, round_index, output_state_index, self.mc[sens][round_index%len(self.mc[sens])].index(list(c_vector_element)), column, 0]]))
+                            self.model.addConstr(and_var == gp.and_([part[attack_side_index, sens , round_index, input_state_index, row, column, 0] for _ in range(2)]+[part[attack_side_index, not(sens), round_index, output_state_index, self.mc[sens][round_index%len(self.mc[sens])].index(list(c_vector_element)), column, 0]]))
                             self.model.addConstr((and_var == 1) >>
                                                     (self.XOR_in_mc_values[(attack_side_index, sens, round_index, column) + c_vector_element + (1,)] == 0),
                                                     name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
                         else : 
                             and_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"and_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
-                            self.model.addConstr(and_var == gp.and_([part[attack_side_index, _ , round_index, input_state_index, row, column, 0] for _ in range(2)]))
+                            self.model.addConstr(and_var == gp.and_([part[attack_side_index, sens , round_index, input_state_index, row, column, 0] for _ in range(2)]))
                             self.model.addConstr((and_var == 1) >>
                                                     (self.XOR_in_mc_values[(attack_side_index, sens, round_index, column) + c_vector_element + (1,)] == 0),
                                                     name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
@@ -218,7 +210,7 @@ class MILP_bricks():
                 else :
                     self.model.addConstrs(((part[attack_side_index, sens, round_index, input_state_index, row, column, 0] == 1) >> 
                                             (self.XOR_in_mc_values[(attack_side_index, sens, round_index, column) + c_vector_element + (1,)] == 0)
-                                            for c_vector_element in c_vector),
+                                            for c_vector_element in self.column_range[sens][round_index%len(self.mc[sens])]),
                                             name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
 
         #An output value in known if one of the possible XOR combinations leading to it is known
@@ -232,52 +224,6 @@ class MILP_bricks():
                             self.model.addGenConstrOr(or_var, [self.XOR_in_mc_values[(attack_side_index, sens, round_index, column)+tuple(index)+(0,)] for index in combination], name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
                         else :
                             self.model.addConstr(or_var == self.XOR_in_mc_values[(attack_side_index, sens, round_index, column)+tuple(combination[0])+(0,)])
-                        self.model.addConstr(not_or_var == 1-or_var)
-                        or_vars.append(not_or_var)  
-
-                self.model.addGenConstrOr(part[attack_side_index, sens, round_index, output_state_index, row, column, 1], or_vars, name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
-    
-    def value_propagation_MR(self, part, attack_side_index, round_index, input_state_index, output_state_index):
-        sens = int(input_state_index > output_state_index)
-        
-        #if you have an unknow value in the input of the MC, all the possible XOR combinations included this value cannot be computed
-        for row in range(self.block_row_size):
-            for column in range(self.block_column_size):
-                c_vector = list(self.vectors_with_bit_set_and_limit(self.block_column_size, column, self.max_1_MC))
-                if attack_side_index == sens :
-                    opposite_sens = int(not sens)
-                    for c_vector_element in c_vector :
-                        if list(c_vector_element) in self.mc[sens][round_index%len(self.mc[sens])]:
-                            and_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"and_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
-                            self.model.addConstr(and_var == gp.and_([part[attack_side_index, _ , round_index, input_state_index, row, column, 0] for _ in range(2)]+[part[attack_side_index, opposite_sens, round_index, row, output_state_index, self.mc[sens][round_index%len(self.mc[sens])].index(list(c_vector_element)), 0]]))
-                            self.model.addConstr((and_var == 1) >>
-                                                    (self.XOR_in_mc_values[(attack_side_index, sens, round_index, row) + c_vector_element + (1,)] == 0),
-                                                    name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
-                        else : 
-                            and_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"and_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
-                            self.model.addConstr(and_var == gp.and_([part[attack_side_index, _ , round_index, input_state_index, row, column, 0] for _ in range(2)]))
-                            self.model.addConstr((and_var == 1) >>
-                                                    (self.XOR_in_mc_values[(attack_side_index, sens, round_index, row) + c_vector_element + (1,)] == 0),
-                                                    name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
-                       
-
-                else :
-                    self.model.addConstrs(((part[attack_side_index, sens, round_index, input_state_index, row, column, 0] == 1) >> 
-                                            (self.XOR_in_mc_values[(attack_side_index, sens, round_index, row) + c_vector_element + (1,)] == 0)
-                                            for c_vector_element in c_vector),
-                                            name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
-
-        #An output value in known if one of the possible XOR combinations leading to it is known
-        for row in range(self.block_row_size):
-            for column in range(self.block_column_size):
-                or_vars = []
-                for combination in self.possible_XORs_MC[sens][round_index%(len(self.mc[0]))][row]:
-                        or_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"or_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
-                        not_or_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"not_or_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
-                        if len(combination) >= 1:
-                            self.model.addGenConstrOr(or_var, [self.XOR_in_mc_values[(attack_side_index, sens, round_index, row)+tuple(index)+(0,)] for index in combination], name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
-                        else :
-                            self.model.addConstr(or_var == self.XOR_in_mc_values[(attack_side_index, sens, round_index, row)+tuple(combination[0])+(0,)])
                         self.model.addConstr(not_or_var == 1-or_var)
                         or_vars.append(not_or_var)  
 
@@ -338,8 +284,6 @@ class MILP_bricks():
                     self.value_propagation_SR(part, attack_side_index, forward_round, state_index, state_index + 1, self.shift_rows)
                 elif self.operation_order[state_index] == 'MC':
                     self.value_propagation_MC(part, attack_side_index, forward_round, state_index, state_index + 1)
-                elif self.operation_order[state_index] == 'MR':
-                    self.value_propagation_MR(part, attack_side_index, forward_round, state_index, state_index + 1)
                 elif self.operation_order[state_index] == 'SB':
                     self.value_propagation_SB(part, attack_side_index, forward_round, state_index, state_index + 1, self.sbox_sizes)
                 elif self.operation_order[state_index] == 'AK':
@@ -357,8 +301,6 @@ class MILP_bricks():
                     self.value_propagation_SR(part, attack_side_index, backward_round, state_index + 1, state_index, self.shift_rows_inverse)
                 elif self.operation_order[state_index] == 'MC':
                     self.value_propagation_MC(part, attack_side_index, backward_round, state_index + 1, state_index)
-                elif self.operation_order[state_index] == 'MR':
-                    self.value_propagation_MR(part, attack_side_index, backward_round, state_index + 1, state_index)
                 elif self.operation_order[state_index] == 'SB':
                     self.value_propagation_SB(part, attack_side_index, backward_round, state_index + 1, state_index, self.sbox_sizes)
                 elif self.operation_order[state_index] == 'AK':

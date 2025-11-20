@@ -15,6 +15,6 @@ cipher_parameters = {
     #Round function parameters
     "operation_order": ['AK', 'SR', 'MC', 'SB'],
     "shift_rows": [0, 1, 2, 3],
-    "mix_columns": [[[1, 0, 1, 1], [1, 0, 0, 0], [0, 1, 1, 0], [1, 0, 1, 0]]],
+    "matrixes": [[[1, 0, 1, 1], [1, 0, 0, 0], [0, 1, 1, 0], [1, 0, 1, 0]]],
     "sbox_sizes": [1,1]
 }    

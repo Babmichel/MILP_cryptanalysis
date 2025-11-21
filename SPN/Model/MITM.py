@@ -50,7 +50,7 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
                                                             for sens in range(2)
                                                             for round_index in range(self.total_rounds)
                                                             for column in range(self.block_column_size)
-                                                            for xor_combination in self.column_range[sens][round_index%len(self.mc[sens])]   
+                                                            for xor_combination in self.column_range[sens][round_index%len(self.matrixes[sens])]   
                                                             for value in range(3)), vtype=gp.GRB.INTEGER, name="fix_in_mc")
                 
                 self.model.addConstrs((gp.quicksum(self.XOR_in_mc_values[(part, sens, round_index, column) + xor_combination + (value,)] for value in range(3)) == 1 
@@ -58,15 +58,40 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
                                         for sens in range(2)
                                         for round_index in range(self.total_rounds)
                                         for column in range(self.block_column_size)
-                                        for xor_combination in self.column_range[sens][round_index%len(self.mc[sens])]),
+                                        for xor_combination in self.column_range[sens][round_index%len(self.matrixes[sens])]),
                                         name='unique_value_in_mc_fix_constraints')
 
-                self.model.addConstrs((self.XOR_in_mc_values[(part, 0, round_index, column) + xor_combination + (2,)] == self.XOR_in_mc_values[(part, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0))) + (2,)]
+                self.model.addConstrs((self.XOR_in_mc_values[(part, 0, round_index, column) + xor_combination + (2,)] == self.XOR_in_mc_values[(part, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0))) + (2,)]
                                         for part in range(2)
                                         for round_index in range(self.total_rounds)
                                         for column in range(self.block_column_size)
-                                        for xor_combination in self.column_range[0][round_index%len(self.mc[0])]),
+                                        for xor_combination in self.column_range[0][round_index%len(self.matrixes[0])]),
                                         name='same fix for backward and forward propagation')
+            
+            if element == 'MR':
+                self.XOR_in_mr_values = self.model.addVars((((part, sens, round_index, row) + (xor_combination) + (value,)) 
+                                                            for part in range(2)
+                                                            for sens in range(2)
+                                                            for round_index in range(self.total_rounds)
+                                                            for row in range(self.block_row_size)
+                                                            for xor_combination in self.row_range[sens][round_index%len(self.matrixes[sens])]   
+                                                            for value in range(3)), vtype=gp.GRB.INTEGER, name="fix_in_mc")
+                
+                self.model.addConstrs((gp.quicksum(self.XOR_in_mr_values[(part, sens, round_index, row) + xor_combination + (value,)] for value in range(3)) == 1 
+                                        for part in range(2)
+                                        for sens in range(2)
+                                        for round_index in range(self.total_rounds)
+                                        for row in range(self.block_row_size)
+                                        for xor_combination in self.row_range[sens][round_index%len(self.matrixes[sens])]),
+                                        name='unique_value_in_mc_fix_constraints')
+
+                self.model.addConstrs((self.XOR_in_mr_values[(part, 0, round_index, row) + xor_combination + (2,)] == self.XOR_in_mr_values[(part, 1, round_index, row) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=1))) + (2,)]
+                                        for part in range(2)
+                                        for round_index in range(self.total_rounds)
+                                        for row in range(self.block_row_size)
+                                        for xor_combination in self.row_range[0][round_index%len(self.matrixes[0])]),
+                                        name='same fix for backward and forward propagation')
+            
 
     def structure(self):
         ###Upper values 
@@ -79,25 +104,23 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         self.forward_value_propagation(self.values, 0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
         self.backward_value_propagation(self.values, 0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
         
-        if 'MC' in self.operation_order:
-            self.model.addConstr(self.fix_up == gp.quicksum(self.values[0, 0, round_index, state_index, row, column, 2]
+        fix_elements = gp.quicksum(self.values[0, 0, round_index, state_index, row, column, 2]
                                                             for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
                                                             for state_index in range(self.state_number)
                                                             for row in range(self.block_row_size)
                                                             for column in range(self.block_column_size))
-                                                            + gp.quicksum(self.XOR_in_mc_values[(0, 0, round_index, column)+(column_xor)+(2,)]
+        if 'MC' in self.operation_order:
+            fix_elements += gp.quicksum(self.XOR_in_mc_values[(0, 0, round_index, column)+(column_xor)+(2,)]
                                                             for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
                                                             for column in range(self.block_column_size)
-                                                            for column_xor in self.column_range[0][round_index%len(self.mc[0])]),
-                                name='fix_up_count')
-        
-        else : 
-            self.model.addConstr(self.fix_up == gp.quicksum(self.values[0, 0, round_index, state_index, row, column, 2]
+                                                            for column_xor in self.column_range[0][round_index%len(self.matrixes[0])])
+        if 'MR' in self.operation_order:
+            fix_elements += gp.quicksum(self.XOR_in_mr_values[(0, 0, round_index, row)+(row_xor)+(2,)]
                                                             for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
-                                                            for state_index in range(self.state_number)
                                                             for row in range(self.block_row_size)
-                                                            for column in range(self.block_column_size)),
-                                name='fix_up_count')
+                                                            for row_xor in self.row_range[0][round_index%len(self.matrixes[0])]) 
+        
+        self.model.addConstr(self.fix_up == fix_elements, name='fix_up_count')
         
         self.model.addConstr(self.active_start_up == (self.block_size//self.word_size
                                                     - gp.quicksum(self.values[0, 0, self.structure_last_round_index, self.state_number-1, row, column , 0]
@@ -117,26 +140,24 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         self.backward_value_propagation(self.values, 1, self.structure_first_round_index, self.structure_last_round_index, self.lower_subkey)
         self.forward_value_propagation(self.values, 1, self.structure_first_round_index, self.structure_last_round_index, self.lower_subkey)
         
-        if 'MC' in self.operation_order:
-            self.model.addConstr(self.fix_down == gp.quicksum(self.values[1, 1, round_index, state_index, row, column, 2]
+        fix_elements = gp.quicksum(self.values[1, 1, round_index, state_index, row, column, 2]
                                                             for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
                                                             for state_index in range(self.state_number)
                                                             for row in range(self.block_row_size)
                                                             for column in range(self.block_column_size))
-                                                            + gp.quicksum(self.XOR_in_mc_values[(1, 1, round_index, column)+(column_xor)+(2,)]
+        if 'MC' in self.operation_order:
+            fix_elements += gp.quicksum(self.XOR_in_mc_values[(1, 1, round_index, column)+(column_xor)+(2,)]
                                                             for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
                                                             for column in range(self.block_column_size)
-                                                            for column_xor in self.column_range[1][round_index%len(self.mc[1])]),
-                                name='fix_down_count')
-        
-        else :  
-            self.model.addConstr(self.fix_down == gp.quicksum(self.values[1, 1, round_index, state_index, row, column, 2]
+                                                            for column_xor in self.column_range[1][round_index%len(self.matrixes[1])])
+        if 'MR' in self.operation_order:
+            fix_elements += gp.quicksum(self.XOR_in_mr_values[(1, 1, round_index, row)+(row_xor)+(2,)]
                                                             for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
-                                                            for state_index in range(self.state_number)
                                                             for row in range(self.block_row_size)
-                                                            for column in range(self.block_column_size)),
-                                name='fix_down_count')
+                                                            for row_xor in self.row_range[1][round_index%len(self.matrixes[1])])
         
+        self.model.addConstr(self.fix_down == fix_elements, name='fix_down_count')
+
         self.model.addConstr(self.active_start_down == self.block_column_size*self.block_row_size
                                                      - gp.quicksum(self.values[1, 1, self.structure_first_round_index, 0, row, column , 0]
                                                                   for row in range(self.block_row_size) 
@@ -171,25 +192,24 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         # Common fix constraints          
         self.common_fix = self.model.addVar(vtype= gp.GRB.INTEGER, name = "fix_common")
         
-        if 'MC' in self.operation_order:
-            self.model.addConstr(self.common_fix == gp.quicksum(self.values[1, 1, round_index, state_index, row, column, 2]*self.values[0, 0, round_index, state_index, row, column, 2]
+        common_fix_elements = gp.quicksum(self.values[1, 1, round_index, state_index, row, column, 2]*self.values[0, 0, round_index, state_index, row, column, 2]
                                                                 for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
                                                                 for state_index in range(self.state_number) 
                                                                 for row in range(self.block_row_size) 
                                                                 for column in range(self.block_column_size) )
-                                                    + gp.quicksum(self.XOR_in_mc_values[(0, 0, round_index, column)+xor_combination+(2,)]*self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0))) +(2,)]
+        if 'MC' in self.operation_order:
+            common_fix_elements += gp.quicksum(self.XOR_in_mc_values[(0, 0, round_index, column)+xor_combination+(2,)]*self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0))) +(2,)]
                                                                 for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
                                                                 for column in range(self.block_column_size)
-                                                                for xor_combination in self.column_range[0][round_index%len(self.mc[1])]),
-                                name='fix_common_count')
-
-        else :
-            self.model.addConstr(self.common_fix == gp.quicksum(self.values[1, 1, round_index, state_index, row, column, 2]*self.values[0, 0, round_index, state_index, row, column, 2]
+                                                                for xor_combination in self.column_range[0][round_index%len(self.matrixes[1])])
+        
+        if 'MC' in self.operation_order:
+            common_fix_elements += gp.quicksum(self.XOR_in_mr_values[(0, 0, round_index, row)+xor_combination+(2,)]*self.XOR_in_mr_values[(1, 1, round_index, row) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=1))) +(2,)]
                                                                 for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
-                                                                for state_index in range(self.state_number) 
-                                                                for row in range(self.block_row_size) 
-                                                                for column in range(self.block_column_size) ),
-                                name='fix_common_count')
+                                                                for row in range(self.block_row_size)
+                                                                for xor_combination in self.row_range[0][round_index%len(self.matrixes[1])])
+        
+        self.model.addConstr(self.common_fix == common_fix_elements, name='common_fix_count')
         
         self.model.addConstr(self.fix_down+self.fix_up-self.common_fix<=self.block_size//self.word_size, name='cannot_fix_more_than_the_block')
 
@@ -201,26 +221,24 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         self.forward_value_propagation(self.values, 0, self.corps_first_round_index, self.corps_last_round_index, self.upper_subkey)
         self.backward_value_propagation(self.values, 0, self.corps_first_round_index, self.corps_last_round_index, self.upper_subkey)
         
-        if 'MC' in self.operation_order:
-            self.model.addConstr(self.state_test_up == gp.quicksum(self.values[0, 0, round_index, state_index, row, column, 2]
+        state_stest_up_elements = gp.quicksum(self.values[0, 0, round_index, state_index, row, column, 2]
                                                                for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
                                                                for state_index in range(self.state_number)
                                                                for row in range(self.block_row_size)
                                                                for column in range(self.block_column_size))
-                                                                 + gp.quicksum(self.XOR_in_mc_values[(0, 0, round_index, column)+(column_xor)+(2,)]
+        if 'MC' in self.operation_order:
+            state_stest_up_elements += gp.quicksum(self.XOR_in_mc_values[(0, 0, round_index, column)+(column_xor)+(2,)]
                                                                 for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
                                                                 for column in range(self.block_column_size)
-                                                                for column_xor in self.column_range[0][round_index%len(self.mc[0])]),
-                                                               name='state_test_up_count')
+                                                                for column_xor in self.column_range[0][round_index%len(self.matrixes[0])])
 
-        else :
-            self.model.addConstr(self.state_test_up == gp.quicksum(self.values[0, 0, round_index, state_index, row, column, 2]
-                                                               for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
-                                                               for state_index in range(self.state_number)
-                                                               for row in range(self.block_row_size)
-                                                               for column in range(self.block_column_size)),
-                                                               name='state_test_up_count')
+        if 'MR' in self.operation_order:
+            state_stest_up_elements += gp.quicksum(self.XOR_in_mr_values[(0, 0, round_index, row)+(row_xor)+(2,)]
+                                                                for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
+                                                                for row in range(self.block_row_size)
+                                                                for row_xor in self.row_range[0][round_index%len(self.matrixes[0])])
 
+        self.model.addConstr(self.state_test_up == state_stest_up_elements, name='state_test_up_count')
        
         self.model.addConstrs(self.values[0, 1, self.corps_last_round_index, self.state_number-1, row, column, 0]==1 
                               for row in range(self.block_row_size) 
@@ -234,25 +252,23 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         self.backward_value_propagation(self.values, 1, self.corps_first_round_index, self.corps_last_round_index, self.lower_subkey)
         self.forward_value_propagation(self.values, 1, self.corps_first_round_index, self.corps_last_round_index, self.lower_subkey)
         
-        if 'MC' in self.operation_order:
-            self.model.addConstr(self.state_test_down == gp.quicksum(self.values[1, 1, round_index, state_index, row, column, 2]
+        state_test_down_elements = gp.quicksum(self.values[1, 1, round_index, state_index, row, column, 2]
                                                                for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
                                                                for state_index in range(self.state_number)
                                                                for row in range(self.block_row_size)
                                                                for column in range(self.block_column_size))
-                                                               + gp.quicksum(self.XOR_in_mc_values[(1, 1, round_index, column)+(column_xor)+(2,)]
+        if 'MC' in self.operation_order:
+            state_test_down_elements += gp.quicksum(self.XOR_in_mc_values[(1, 1, round_index, column)+(column_xor)+(2,)]
                                                                 for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
                                                                 for column in range(self.block_column_size)
-                                                                for column_xor in self.column_range[1][round_index%len(self.mc[1])]),
-                                                               name='state_test_down_count')
-
-        else :
-            self.model.addConstr(self.state_test_down == gp.quicksum(self.values[1, 1, round_index, state_index, row, column, 2]
-                                                               for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
-                                                               for state_index in range(self.state_number)
-                                                               for row in range(self.block_row_size)
-                                                               for column in range(self.block_column_size)),
-                                                               name='state_test_down_count')
+                                                                for column_xor in self.column_range[1][round_index%len(self.matrixes[1])])
+        if 'MR' in self.operation_order:
+            state_test_down_elements += gp.quicksum(self.XOR_in_mr_values[(1, 1, round_index, row)+(row_xor)+(2,)]
+                                                                for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
+                                                                for row in range(self.block_row_size)
+                                                                for row_xor in self.row_range[1][round_index%len(self.matrixes[1])])
+        
+        self.model.addConstr(self.state_test_down == state_test_down_elements, name='state_test_down_count')
 
         self.model.addConstrs(self.values[1, 0, self.corps_first_round_index, 0, row, column, 0]==1
                               for row in range(self.block_row_size) 
@@ -261,6 +277,8 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
     def match(self):
         if 'MC' in self.operation_order:
             self.match_state_index = self.operation_order.index('MC')
+        if 'MR' in self.operation_order:
+            self.match_state_index = self.operation_order.index('MR')
         else : 
             raise ValueError("No matching operation MC found in operation order.")
         self.match_quantity = self.model.addVars(range(self.corps_rounds), vtype= gp.GRB.INTEGER, name = "match_quantity")
@@ -472,123 +490,137 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
                     line += "|"
                     if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
                         line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
+                    elif row == self.block_row_size//2:
                         line += "->"
+                    elif row == self.block_row_size//2 - 1 and state_index == self.state_number -1:
+                        line += "NR"
                     else :
                         line += "  "
                 line += " "
                 print(line)
                 line=""
 
-            print("\n lower backward propagation")
-            for row in range(self.block_row_size):
-                line = ""
-                for state_index in range(self.state_number):
-                    line += "|"
-                    for column in range(self.block_column_size):
-                        if (self.values[1, 0, round_index, state_index, row, column, 0].X == 1):
-                            line += "\033[90m ■ \033[0m"
-                        elif (self.values[1, 0, round_index, state_index, row, column, 1].X == 1):
-                            line += "\033[94m ■ \033[0m"
-                        elif (self.values[1, 0, round_index, state_index, row, column, 2].X == 1):
-                            line += "\033[94m F \033[0m"
-                        else :
-                            line += " ? "
-                            print(self.values[0, 0, round_index, state_index, row, column, 2])
-                            print(self.values[1, 1, round_index, state_index, row, column, 1])
-                    line += "|"
-                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                        line += "->"
-                    else :
-                        line += "  "
-                line += " "
-                print(line)
-                line=""
-            print("\n lower direct propagation")
-            for row in range(self.block_row_size):
-                line = ""
-                for state_index in range(self.state_number):
-                    line += "|"
-                    for column in range(self.block_column_size):
-                        if (self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
-                            line += "\033[90m ■ \033[0m"
-                        elif (self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
-                            line += "\033[94m ■ \033[0m"
-                        elif (self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
-                            line += "\033[94m F \033[0m"
-                    line += "|"
-                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                        line += "->"
-                    else :
-                        line += "  "
-                line += " "
-                print(line)
-                line=""
-            print("\n upper backward propagation")
-            for row in range(self.block_row_size):
-                line = ""
-                for state_index in range(self.state_number):
-                    line += "|"
-                    for column in range(self.block_column_size):
-                        if (self.values[0, 1, round_index, state_index, row, column, 0].X == 1):
-                            line += "\033[90m ■ \033[0m"
-                        elif (self.values[0, 1, round_index, state_index, row, column, 1].X == 1):
-                            line += "\033[91m ■ \033[0m"
-                        elif (self.values[0, 1, round_index, state_index, row, column, 2].X == 1):
-                            line += "\033[91m F \033[0m"
-                    line += "|"
-                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                        line += "->"
-                    else :
-                        line += "  "
-                line += " "
-                print(line)
-                line=""
-            print("\n upper direct propagation :")
-            for row in range(self.block_row_size):
-                line = ""
-                for state_index in range(self.state_number):
-                    line += "|"
-                    for column in range(self.block_column_size):
-                        if (self.values[0, 0, round_index, state_index, row, column, 0].X == 1):
-                            line += "\033[90m ■ \033[0m"
-                        elif (self.values[0, 0, round_index, state_index, row, column, 1].X == 1):
-                            line += "\033[91m ■ \033[0m"
-                        elif (self.values[0, 0, round_index, state_index, row, column, 2].X == 1):
-                            line += "\033[91m F \033[0m"
-                    line += "|"
-                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                        line += "->"
-                    else :
-                        line += "  "
-                line += " "
-                print(line)
-                line=""
+            # print("\n lower backward propagation")
+            # for row in range(self.block_row_size):
+            #     line = ""
+            #     for state_index in range(self.state_number):
+            #         line += "|"
+            #         for column in range(self.block_column_size):
+            #             if (self.values[1, 0, round_index, state_index, row, column, 0].X == 1):
+            #                 line += "\033[90m ■ \033[0m"
+            #             elif (self.values[1, 0, round_index, state_index, row, column, 1].X == 1):
+            #                 line += "\033[94m ■ \033[0m"
+            #             elif (self.values[1, 0, round_index, state_index, row, column, 2].X == 1):
+            #                 line += "\033[94m F \033[0m"
+            #             else :
+            #                 line += " ? "
+            #                 print(self.values[0, 0, round_index, state_index, row, column, 2])
+            #                 print(self.values[1, 1, round_index, state_index, row, column, 1])
+            #         line += "|"
+            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #             line += "->"
+            #         else :
+            #             line += "  "
+            #     line += " "
+            #     print(line)
+            #     line=""
+            # print("\n lower direct propagation")
+            # for row in range(self.block_row_size):
+            #     line = ""
+            #     for state_index in range(self.state_number):
+            #         line += "|"
+            #         for column in range(self.block_column_size):
+            #             if (self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
+            #                 line += "\033[90m ■ \033[0m"
+            #             elif (self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
+            #                 line += "\033[94m ■ \033[0m"
+            #             elif (self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
+            #                 line += "\033[94m F \033[0m"
+            #         line += "|"
+            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #             line += "->"
+            #         else :
+            #             line += "  "
+            #     line += " "
+            #     print(line)
+            #     line=""
+            # print("\n upper backward propagation")
+            # for row in range(self.block_row_size):
+            #     line = ""
+            #     for state_index in range(self.state_number):
+            #         line += "|"
+            #         for column in range(self.block_column_size):
+            #             if (self.values[0, 1, round_index, state_index, row, column, 0].X == 1):
+            #                 line += "\033[90m ■ \033[0m"
+            #             elif (self.values[0, 1, round_index, state_index, row, column, 1].X == 1):
+            #                 line += "\033[91m ■ \033[0m"
+            #             elif (self.values[0, 1, round_index, state_index, row, column, 2].X == 1):
+            #                 line += "\033[91m F \033[0m"
+            #         line += "|"
+            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #             line += "->"
+            #         else :
+            #             line += "  "
+            #     line += " "
+            #     print(line)
+            #     line=""
+            # print("\n upper direct propagation :")
+            # for row in range(self.block_row_size):
+            #     line = ""
+            #     for state_index in range(self.state_number):
+            #         line += "|"
+            #         for column in range(self.block_column_size):
+            #             if (self.values[0, 0, round_index, state_index, row, column, 0].X == 1):
+            #                 line += "\033[90m ■ \033[0m"
+            #             elif (self.values[0, 0, round_index, state_index, row, column, 1].X == 1):
+            #                 line += "\033[91m ■ \033[0m"
+            #             elif (self.values[0, 0, round_index, state_index, row, column, 2].X == 1):
+            #                 line += "\033[91m F \033[0m"
+            #         line += "|"
+            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #             line += "->"
+            #         else :
+            #             line += "  "
+            #     line += " "
+            #     print(line)
+            #     line=""
             if 'MC' in self.operation_order:
                 for column in range(self.block_column_size):
-                    for vector in self.column_range[0][round_index%len(self.mc[0])]:
+                    for vector in self.column_range[0][round_index%len(self.matrixes[0])]:
                             vector = tuple(vector)
-                            if self.XOR_in_mc_values[(0, 0, round_index, column)+vector+(2,)].X == 1 and self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0))) +(2,)].X == 0:
+                            if self.XOR_in_mc_values[(0, 0, round_index, column)+vector+(2,)].X == 1 and self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0))) +(2,)].X == 0:
                                 line += f"\033[91m c:{column} / {vector} : F\033[0m "
-                            elif self.XOR_in_mc_values[(0, 0, round_index, column)+vector+(2,)].X == 0 and self.XOR_in_mc_values[(1, 1, round_index, column)+tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0)))+(2,)].X == 1:
-                                line += f"\033[94m c:{column} / {vector} - {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0)))} : F\033[0m "
-                            elif self.XOR_in_mc_values[(0, 0, round_index, column)+vector+(2,)].X == 1 and self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0))) +(2,)].X == 1:
-                                line += f"\033[95m c:{column} / {vector} et {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mc[1][round_index%len(self.mc[1])]), axis=0)))} : F \033[0m"
+                            elif self.XOR_in_mc_values[(0, 0, round_index, column)+vector+(2,)].X == 0 and self.XOR_in_mc_values[(1, 1, round_index, column)+tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0)))+(2,)].X == 1:
+                                line += f"\033[94m c:{column} / {vector} - {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0)))} : F\033[0m "
+                            elif self.XOR_in_mc_values[(0, 0, round_index, column)+vector+(2,)].X == 1 and self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0))) +(2,)].X == 1:
+                                line += f"\033[95m c:{column} / {vector} et {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0)))} : F \033[0m"
+                line+="\n"
+            print(line)
+            line=""
+            print("\n")
+            if 'MR' in self.operation_order:
+                for row in range(self.block_row_size):
+                    for vector in self.row_range[0][round_index%len(self.matrixes_transposes[0])]:
+                            vector = tuple(vector)
+                            if self.XOR_in_mr_values[(0, 0, round_index, row)+vector+(2,)].X == 1 and self.XOR_in_mr_values[(1, 1, round_index, row) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes_transposes[1][round_index%len(self.matrixes[1])]), axis=1))) +(2,)].X == 0:
+                                line += f"\033[91m c:{column} / {vector} : F\033[0m "
+                            elif self.XOR_in_mr_values[(0, 0, round_index, row)+vector+(2,)].X == 0 and self.XOR_in_mr_values[(1, 1, round_index, row)+tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes_transposes[1][round_index%len(self.matrixes[1])]), axis=1)))+(2,)].X == 1:
+                                line += f"\033[94m c:{column} / {vector} - {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0)))} : F\033[0m "
+                            elif self.XOR_in_mr_values[(0, 0, round_index, row)+vector+(2,)].X == 1 and self.XOR_in_mr_values[(1, 1, round_index, row) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes_transposes[1][round_index%len(self.matrixes[1])]), axis=1))) +(2,)].X == 1:
+                                line += f"\033[95m c:{column} / {vector} et {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0)))} : F \033[0m"
                 line+="\n"
             print(line)
             line=""
             print("\n")
         print("END OF THE ATTACK")
-        print(self.values[0, 0, 2, 0, 0, 2, 1])
-        print(self.values[0, 0, 2, 0, 2, 2, 1])
-        print(self.XOR_in_mc_values[0, 0, 0, 2, 1, 0, 1, 0, 1])
+
 
 

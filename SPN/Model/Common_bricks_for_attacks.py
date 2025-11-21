@@ -46,6 +46,9 @@ class MILP_bricks():
                         for vector in vector_combination:
                             self.column_range[i][mc_index].add(tuple(vector))
                             self.column_range[not(i)][mc_index].add(tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.mc[not(i)][mc_index]), axis=0))))
+        self.mc_sets = {s: [set(map(tuple, round_mc)) for round_mc in self.mc[s]]for s in (0,1)}
+        self.mc_index_map = {s: [{tuple(v): idx for idx, v in enumerate(round_mc)}for round_mc in self.mc[s]]for s in (0,1)}
+
         #Model Creation
         self.model=model
         if self.model==None:
@@ -62,7 +65,7 @@ class MILP_bricks():
             self.model.setParam("PreSparsify", 1) #AND and OR constraints sparsification
             self.model.setParam("Aggregate", 0) #AND and OR constraints aggregation
             self.model.setParam("MIPFocus", 1) #balances search between feasible solutions and optimality proof
-            self.model.setParam("Threads", 24) 
+            self.model.setParam("Threads", 12) 
             self.model.setParam("ConcurrentMIP", 1) #exploration paralléle
 
         # Double Check of cipher model
@@ -136,81 +139,90 @@ class MILP_bricks():
                 possible_XOR_list[row]=self.unpack_possible_XORs_vector(matrixe[row])
         return possible_XOR_list
     
-    def vectors_with_bit_set_and_limit(self, n, row, x):
-        """
-        Génère tous les vecteurs binaires de taille n :
-        - avec vector[row] = 1
-        - avec AU PLUS x bits à 1 (donc 1, 2, ..., x)
-        """
+    # def vectors_with_bit_set_and_limit(self, n, row, x):
+    #     """
+    #     Génère tous les vecteurs binaires de taille n :
+    #     - avec vector[row] = 1
+    #     - avec AU PLUS x bits à 1 (donc 1, 2, ..., x)
+    #     """
         
-        # positions possibles sauf 'row'
-        others = [i for i in range(n) if i != row]
+    #     # positions possibles sauf 'row'
+    #     others = [i for i in range(n) if i != row]
 
-        if x < 1 or x > n:
-            return  # impossible, aucun vecteur
+    #     if x < 1 or x > n:
+    #         return  # impossible, aucun vecteur
 
-        # nombre total de bits à 1 = k + 1 (car row=1 est obligatoire)
-        for k in range(0, min(x-1, n-1) + 1):  # k = nb de 1 supplémentaires (0 .. x-1)
-            for combo in combinations(others, k):
-                vector = [0] * n
-                vector[row] = 1
-                for pos in combo:
-                    vector[pos] = 1
-                vector = tuple(vector)
+    #     # nombre total de bits à 1 = k + 1 (car row=1 est obligatoire)
+    #     for k in range(0, min(x-1, n-1) + 1):  # k = nb de 1 supplémentaires (0 .. x-1)
+    #         for combo in combinations(others, k):
+    #             vector = [0] * n
+    #             vector[row] = 1
+    #             for pos in combo:
+    #                 vector[pos] = 1
+    #             vector = tuple(vector)
                 
-                if any(vector):
-                    yield vector
+    #             if any(vector):
+    #                 yield vector
 
-    def generate_binary_vectors_with_limit(self, n, max_ones):  #a refaire car fait avec le chat GPT
-        """
-        Génère uniquement les vecteurs binaires de longueur n
-        contenant <= max_ones bits à 1.
-        """
-        for k in range(max_ones + 1):
-            for positions in combinations(range(n), k):
-                vector = [0] * n
-                for pos in positions:
-                    vector[pos] = 1
-                vector = tuple(vector)
-                if any(vector):
-                    yield vector
+    # def generate_binary_vectors_with_limit(self, n, max_ones):  #a refaire car fait avec le chat GPT
+    #     """
+    #     Génère uniquement les vecteurs binaires de longueur n
+    #     contenant <= max_ones bits à 1.
+    #     """
+    #     for k in range(max_ones + 1):
+    #         for positions in combinations(range(n), k):
+    #             vector = [0] * n
+    #             for pos in positions:
+    #                 vector[pos] = 1
+    #             vector = tuple(vector)
+    #             if any(vector):
+    #                 yield vector
             
     #Propagation of values OPERATORS
     def value_propagation_SR(self, part, attack_side_index, round_index, input_state_index, output_state_index, shift_rows):
         #an unknow value cannot turn to a value that can be computed.
         sens = int(input_state_index > output_state_index)
-        self.model.addConstrs(((part[attack_side_index, sens, round_index, input_state_index, row, column, 0] == 1)
-                                >> (part[attack_side_index, sens, round_index, output_state_index, row, (column+shift_rows[row])%self.block_column_size, 1] == 0)
+        self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row, column, 0]
+                                + part[attack_side_index, sens, round_index, output_state_index, row, (column+shift_rows[row])%self.block_column_size, 1] <= 1
                                 for row in range(4) for column in range(4)),
                                 name = "value_propagation_:_SR_0_not_to_1")
     
     def value_propagation_MC(self, part, attack_side_index, round_index, input_state_index, output_state_index):
         sens = int(input_state_index > output_state_index)
-        
-        #if you have an unknow value in the input of the MC, all the possible XOR combinations included this value cannot be computed
+        mc_index = round_index % len(self.mc[sens])
+
+        #First we fix to 0 all the input XOR that cannot be computed
         for row in range(self.block_row_size):
             for column in range(self.block_column_size):
-                if attack_side_index == sens :
-                    for c_vector_element in self.column_range[sens][round_index%len(self.mc[sens])]:
-                        if c_vector_element in self.mc[sens][round_index%len(self.mc[sens])]:
-                            and_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"and_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
-                            self.model.addConstr(and_var == gp.and_([part[attack_side_index, sens , round_index, input_state_index, row, column, 0] for _ in range(2)]+[part[attack_side_index, not(sens), round_index, output_state_index, self.mc[sens][round_index%len(self.mc[sens])].index(list(c_vector_element)), column, 0]]))
-                            self.model.addConstr((and_var == 1) >>
-                                                    (self.XOR_in_mc_values[(attack_side_index, sens, round_index, column) + c_vector_element + (1,)] == 0),
-                                                    name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
-                        else : 
-                            and_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"and_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
-                            self.model.addConstr(and_var == gp.and_([part[attack_side_index, sens , round_index, input_state_index, row, column, 0] for _ in range(2)]))
-                            self.model.addConstr((and_var == 1) >>
-                                                    (self.XOR_in_mc_values[(attack_side_index, sens, round_index, column) + c_vector_element + (1,)] == 0),
-                                                    name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
-                       
+                for c_vector_element in self.column_range[sens][mc_index]:
+                    if c_vector_element[row] == 1:
+                        XOR_var = self.XOR_in_mc_values[(attack_side_index, sens, round_index, column) + c_vector_element + (1,)]
+                        #If propagation is forward in the upper part of bacward for the lower part : we can use the opposite propagation
+                        if attack_side_index == sens:
+                            # if the considered vector is in MC than we check if it is known form the opposite propagation
+                            if c_vector_element in self.mc_sets[sens][mc_index]:
+                                AND_elements = [part[attack_side_index, sens, round_index, input_state_index, row, column, 0],
+                                            part[attack_side_index, not(sens), round_index, input_state_index, row, column, 0],
+                                            part[attack_side_index, not(sens), round_index, output_state_index, self.mc_index_map[sens][mc_index][c_vector_element], column, 0]]
+                            else:
+                                AND_elements = [part[attack_side_index, sens, round_index, input_state_index, row, column, 0],
+                                            part[attack_side_index, not(sens), round_index, input_state_index, row, column, 0]]
 
-                else :
-                    self.model.addConstrs(((part[attack_side_index, sens, round_index, input_state_index, row, column, 0] == 1) >> 
-                                            (self.XOR_in_mc_values[(attack_side_index, sens, round_index, column) + c_vector_element + (1,)] == 0)
-                                            for c_vector_element in self.column_range[sens][round_index%len(self.mc[sens])]),
-                                            name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+                            and_var = self.model.addVar(vtype=gp.GRB.BINARY, name=f"and_var_MC_side{attack_side_index}_r{round_index}_row{row}_col{column}")
+
+                            # AND constraint with only linear constraints
+                            for element in AND_elements:
+                                self.model.addConstr(and_var <= element)
+                            self.model.addConstr(and_var >= gp.quicksum(AND_elements) - (len(AND_elements) - 1))
+
+                            # XOR is not known only if all the AND elements are unknown
+                            self.model.addConstr(XOR_var <= 1 - and_var, name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+
+                        # in the other setup : forward/lower and backward/upper, we are not using the opposite propagation
+                        else:
+                            input_var = part[attack_side_index, sens, round_index, input_state_index, row, column, 0]
+                            self.model.addConstr(input_var + XOR_var <= 1,
+                                                name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
 
         #An output value in known if one of the possible XOR combinations leading to it is known
         for row in range(self.block_row_size):
@@ -225,15 +237,17 @@ class MILP_bricks():
                             self.model.addConstr(or_var == self.XOR_in_mc_values[(attack_side_index, sens, round_index, column)+tuple(combination[0])+(0,)])
                         self.model.addConstr(not_or_var == 1-or_var)
                         or_vars.append(not_or_var)  
-
-                self.model.addGenConstrOr(part[attack_side_index, sens, round_index, output_state_index, row, column, 1], or_vars, name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+                #linear mode for the OR constraint
+                for elements in or_vars:
+                    self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, column, 1] >= elements, name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+                    self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, column, 1]<= gp.quicksum(or_vars), name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
     
     def value_propagation_SB(self, part, attack_side_index, round_index, input_state_index, output_state_index, sbox_sizes):
         #if you have an unknow value in the input of the sbox all the outputs cannot be computed
         sens = int(input_state_index > output_state_index)
 
-        self.model.addConstrs(((part[attack_side_index, sens, round_index, input_state_index, row_input, column_input, 0]==1)
-                                 >> (part[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1]==0)
+        self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row_input, column_input, 0]
+                                 + part[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1] <= 1
                                  for row_output in range(self.block_row_size//sbox_sizes[0])
                                  for column_output in range(self.block_column_size//sbox_sizes[1])
                                  for sbox_row in range(sbox_sizes[0])
@@ -246,22 +260,22 @@ class MILP_bricks():
         #if the state if not known before the AK it cannot be computed after
         sens = int(input_state_index > output_state_index)
 
-        self.model.addConstrs((((part[attack_side_index, sens, round_index, input_state_index, row, column, 0]==1)
-                                >> (part[attack_side_index, sens,round_index, output_state_index, row, column, 1]==0))
+        self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row, column, 0] +
+                                part[attack_side_index, sens,round_index, output_state_index, row, column, 1] <= 1
                                 for row in range(self.block_row_size) for column in range(self.block_column_size))
                                 ,name = 'value_propagation_SK_:_0_in_state_not_to_1')
         
         #if the key is not known, the state after AK cannot be computed
-        self.model.addConstrs((((subkey_part[round_index, row, column]==0)
-                                >> (part[attack_side_index, sens, round_index, output_state_index, row, column, 1]==0))
+        self.model.addConstrs(( part[attack_side_index, sens, round_index, output_state_index, row, column, 1] <= subkey_part[round_index, row, column]
                                 for row in range(self.block_row_size) for column in range(self.block_column_size))
                                 ,name = 'value_propagation_SK_:_0_in_key_not_to_1')
         
     def value_propagation_NR(self, part, attack_side_index, input_round_index, output_round_index):
         #an unknown value cannot lead to a value that can be computed
         if input_round_index < output_round_index:
-            self.model.addConstrs(((part[attack_side_index, 0, input_round_index, self.state_number-1, row, column, 0]==1)
-                                    >> (part[attack_side_index, 0, output_round_index, 0, row, column, 1]==0) for row in range(self.block_row_size) for column in range(self.block_column_size)), 
+            self.model.addConstrs((part[attack_side_index, 0, input_round_index, self.state_number-1, row, column, 0]
+                                    + part[attack_side_index, 0, output_round_index, 0, row, column, 1] <= 1
+                                      for row in range(self.block_row_size) for column in range(self.block_column_size)), 
                                     name='value_propagation_NR_:_0_not_to_1')
         else :
             self.everything_all_right = False
@@ -269,8 +283,8 @@ class MILP_bricks():
         
     def value_propagation_PR(self, part, attack_side_index, input_round_index, output_round_index):
         #an unknown value cannot lead to a value that can be computed
-        self.model.addConstrs(((part[attack_side_index, 1, input_round_index, 0, row, column, 0]==1)
-                                >> (part[attack_side_index, 1, output_round_index, self.state_number-1, row, column, 1]==0) 
+        self.model.addConstrs((part[attack_side_index, 1, input_round_index, 0, row, column, 0]
+                                + part[attack_side_index, 1, output_round_index, self.state_number-1, row, column, 1] <= 1
                                 for row in range(self.block_row_size) 
                                 for column in range(self.block_column_size)), 
                                 name='value_propagation_PR_:_0_not_to_1')

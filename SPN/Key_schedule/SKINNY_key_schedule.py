@@ -40,7 +40,7 @@ class Model_MILP_key_schedule(MILP_bricks):
                                              vtype = gp.GRB.BINARY, 
                                              name  = 'master_key_count_guess_during_match')
 
-        self.model.addConstrs((self.master_key[row, column, 0]==1) >> (self.master_key[row, column, value] == 0)
+        self.model.addConstrs(self.master_key[row, column, 0] + self.master_key[row, column, value] <= 1
                               for row in range(self.block_row_size)
                               for column in range(self.block_column_size)
                               for value in [1,2])

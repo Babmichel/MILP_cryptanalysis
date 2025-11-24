@@ -312,29 +312,29 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         
         self.structure()
 
-        self.model.addConstr(self.values[0, 0, 0, 0, 0, 2, 2]==1)
-        self.model.addConstr(self.values[0, 0, 0, 0, 2, 0, 2]==1)
-        self.model.addConstr(self.values[0, 0, 0, 0, 3, 0, 2]==1)
-        self.model.addConstr(self.values[0, 0, 0, 0, 3, 1, 2]==1)
+        # self.model.addConstr(self.values[0, 0, 0, 0, 0, 2, 2]==1)
+        # self.model.addConstr(self.values[0, 0, 0, 0, 2, 0, 2]==1)
+        # self.model.addConstr(self.values[0, 0, 0, 0, 3, 0, 2]==1)
+        # self.model.addConstr(self.values[0, 0, 0, 0, 3, 1, 2]==1)
 
-        self.model.addConstr(self.values[0, 0, 0, 3, 0, 1, 2]==1)
-        self.model.addConstr(self.values[0, 0, 0, 3, 2, 1, 2]==1)
-        self.model.addConstr(self.values[0, 0, 0, 3, 2, 3, 2]==1)
-        self.model.addConstr(self.XOR_in_mc_values[0, 0, 0, 0, 1, 0, 1, 0, 2]==1)
-        self.model.addConstr(self.XOR_in_mc_values[0, 0, 0, 3, 1, 0, 1, 0, 2]==1)
+        # self.model.addConstr(self.values[0, 0, 0, 3, 0, 1, 2]==1)
+        # self.model.addConstr(self.values[0, 0, 0, 3, 2, 1, 2]==1)
+        # self.model.addConstr(self.values[0, 0, 0, 3, 2, 3, 2]==1)
+        # self.model.addConstr(self.XOR_in_mc_values[0, 0, 0, 0, 1, 0, 1, 0, 2]==1)
+        # self.model.addConstr(self.XOR_in_mc_values[0, 0, 0, 3, 1, 0, 1, 0, 2]==1)
 
-        self.model.addConstr(self.values[0, 0, 1, 3, 2, 0, 2]==1)
-        self.model.addConstr(self.values[0, 0, 1, 3, 2, 2, 2]==1)
-        self.model.addConstr(self.XOR_in_mc_values[0, 0, 1, 2, 1, 0, 1, 0, 2]==1)
+        # self.model.addConstr(self.values[0, 0, 1, 3, 2, 0, 2]==1)
+        # self.model.addConstr(self.values[0, 0, 1, 3, 2, 2, 2]==1)
+        # self.model.addConstr(self.XOR_in_mc_values[0, 0, 1, 2, 1, 0, 1, 0, 2]==1)
 
-        self.model.addConstr(self.values[0, 0, 2, 1, 0, 0, 2]==1)
+        # self.model.addConstr(self.values[0, 0, 2, 1, 0, 0, 2]==1)
 
-        self.model.addConstr(self.values[0, 0, 2, 3, 2, 3, 2]==1)
-        self.model.addConstr(self.values[0, 0, 2, 3, 0, 3, 2]==1)
+        # self.model.addConstr(self.values[0, 0, 2, 3, 2, 3, 2]==1)
+        # self.model.addConstr(self.values[0, 0, 2, 3, 0, 3, 2]==1)
 
-        self.model.addConstr(self.values[0, 0, 4, 1, 0, 2, 2]==1)
+        # self.model.addConstr(self.values[0, 0, 4, 1, 0, 2, 2]==1)
 
-        self.model.addConstr(self.common_fix == 16)
+        # self.model.addConstr(self.common_fix == 16)
 
         self.forward_value_propagation_upper_part()
         self.backward_value_propagation_lower_part()

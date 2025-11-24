@@ -112,9 +112,9 @@ class Model_MILP_key_schedule(MILP_bricks):
         self.model.addConstr(self.common_key_guess == gp.quicksum(self.lower_subkey[round_index, row, column]*self.upper_subkey[round_index, row, column]*self.master_key[0, row, column, 1]*self.master_key[0, row, column,2] for row in range(4) for column in range(self.key_size//8)),
                                 name='common_key_guess')
         
-        self.model.addConstr(self.upper_key_guess < self.key_size)
+        self.model.addConstr(self.upper_key_guess <= self.key_size-1)
 
-        self.model.addConstr(self.lower_key_guess < self.key_size)
+        self.model.addConstr(self.lower_key_guess <= self.key_size-1)
         
     def display_master_key(self):
         print("Master keys :")

@@ -218,7 +218,7 @@ class MILP_bricks():
             for column in range(self.block_column_size):
                 for c_vector_element in self.column_range[sens][mc_index]:
                     if c_vector_element[row] == 1:
-                        XOR_var = self.XOR_in_part[(attack_side_index, sens, round_index, column) + c_vector_element + (1,)]
+                        XOR_var = XOR_in_part[(attack_side_index, sens, round_index, column) + c_vector_element + (1,)]
                         #If propagation is forward in the upper part of bacward for the lower part : we can use the opposite propagation
                         if attack_side_index == sens:
                             # if the considered vector is in MC than we check if it is known form the opposite propagation
@@ -252,13 +252,14 @@ class MILP_bricks():
                 or_vars = []
                 for combination in self.possible_XORs_MC[sens][round_index%(len(self.matrixes[0]))][row]:
                         or_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"or_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
-                        not_or_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"not_or_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
                         if len(combination) >= 1:
-                            self.model.addGenConstrOr(or_var, [self.XOR_in_part[(attack_side_index, sens, round_index, column)+tuple(index)+(0,)] for index in combination], name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
+                            #Model the OR with linear constraint for efficiency
+                            for element in combination :
+                                self.model.addConstr(or_var >= XOR_in_part[(attack_side_index, sens, round_index, column)+tuple(element)+(0,)])
+                            self.model.addConstr(or_var <= gp.quicksum(XOR_in_part[(attack_side_index, sens, round_index, column)+tuple(element)+(0,)] for element in combination), name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
                         else :
-                            self.model.addConstr(or_var == self.XOR_in_part[(attack_side_index, sens, round_index, column)+tuple(combination[0])+(0,)])
-                        self.model.addConstr(not_or_var == 1-or_var)
-                        or_vars.append(not_or_var)  
+                            self.model.addConstr(or_var == XOR_in_part[(attack_side_index, sens, round_index, column)+tuple(combination[0])+(0,)])
+                        or_vars.append(1-or_var)  
                 #linear mode for the OR constraint
                 for elements in or_vars:
                     self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, column, 1] >= elements, name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
@@ -273,7 +274,7 @@ class MILP_bricks():
             for column in range(self.block_column_size):
                 for c_vector_element in self.row_range[sens][mc_index]:
                     if c_vector_element[row] == 1:
-                        XOR_var = self.XOR_in_part[(attack_side_index, sens, round_index, row) + c_vector_element + (1,)]
+                        XOR_var = XOR_in_part[(attack_side_index, sens, round_index, row) + c_vector_element + (1,)]
                         #If propagation is forward in the upper part of bacward for the lower part : we can use the opposite propagation
                         if attack_side_index == sens:
                             # if the considered vector is in MC than we check if it is known form the opposite propagation
@@ -309,9 +310,9 @@ class MILP_bricks():
                         or_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"or_var_MR_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
                         not_or_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"not_or_var_MR_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
                         if len(combination) >= 1:
-                            self.model.addGenConstrOr(or_var, [self.XOR_in_part[(attack_side_index, sens, round_index, row)+tuple(index)+(0,)] for index in combination], name = f"OR_MR_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
+                            self.model.addGenConstrOr(or_var, [XOR_in_part[(attack_side_index, sens, round_index, row)+tuple(index)+(0,)] for index in combination], name = f"OR_MR_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
                         else :
-                            self.model.addConstr(or_var == self.XOR_in_part[(attack_side_index, sens, round_index, row)+tuple(combination[0])+(0,)])
+                            self.model.addConstr(or_var == XOR_in_part[(attack_side_index, sens, round_index, row)+tuple(combination[0])+(0,)])
                         self.model.addConstr(not_or_var == 1-or_var)
                         or_vars.append(not_or_var)  
                 #linear mode for the OR constraint

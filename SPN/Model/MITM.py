@@ -203,7 +203,7 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
                                                                 for column in range(self.block_column_size)
                                                                 for xor_combination in self.column_range[0][round_index%len(self.matrixes[1])])
         
-        if 'MC' in self.operation_order:
+        if 'MR' in self.operation_order:
             common_fix_elements += gp.quicksum(self.XOR_in_mr_values[(0, 0, round_index, row)+xor_combination+(2,)]*self.XOR_in_mr_values[(1, 1, round_index, row) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=1))) +(2,)]
                                                                 for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
                                                                 for row in range(self.block_row_size)
@@ -277,7 +277,7 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
     def match(self):
         if 'MC' in self.operation_order:
             self.match_state_index = self.operation_order.index('MC')
-        if 'MR' in self.operation_order:
+        elif 'MR' in self.operation_order:
             self.match_state_index = self.operation_order.index('MR')
         else : 
             raise ValueError("No matching operation MC found in operation order.")
@@ -312,27 +312,27 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         
         self.structure()
 
-        # self.model.addConstr(self.values[0, 0, 0, 0, 0, 2, 2]==1)
-        # self.model.addConstr(self.values[0, 0, 0, 0, 2, 0, 2]==1)
-        # self.model.addConstr(self.values[0, 0, 0, 0, 3, 0, 2]==1)
-        # self.model.addConstr(self.values[0, 0, 0, 0, 3, 1, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 0, 0, 2, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 0, 2, 0, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 0, 3, 0, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 0, 3, 1, 2]==1)
 
-        # self.model.addConstr(self.values[0, 0, 0, 3, 0, 1, 2]==1)
-        # self.model.addConstr(self.values[0, 0, 0, 3, 2, 1, 2]==1)
-        # self.model.addConstr(self.values[0, 0, 0, 3, 2, 3, 2]==1)
-        # self.model.addConstr(self.XOR_in_mc_values[0, 0, 0, 0, 1, 0, 1, 0, 2]==1)
-        # self.model.addConstr(self.XOR_in_mc_values[0, 0, 0, 3, 1, 0, 1, 0, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 3, 0, 1, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 3, 2, 1, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 3, 2, 3, 2]==1)
+        self.model.addConstr(self.XOR_in_mc_values[0, 0, 0, 0, 1, 0, 1, 0, 2]==1)
+        self.model.addConstr(self.XOR_in_mc_values[0, 0, 0, 3, 1, 0, 1, 0, 2]==1)
 
-        # self.model.addConstr(self.values[0, 0, 1, 3, 2, 0, 2]==1)
-        # self.model.addConstr(self.values[0, 0, 1, 3, 2, 2, 2]==1)
-        # self.model.addConstr(self.XOR_in_mc_values[0, 0, 1, 2, 1, 0, 1, 0, 2]==1)
+        self.model.addConstr(self.values[0, 0, 1, 3, 2, 0, 2]==1)
+        self.model.addConstr(self.values[0, 0, 1, 3, 2, 2, 2]==1)
+        self.model.addConstr(self.XOR_in_mc_values[0, 0, 1, 2, 1, 0, 1, 0, 2]==1)
 
-        # self.model.addConstr(self.values[0, 0, 2, 1, 0, 0, 2]==1)
+        self.model.addConstr(self.values[0, 0, 2, 1, 0, 0, 2]==1)
 
-        # self.model.addConstr(self.values[0, 0, 2, 3, 2, 3, 2]==1)
-        # self.model.addConstr(self.values[0, 0, 2, 3, 0, 3, 2]==1)
+        self.model.addConstr(self.values[0, 0, 2, 3, 2, 3, 2]==1)
+        self.model.addConstr(self.values[0, 0, 2, 3, 0, 3, 2]==1)
 
-        # self.model.addConstr(self.values[0, 0, 4, 1, 0, 2, 2]==1)
+        self.model.addConstr(self.values[0, 0, 4, 1, 0, 2, 2]==1)
 
         self.model.addConstr(self.common_fix == 16)
 

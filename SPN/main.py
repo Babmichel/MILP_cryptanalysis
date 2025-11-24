@@ -1,17 +1,18 @@
 import sys
 import importlib
 cipher_name = sys.argv[1]  
-cipher = importlib.import_module(f"Cipher.{cipher_name}_parameters")
-key_schedule = importlib.import_module(f"Key_schedule.{cipher_name}_key_schedule")
+attack_type = sys.argv[2]
+parameters = importlib.import_module(f"Attack_parameters.{cipher_name}_{attack_type}_attack")
+cipher = importlib.import_module(f"Cipher.{parameters.attack_parameters.get('Cipher')}_parameters")
+key_schedule = importlib.import_module(f"Key_schedule.{parameters.attack_parameters.get('Key_schedule')}_key_schedule")
 from Model import MITM
 import licence_parameters 
-import attack_parameters
 import gurobipy as gp
 
 
 attack = MITM.MITM(cipher.cipher_parameters, 
                    licence_parameters.licence_parameters, 
-                   attack_parameters.attack_parameters, None)
+                   parameters.attack_parameters, None)
 
 key_schedule = key_schedule.Model_MILP_key_schedule(cipher.cipher_parameters, 
                                                                  attack.total_rounds,

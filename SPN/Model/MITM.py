@@ -304,7 +304,7 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
                                                                 for state_index in range(2)) , 
                                                                 name='mathc_only_around_MC')
 
-        #self.model.addConstr(gp.quicksum(self.match_quantity[round_index] for round_index in range(self.corps_rounds)) >= 1, name='at_least_one_match')
+        self.model.addConstr(gp.quicksum(self.match_quantity[round_index] for round_index in range(self.corps_rounds)) >= 1, name='at_least_one_match')
 
     def attack(self):
         
@@ -463,42 +463,79 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
                 key_line += "|\n"
             print(key_line)
             
-
-            for row in range(self.block_row_size):
-                line = ""
-                for state_index in range(self.state_number):
-                    line += "|"
-                    for column in range(self.block_column_size):
-                        if (self.values[0, 0, round_index, state_index, row, column, 1].X == 1 or self.values[0, 1, round_index, state_index, row, column, 1].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 1].X == 1 or self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
-                            line += "\033[95m ■ \033[0m"
-                        elif (self.values[0, 0, round_index, state_index, row, column, 0].X == 1 and self.values[0, 1, round_index, state_index, row, column, 0].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 0].X == 1 and self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
-                            line += "\033[90m ■ \033[0m"
-                        elif (self.values[0, 0, round_index, state_index, row, column, 1].X == 1 or self.values[0, 1, round_index, state_index, row, column, 1].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 0].X == 1 or self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
-                            line += "\033[91m ■ \033[0m"
-                        elif (self.values[0, 0, round_index, state_index, row, column, 2].X == 1 or self.values[0, 1, round_index, state_index, row, column, 2].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 0].X == 1 or self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
-                            line += "\033[91m F \033[0m"
-                        elif (self.values[0, 0, round_index, state_index, row, column, 0].X == 1 or self.values[0, 1, round_index, state_index, row, column, 0].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 1].X == 1 or self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
-                            line += "\033[94m ■ \033[0m"
-                        elif (self.values[0, 0, round_index, state_index, row, column, 0].X == 1 or self.values[0, 1, round_index, state_index, row, column, 0].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 2].X == 1 or self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
-                            line += "\033[94m F \033[0m"
-                        elif (self.values[0, 0, round_index, state_index, row, column, 2].X == 1 or self.values[0, 1, round_index, state_index, row, column, 2].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 2].X == 1 or self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
-                            line += "\033[95m F \033[0m"
+            if self.block_column_size <= 12 :
+                for row in range(self.block_row_size):
+                    line = ""
+                    for state_index in range(self.state_number):
+                        line += "|"
+                        for column in range(self.block_column_size):
+                            if (self.values[0, 0, round_index, state_index, row, column, 1].X == 1 or self.values[0, 1, round_index, state_index, row, column, 1].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 1].X == 1 or self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
+                                line += "\033[95m ■ \033[0m"
+                            elif (self.values[0, 0, round_index, state_index, row, column, 0].X == 1 and self.values[0, 1, round_index, state_index, row, column, 0].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 0].X == 1 and self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
+                                line += "\033[90m ■ \033[0m"
+                            elif (self.values[0, 0, round_index, state_index, row, column, 1].X == 1 or self.values[0, 1, round_index, state_index, row, column, 1].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 0].X == 1 or self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
+                                line += "\033[91m ■ \033[0m"
+                            elif (self.values[0, 0, round_index, state_index, row, column, 2].X == 1 or self.values[0, 1, round_index, state_index, row, column, 2].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 0].X == 1 or self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
+                                line += "\033[91m F \033[0m"
+                            elif (self.values[0, 0, round_index, state_index, row, column, 0].X == 1 or self.values[0, 1, round_index, state_index, row, column, 0].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 1].X == 1 or self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
+                                line += "\033[94m ■ \033[0m"
+                            elif (self.values[0, 0, round_index, state_index, row, column, 0].X == 1 or self.values[0, 1, round_index, state_index, row, column, 0].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 2].X == 1 or self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
+                                line += "\033[94m F \033[0m"
+                            elif (self.values[0, 0, round_index, state_index, row, column, 2].X == 1 or self.values[0, 1, round_index, state_index, row, column, 2].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 2].X == 1 or self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
+                                line += "\033[95m F \033[0m"
+                            else :
+                                line += " ? "
+                                print(self.values[0, 0, round_index, state_index, row, column, 2])
+                                print(self.values[1, 1, round_index, state_index, row, column, 1])
+                        line += "|"
+                        if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+                            line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+                        elif row == self.block_row_size//2:
+                            line += "->"
+                        elif row == self.block_row_size//2 - 1 and state_index == self.state_number -1:
+                            line += "NR"
                         else :
-                            line += " ? "
-                            print(self.values[0, 0, round_index, state_index, row, column, 2])
-                            print(self.values[1, 1, round_index, state_index, row, column, 1])
-                    line += "|"
-                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                    elif row == self.block_row_size//2:
-                        line += "->"
-                    elif row == self.block_row_size//2 - 1 and state_index == self.state_number -1:
-                        line += "NR"
-                    else :
-                        line += "  "
-                line += " "
-                print(line)
-                line=""
+                            line += "  "
+                    line += " "
+                    print(line)
+                    line=""
+            else :
+                for state_index in range(self.state_number):
+                    line = ""
+                    for row in range(self.block_row_size):
+                        line += "|"
+                        for column in range(self.block_column_size):
+                            if (self.values[0, 0, round_index, state_index, row, column, 1].X == 1 or self.values[0, 1, round_index, state_index, row, column, 1].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 1].X == 1 or self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
+                                line += "\033[95m ■ \033[0m"
+                            elif (self.values[0, 0, round_index, state_index, row, column, 0].X == 1 and self.values[0, 1, round_index, state_index, row, column, 0].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 0].X == 1 and self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
+                                line += "\033[90m ■ \033[0m"
+                            elif (self.values[0, 0, round_index, state_index, row, column, 1].X == 1 or self.values[0, 1, round_index, state_index, row, column, 1].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 0].X == 1 or self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
+                                line += "\033[91m ■ \033[0m"
+                            elif (self.values[0, 0, round_index, state_index, row, column, 2].X == 1 or self.values[0, 1, round_index, state_index, row, column, 2].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 0].X == 1 or self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
+                                line += "\033[91m F \033[0m"
+                            elif (self.values[0, 0, round_index, state_index, row, column, 0].X == 1 or self.values[0, 1, round_index, state_index, row, column, 0].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 1].X == 1 or self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
+                                line += "\033[94m ■ \033[0m"
+                            elif (self.values[0, 0, round_index, state_index, row, column, 0].X == 1 or self.values[0, 1, round_index, state_index, row, column, 0].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 2].X == 1 or self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
+                                line += "\033[94m F \033[0m"
+                            elif (self.values[0, 0, round_index, state_index, row, column, 2].X == 1 or self.values[0, 1, round_index, state_index, row, column, 2].X == 1) and (self.values[1, 0, round_index, state_index, row, column, 2].X == 1 or self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
+                                line += "\033[95m F \033[0m"
+                            else :
+                                line += " ? "
+                                print(self.values[0, 0, round_index, state_index, row, column, 2])
+                                print(self.values[1, 1, round_index, state_index, row, column, 1])
+                        line += "|"
+                        if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+                            line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+                        elif row == self.block_row_size//2:
+                            line += "->"
+                        elif row == self.block_row_size//2 - 1 and state_index == self.state_number -1:
+                            line += "NR"
+                        else :
+                            line += "  "
+                        line += ""
+                        print(line)
+                        line=""
+                    print("")
 
             # print("\n lower backward propagation")
             # for row in range(self.block_row_size):
@@ -597,11 +634,11 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
                     for vector in self.column_range[0][round_index%len(self.matrixes[0])]:
                             vector = tuple(vector)
                             if self.XOR_in_mc_values[(0, 0, round_index, column)+vector+(2,)].X == 1 and self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0))) +(2,)].X == 0:
-                                line += f"\033[91m c:{column} / {vector} : F\033[0m "
+                                line += f"\033[91m c:{column} / {vector} : F\033[0m \n"
                             elif self.XOR_in_mc_values[(0, 0, round_index, column)+vector+(2,)].X == 0 and self.XOR_in_mc_values[(1, 1, round_index, column)+tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0)))+(2,)].X == 1:
-                                line += f"\033[94m c:{column} / {vector} - {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0)))} : F\033[0m "
+                                line += f"\033[94m c:{column} / {vector} - {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0)))} : F\033[0m \n"
                             elif self.XOR_in_mc_values[(0, 0, round_index, column)+vector+(2,)].X == 1 and self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0))) +(2,)].X == 1:
-                                line += f"\033[95m c:{column} / {vector} et {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0)))} : F \033[0m"
+                                line += f"\033[95m c:{column} / {vector} et {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0)))} : F \033[0m \n"
                 line+="\n"
             print(line)
             line=""
@@ -611,11 +648,11 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
                     for vector in self.row_range[0][round_index%len(self.matrixes_transposes[0])]:
                             vector = tuple(vector)
                             if self.XOR_in_mr_values[(0, 0, round_index, row)+vector+(2,)].X == 1 and self.XOR_in_mr_values[(1, 1, round_index, row) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes_transposes[1][round_index%len(self.matrixes[1])]), axis=1))) +(2,)].X == 0:
-                                line += f"\033[91m c:{column} / {vector} : F\033[0m "
+                                line += f"\033[91m c:{column} / {vector} : F\033[0m \n"
                             elif self.XOR_in_mr_values[(0, 0, round_index, row)+vector+(2,)].X == 0 and self.XOR_in_mr_values[(1, 1, round_index, row)+tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes_transposes[1][round_index%len(self.matrixes[1])]), axis=1)))+(2,)].X == 1:
-                                line += f"\033[94m c:{column} / {vector} - {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0)))} : F\033[0m "
+                                line += f"\033[94m c:{column} / {vector} - {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0)))} : F\033[0m \n"
                             elif self.XOR_in_mr_values[(0, 0, round_index, row)+vector+(2,)].X == 1 and self.XOR_in_mr_values[(1, 1, round_index, row) + tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes_transposes[1][round_index%len(self.matrixes[1])]), axis=1))) +(2,)].X == 1:
-                                line += f"\033[95m c:{column} / {vector} et {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0)))} : F \033[0m"
+                                line += f"\033[95m c:{column} / {vector} et {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0)))} : F \033[0m \n"
                 line+="\n"
             print(line)
             line=""

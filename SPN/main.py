@@ -5,12 +5,13 @@ attack_type = sys.argv[2]
 parameters = importlib.import_module(f"Attack_parameters.{cipher_name}_{attack_type}_attack")
 cipher = importlib.import_module(f"Cipher.{parameters.attack_parameters.get('Cipher')}_parameters")
 key_schedule = importlib.import_module(f"Key_schedule.{parameters.attack_parameters.get('Key_schedule')}_key_schedule")
-from Model import MITM
+attack_model = importlib.import_module(f"Model.{attack_type}")
+
 import licence_parameters 
 import gurobipy as gp
 
 
-attack = MITM.MITM(cipher.cipher_parameters, 
+attack = attack_model.attack_model(cipher.cipher_parameters, 
                    licence_parameters.licence_parameters, 
                    parameters.attack_parameters, None)
 

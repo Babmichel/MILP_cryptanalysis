@@ -2,7 +2,7 @@ from Model import Common_bricks_for_attacks
 import gurobipy as gp
 import numpy as np
 
-class MITM(Common_bricks_for_attacks.MILP_bricks):
+class attack_model(Common_bricks_for_attacks.MILP_bricks):
     def __init__(self, cipher_parameters, licence_parameters, attack_parameters, model):
         super().__init__(cipher_parameters, licence_parameters, model)
         #Attack parameters
@@ -101,8 +101,8 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         self.active_start_up = self.model.addVar(vtype= gp.GRB.INTEGER, name = "active_start_up")
 
         #Constraints
-        self.forward_value_propagation(self.values, 0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
-        self.backward_value_propagation(self.values, 0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
+        self.forward_propagation(self.values, 0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
+        self.backward_propagation(self.values, 0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
         
         fix_elements = gp.quicksum(self.values[0, 0, round_index, state_index, row, column, 2]
                                                             for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
@@ -123,7 +123,7 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         self.model.addConstr(self.fix_up == fix_elements, name='fix_up_count')
         
         self.model.addConstr(self.active_start_up == (self.block_size//self.word_size
-                                                    - gp.quicksum(self.values[0, 0, self.structure_last_round_index, self.state_number-1, row, column , 0]
+                                                    - gp.quicksum(self.values[0, 0, self.structure_last_round_index, self.operation_order.index('AK')+1, row, column , 0]
                                                                   for row in range(self.block_row_size) 
                                                                   for column in range(self.block_column_size))), 
                             name='active_last_state_structure')
@@ -137,8 +137,8 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         self.active_start_down =  self.model.addVar(vtype= gp.GRB.INTEGER, name = "active_start_down")
         
         #Constraints
-        self.backward_value_propagation(self.values, 1, self.structure_first_round_index, self.structure_last_round_index, self.lower_subkey)
-        self.forward_value_propagation(self.values, 1, self.structure_first_round_index, self.structure_last_round_index, self.lower_subkey)
+        self.backward_propagation(self.values, 1, self.structure_first_round_index, self.structure_last_round_index, self.lower_subkey)
+        self.forward_propagation(self.values, 1, self.structure_first_round_index, self.structure_last_round_index, self.lower_subkey)
         
         fix_elements = gp.quicksum(self.values[1, 1, round_index, state_index, row, column, 2]
                                                             for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
@@ -159,7 +159,7 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         self.model.addConstr(self.fix_down == fix_elements, name='fix_down_count')
 
         self.model.addConstr(self.active_start_down == self.block_column_size*self.block_row_size
-                                                     - gp.quicksum(self.values[1, 1, self.structure_first_round_index, 0, row, column , 0]
+                                                     - gp.quicksum(self.values[1, 1, self.structure_first_round_index, self.operation_order.index('AK'), row, column , 0]
                                                                   for row in range(self.block_row_size) 
                                                                   for column in range(self.block_column_size)), 
                             name='active_last_state_structure')
@@ -168,22 +168,22 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         
         
         #Propagation initial Contrainst
-        self.model.addConstrs((self.values[0, 0, 0, 0, row, column, 1] == 0
+        self.model.addConstrs((self.values[0, 0, 0, self.operation_order.index('AK'), row, column, 1] == 0
                             for row in range(self.block_row_size)
                             for column in range(self.block_column_size)),
                             name='no_initial_known_value_upper_structure')
 
-        self.model.addConstrs((self.values[1, 0, 0, 0, row, column, 1] == 0
+        self.model.addConstrs((self.values[1, 0, 0, self.operation_order.index('AK'), row, column, 1] == 0
                             for row in range(self.block_row_size)
                             for column in range(self.block_column_size)),
                             name='no_initial_known_value_lower_structure')
         
-        self.model.addConstrs((self.values[1, 1, self.structure_rounds-1, self.state_number-1, row, column, 1] ==0
+        self.model.addConstrs((self.values[1, 1, self.structure_rounds-1, self.operation_order.index('AK')+1, row, column, 1] ==0
                               for row in range(self.block_row_size)
                               for column in range(self.block_column_size)),
                               name='no_initial_known_value_lower_structure')
         
-        self.model.addConstrs((self.values[0, 1, self.structure_rounds-1, self.state_number-1, row, column, 1] ==0
+        self.model.addConstrs((self.values[0, 1, self.structure_rounds-1, self.operation_order.index('AK')+1, row, column, 1] ==0
                               for row in range(self.block_row_size)
                               for column in range(self.block_column_size)),
                               name='no_initial_known_value_upper_structure')
@@ -218,8 +218,14 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         self.state_test_up = self.model.addVar(vtype= gp.GRB.INTEGER, name = "state_test_up")
 
         #Constraints :
-        self.forward_value_propagation(self.values, 0, self.corps_first_round_index, self.corps_last_round_index, self.upper_subkey)
-        self.backward_value_propagation(self.values, 0, self.corps_first_round_index, self.corps_last_round_index, self.upper_subkey)
+        self.forward_propagation(self.values, 0, self.corps_first_round_index, self.corps_last_round_index, self.upper_subkey)
+        
+        self.model.addConstrs((self.values[0, 1, round_index, part, row, column, 0]==1
+                              for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
+                              for part in range(self.state_number)
+                              for row in range(self.block_row_size)
+                              for column in range(self.block_column_size)), 
+                              name = "no bacward upper propagation")
         
         state_stest_up_elements = gp.quicksum(self.values[0, 0, round_index, state_index, row, column, 2]
                                                                for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
@@ -249,8 +255,14 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         self.state_test_down = self.model.addVar(vtype= gp.GRB.INTEGER, name = "state_test_down")
         
         #Constraints
-        self.backward_value_propagation(self.values, 1, self.corps_first_round_index, self.corps_last_round_index, self.lower_subkey)
-        self.forward_value_propagation(self.values, 1, self.corps_first_round_index, self.corps_last_round_index, self.lower_subkey)
+        self.backward_propagation(self.values, 1, self.corps_first_round_index, self.corps_last_round_index, self.lower_subkey)
+        
+        self.model.addConstrs((self.values[1, 0, round_index, part, row, column, 0]==1
+                              for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
+                              for part in range(self.state_number)
+                              for row in range(self.block_row_size)
+                              for column in range(self.block_column_size)), 
+                              name = "no bacward upper propagation")
         
         state_test_down_elements = gp.quicksum(self.values[1, 1, round_index, state_index, row, column, 2]
                                                                for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
@@ -281,8 +293,9 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
             self.match_state_index = self.operation_order.index('MR')
         else : 
             raise ValueError("No matching operation MC found in operation order.")
-        self.match_quantity = self.model.addVars(range(self.corps_rounds), vtype= gp.GRB.INTEGER, name = "match_quantity")
-        self.match_state = self.model.addVars(range(self.corps_rounds),
+        self.match_quantity = self.model.addVars(range(1, self.corps_rounds-1), vtype= gp.GRB.INTEGER, name = "match_quantity")
+        
+        self.match_state = self.model.addVars(range(1, self.corps_rounds-1),
                                               range(2),
                                               range(self.block_row_size), 
                                               range(self.block_column_size), 
@@ -291,7 +304,7 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
 
         self.model.addConstrs((self.match_state[round_index, state_index, row, column] 
                               == gp.and_(self.values[0, 0, round_index + self.corps_first_round_index, self.match_state_index + state_index, row, column, 1], self.values[1, 1, round_index + self.corps_first_round_index, self.match_state_index + state_index, row, column, 1])
-                              for round_index in range(self.corps_rounds)
+                              for round_index in range(1, self.corps_rounds-1)
                               for state_index in range(2)
                               for row in range(self.block_row_size)
                               for column in range(self.block_column_size)), 
@@ -300,11 +313,11 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         self.model.addConstrs((self.match_quantity[round_index] <= gp.quicksum(self.match_state[round_index, state_index, row, column]
                                                                                 for row in range(self.block_row_size)
                                                                                 for column in range(self.block_column_size))
-                                                                for round_index in range(self.corps_rounds)
+                                                                for round_index in range(1, self.corps_rounds-1)
                                                                 for state_index in range(2)) , 
                                                                 name='mathc_only_around_MC')
 
-        self.model.addConstr(gp.quicksum(self.match_quantity[round_index] for round_index in range(self.corps_rounds)) >= 1, name='at_least_one_match')
+        self.model.addConstr(gp.quicksum(self.match_quantity[round_index] for round_index in range(1, self.corps_rounds-1)) >= 1, name='at_least_one_match')
 
     def attack(self):
         
@@ -312,29 +325,30 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
         
         self.structure()
 
-        # self.model.addConstr(self.values[0, 0, 0, 0, 0, 2, 2]==1)
-        # self.model.addConstr(self.values[0, 0, 0, 0, 2, 0, 2]==1)
-        # self.model.addConstr(self.values[0, 0, 0, 0, 3, 0, 2]==1)
-        # self.model.addConstr(self.values[0, 0, 0, 0, 3, 1, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 0, 0, 2, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 0, 2, 0, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 0, 3, 0, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 0, 3, 1, 2]==1)
 
-        # self.model.addConstr(self.values[0, 0, 0, 3, 0, 1, 2]==1)
-        # self.model.addConstr(self.values[0, 0, 0, 3, 2, 1, 2]==1)
-        # self.model.addConstr(self.values[0, 0, 0, 3, 2, 3, 2]==1)
-        # self.model.addConstr(self.XOR_in_mc_values[0, 0, 0, 0, 1, 0, 1, 0, 2]==1)
-        # self.model.addConstr(self.XOR_in_mc_values[0, 0, 0, 3, 1, 0, 1, 0, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 3, 0, 1, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 3, 2, 1, 2]==1)
+        self.model.addConstr(self.values[0, 0, 0, 3, 2, 3, 2]==1)
+        self.model.addConstr(self.XOR_in_mc_values[0, 0, 0, 0, 1, 0, 1, 0, 2]==1)
+        self.model.addConstr(self.XOR_in_mc_values[0, 0, 0, 3, 1, 0, 1, 0, 2]==1)
 
-        # self.model.addConstr(self.values[0, 0, 1, 3, 2, 0, 2]==1)
-        # self.model.addConstr(self.values[0, 0, 1, 3, 2, 2, 2]==1)
-        # self.model.addConstr(self.XOR_in_mc_values[0, 0, 1, 2, 1, 0, 1, 0, 2]==1)
+        self.model.addConstr(self.values[0, 0, 1, 3, 2, 0, 2]==1)
+        self.model.addConstr(self.values[0, 0, 1, 3, 2, 2, 2]==1)
+        self.model.addConstr(self.XOR_in_mc_values[0, 0, 1, 2, 1, 0, 1, 0, 2]==1)
 
-        # self.model.addConstr(self.values[0, 0, 2, 1, 0, 0, 2]==1)
+        self.model.addConstr(self.values[0, 0, 2, 1, 0, 0, 2]==1)
 
-        # self.model.addConstr(self.values[0, 0, 2, 3, 2, 3, 2]==1)
-        # self.model.addConstr(self.values[0, 0, 2, 3, 0, 3, 2]==1)
+        self.model.addConstr(self.values[0, 0, 2, 3, 2, 3, 2]==1)
+        self.model.addConstr(self.values[0, 0, 2, 3, 0, 3, 2]==1)
 
-        # self.model.addConstr(self.values[0, 0, 4, 1, 0, 2, 2]==1)
+        self.model.addConstr(self.values[0, 0, 4, 1, 0, 2, 2]==1)
 
-        # self.model.addConstr(self.common_fix == 16)
+        self.model.addConstr(self.common_fix == self.fix_up)
+        self.model.addConstr(self.common_fix == self.fix_down)
 
         self.forward_value_propagation_upper_part()
         self.backward_value_propagation_lower_part()
@@ -399,7 +413,7 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
 
         self.model.addConstr(self.time_complexity_up == self.state_test_up + self.upper_key_guess + (self.block_size//self.word_size - self.fix_up), name='time_complexity_up_definition')
         self.model.addConstr(self.time_complexity_down == self.state_test_down + self.lower_key_guess + (self.block_size//self.word_size - self.fix_down), name='time_complexity_down_definition')
-        self.model.addConstr(self.time_complexity_match == self.time_complexity_up + self.time_complexity_down - self.common_key_guess - gp.quicksum(self.match_quantity[round_index] for round_index in range(self.corps_rounds)), name='time_complexity_match_definition')
+        self.model.addConstr(self.time_complexity_match == self.time_complexity_up + self.time_complexity_down - self.common_key_guess - gp.quicksum(self.match_quantity[round_index] for round_index in range(1, self.corps_rounds-1)), name='time_complexity_match_definition')
         
         self.model.addConstr(self.memory_complexity == self.upper_key_guess + self.state_test_up - self.common_fix + (self.block_size//self.word_size - self.fix_up), name='memory_complexity_up_definition')
         self.model.addConstr(self.memory_complexity == self.lower_key_guess + self.state_test_down - self.common_fix + (self.block_size//self.word_size - self.fix_down), name='memory_complexity_down_definition')
@@ -430,7 +444,7 @@ class MITM(Common_bricks_for_attacks.MILP_bricks):
             print("MATHC PART :")
             print("Common fix :", self.common_fix.X)
             print("Common key bits guessed :", self.common_key_guess.X)
-            print("Match quantity :", sum(self.match_quantity[round_index].X for round_index in range(self.corps_rounds)))
+            print("Match quantity :", sum(self.match_quantity[round_index].X for round_index in range(1, self.corps_rounds-1)))
             print("Complexity match :", self.time_complexity_match.X)
             print("\n")
             print("OVERALL :")

@@ -559,7 +559,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.model.addConstr(self.time_complexity_up == self.upper_key_guess + self.state_test_up + self.probabilist_annulation_down + self.max_fix_up_fix_down- self.fix_up)
         self.model.addConstr(self.time_complexity_down == self.lower_key_guess + self.state_test_down + self.probabilist_annulation_up + self.max_fix_up_fix_down- self.fix_down
                               + self.active_start_down - self.active_start_up)
-        self.model.addConstr(self.time_complexity_match == self.upper_key_guess + self.lower_key_guess - self.common_key_guess + self.active_start_down + self.state_test_up + self.state_test_down +
+        self.model.addConstr(self.time_complexity_match == self.upper_key_guess + self.lower_key_guess - self.common_key_guess + self.active_start_down +
                             self.block_row_size*self.block_row_size - self.common_fix - self.matching_differences + self.max_fix_up_fix_down - self.fix_up - self.fix_down)
     
 

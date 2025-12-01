@@ -3,11 +3,12 @@ attack_parameters = {
     "Key_schedule": "SKINNY",
     "attack_type": "Diff-MITM",
     "structure_rounds": 2,
-    "upper_rounds": 5,
-    "lower_rounds": 5,
+    "upper_rounds": 6,
+    "lower_rounds": 6,
     "distinguisher_probability" : 52,
     "distinguisher_rounds" : 11, 
-    "distinguisher_inputs" : [[1, 2], [2, 1], [3, 0]],
-    "distinguisher_outputs": [[0, 1], [1, 1], [2, 1], [3, 1]],
-    "optimal_complexity": False
+    "distinguisher_inputs" : [[3, 3]],
+    "distinguisher_outputs": [[0, 1], [1, 0]],
+    "optimal_complexity": False,
+    "truncated_differential" : True
 }

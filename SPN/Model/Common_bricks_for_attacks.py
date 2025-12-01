@@ -160,47 +160,8 @@ class MILP_bricks():
         for row in range(self.block_row_size):
                 possible_XOR_list[row]=self.unpack_possible_XORs_vector(matrixe[row])
         return possible_XOR_list
-    
-    # def vectors_with_bit_set_and_limit(self, n, row, x):
-    #     """
-    #     Génère tous les vecteurs binaires de taille n :
-    #     - avec vector[row] = 1
-    #     - avec AU PLUS x bits à 1 (donc 1, 2, ..., x)
-    #     """
-        
-    #     # positions possibles sauf 'row'
-    #     others = [i for i in range(n) if i != row]
-
-    #     if x < 1 or x > n:
-    #         return  # impossible, aucun vecteur
-
-    #     # nombre total de bits à 1 = k + 1 (car row=1 est obligatoire)
-    #     for k in range(0, min(x-1, n-1) + 1):  # k = nb de 1 supplémentaires (0 .. x-1)
-    #         for combo in combinations(others, k):
-    #             vector = [0] * n
-    #             vector[row] = 1
-    #             for pos in combo:
-    #                 vector[pos] = 1
-    #             vector = tuple(vector)
-                
-    #             if any(vector):
-    #                 yield vector
-
-    # def generate_binary_vectors_with_limit(self, n, max_ones):  #a refaire car fait avec le chat GPT
-    #     """
-    #     Génère uniquement les vecteurs binaires de longueur n
-    #     contenant <= max_ones bits à 1.
-    #     """
-    #     for k in range(max_ones + 1):
-    #         for positions in combinations(range(n), k):
-    #             vector = [0] * n
-    #             for pos in positions:
-    #                 vector[pos] = 1
-    #             vector = tuple(vector)
-    #             if any(vector):
-    #                 yield vector
             
-    #Propagation through ORPERATIONS
+    #Propagation of VALUES through ORPERATIONS
     def propagation_SR_values(self, part, attack_side_index, round_index, input_state_index, output_state_index, shift_rows):
         #an unknow value cannot turn to a value that can be computed.
         sens = int(input_state_index > output_state_index)
@@ -208,14 +169,7 @@ class MILP_bricks():
                                 + part[attack_side_index, sens, round_index, output_state_index, row, (column+shift_rows[row])%self.block_column_size, 1] <= 1
                                 for row in range(self.block_row_size) for column in range(self.block_column_size)),
                                 name = "value_propagation_:_SR_0_not_to_1")
-    
-    def propagation_SR_differences(self, part, attack_side_index, round_index, input_state_index, output_state_index, shift_rows):
-        sens = int(input_state_index > output_state_index)
-        self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row, column, 1]
-                                == part[attack_side_index, sens, round_index, output_state_index, row, (column+shift_rows[row])%self.block_column_size, 1] 
-                                for row in range(self.block_row_size) for column in range(self.block_column_size)),
-                                name = "differential propagation :_SR_1_not_to_1")
-        
+   
     def propagation_MC_values(self, part, XOR_in_part, attack_side_index, round_index, input_state_index, output_state_index):
         sens = int(input_state_index > output_state_index)
         mc_index = round_index % len(self.matrixes[sens])
@@ -328,6 +282,61 @@ class MILP_bricks():
                     self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, column, 1] >= elements, name = f"OR_MR_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
                     self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, column, 1]<= gp.quicksum(or_vars), name = f"OR_MR_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
     
+    def propagation_AK(self, part, attack_side_index, subkey_part, round_index, input_state_index, output_state_index):
+        #if the state if not known before the AK it cannot be computed after
+        sens = int(input_state_index > output_state_index)
+
+        self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row, column, 0] +
+                                part[attack_side_index, sens,round_index, output_state_index, row, column, 1] <= 1
+                                for row in range(self.block_row_size) for column in range(self.block_column_size))
+                                ,name = 'value_propagation_SK_:_0_in_state_not_to_1')
+        
+        #if the key is not known, the state after AK cannot be computed
+        self.model.addConstrs(( part[attack_side_index, sens, round_index, output_state_index, row, column, 1] <= subkey_part[round_index, row, column]
+                                for row in range(self.block_row_size) for column in range(self.block_column_size))
+                                ,name = 'value_propagation_SK_:_0_in_key_not_to_1')
+        
+    def propagation_SB_values(self, part, attack_side_index, round_index, input_state_index, output_state_index, sbox_sizes):
+        #if you have an unknow value in the input of the sbox all the outputs cannot be computed
+        sens = int(input_state_index > output_state_index)
+
+        self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row_input, column_input, 0]
+                                 + part[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1] <= 1
+                                 for row_output in range(self.block_row_size//sbox_sizes[0])
+                                 for column_output in range(self.block_column_size//sbox_sizes[1])
+                                 for sbox_row in range(sbox_sizes[0])
+                                 for sbox_column in range(sbox_sizes[1])
+                                 for row_input in range(sbox_sizes[0]*row_output, sbox_sizes[0]*row_output + sbox_sizes[0])
+                                 for column_input in range(sbox_sizes[1]*column_output, sbox_sizes[1]*column_output+sbox_sizes[1])), 
+                                 name='value_propagation_SB_:_0_not_to_1')
+
+    def propagation_values_NR(self, part, attack_side_index, input_round_index, output_round_index):
+        #an unknown value cannot lead to a value that can be computed
+        if input_round_index < output_round_index:
+            self.model.addConstrs((part[attack_side_index, 0, input_round_index, self.state_number-1, row, column, 0]
+                                    + part[attack_side_index, 0, output_round_index, 0, row, column, 1] <= 1
+                                      for row in range(self.block_row_size) for column in range(self.block_column_size)), 
+                                    name='value_propagation_NR_:_0_not_to_1')
+        else :
+            self.everything_all_right = False
+            print("Error in value_propagation_NR: input_round_index should be inferior from output_round_index")
+
+    def propagation_values_PR(self, part, attack_side_index, input_round_index, output_round_index):
+        #an unknown value cannot lead to a value that can be computed
+        self.model.addConstrs((part[attack_side_index, 1, input_round_index, 0, row, column, 0]
+                                + part[attack_side_index, 1, output_round_index, self.state_number-1, row, column, 1] <= 1
+                                for row in range(self.block_row_size) 
+                                for column in range(self.block_column_size)), 
+                                name='value_propagation_PR_:_0_not_to_1')
+
+    #Propagation of DIFFERENCES through OPERATIONS
+    def propagation_SR_differences(self, part, attack_side_index, round_index, input_state_index, output_state_index, shift_rows):
+        sens = int(input_state_index > output_state_index)
+        self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row, column, 1]
+                                == part[attack_side_index, sens, round_index, output_state_index, row, (column+shift_rows[row])%self.block_column_size, 1] 
+                                for row in range(self.block_row_size) for column in range(self.block_column_size)),
+                                name = "differential propagation :_SR_1_not_to_1")
+    
     def propagation_MC_differences(self, part, XOR_in_part, attack_side_index, round_index, input_state_index, output_state_index):
         sens = int(input_state_index > output_state_index)
         mc_index = round_index % len(self.matrixes[sens])
@@ -337,11 +346,15 @@ class MILP_bricks():
             for column in range(self.block_column_size):
                 for c_vector_element in self.column_range[sens][mc_index]:
                     if c_vector_element[row] == 1:
-                        XOR_var = XOR_in_part[(attack_side_index, sens, round_index, column) + c_vector_element + (1,)]
+                        XOR_var = XOR_in_part[(attack_side_index, sens, round_index, column) + c_vector_element + (0,)]
+                        input_var = part[attack_side_index, sens, round_index, input_state_index, row, column, 1]
+                        self.model.addConstr(input_var + XOR_var <= 1,
+                                                name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_1_not_to_0")
+                        XOR_var = XOR_in_part[(attack_side_index, sens, round_index, column) + c_vector_element + (2,)]
                         input_var = part[attack_side_index, sens, round_index, input_state_index, row, column, 0]
                         self.model.addConstr(input_var + XOR_var <= 1,
-                                                name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
-
+                                                name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_2")
+                        
         
         for row in range(self.block_row_size):
             for column in range(self.block_column_size):
@@ -358,14 +371,25 @@ class MILP_bricks():
                         or_vars.append(1-or_var)  
                 #linear mode for the OR constraint
                 for elements in or_vars:
-                    self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, column, 1] >= elements, name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
-                    self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, column, 1]<= gp.quicksum(or_vars), name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+                    self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, column, 0] >= elements, name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+                    self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, column, 0]<= gp.quicksum(or_vars), name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
     
-    def propagation_SB_values(self, part, attack_side_index, round_index, input_state_index, output_state_index, sbox_sizes):
+    def propagation_SB_differences(self, part, attack_side_index, round_index, input_state_index, output_state_index, sbox_sizes):
         #if you have an unknow value in the input of the sbox all the outputs cannot be computed
         sens = int(input_state_index > output_state_index)
-
-        self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row_input, column_input, 0]
+        if round_index >= self.upper_part_first_round and round_index <= self.lower_part_last_round :
+            self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row_input, column_input, 1]
+                                    == part[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1]
+                                    for row_output in range(self.block_row_size//sbox_sizes[0])
+                                    for column_output in range(self.block_column_size//sbox_sizes[1])
+                                    for sbox_row in range(sbox_sizes[0])
+                                    for sbox_column in range(sbox_sizes[1])
+                                    for row_input in range(sbox_sizes[0]*row_output, sbox_sizes[0]*row_output + sbox_sizes[0])
+                                    for column_input in range(sbox_sizes[1]*column_output, sbox_sizes[1]*column_output+sbox_sizes[1])), 
+                                    name='value_propagation_SB_:_0_not_to_1')
+        
+        else : 
+            self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row_input, column_input, 0]
                                  + part[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1] <= 1
                                  for row_output in range(self.block_row_size//sbox_sizes[0])
                                  for column_output in range(self.block_column_size//sbox_sizes[1])
@@ -374,50 +398,20 @@ class MILP_bricks():
                                  for row_input in range(sbox_sizes[0]*row_output, sbox_sizes[0]*row_output + sbox_sizes[0])
                                  for column_input in range(sbox_sizes[1]*column_output, sbox_sizes[1]*column_output+sbox_sizes[1])), 
                                  name='value_propagation_SB_:_0_not_to_1')
-    
-    def propagation_SB_differences(self, part, attack_side_index, round_index, input_state_index, output_state_index, sbox_sizes):
-        #if you have an unknow value in the input of the sbox all the outputs cannot be computed
-        sens = int(input_state_index > output_state_index)
-
-        self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row_input, column_input, 1]
-                                 == part[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1]
-                                 for row_output in range(self.block_row_size//sbox_sizes[0])
-                                 for column_output in range(self.block_column_size//sbox_sizes[1])
-                                 for sbox_row in range(sbox_sizes[0])
-                                 for sbox_column in range(sbox_sizes[1])
-                                 for row_input in range(sbox_sizes[0]*row_output, sbox_sizes[0]*row_output + sbox_sizes[0])
-                                 for column_input in range(sbox_sizes[1]*column_output, sbox_sizes[1]*column_output+sbox_sizes[1])), 
-                                 name='value_propagation_SB_:_0_not_to_1')
         
-        self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row, column, 1] + self.values[attack_side_index, not(sens), round_index, input_state_index, row, column, 0] <= 1
-                               for row in range(self.block_row_size)
-                               for column in range(self.block_column_size)), name = "to pass the Sbox with differenes values are required")
-        
-    def propagation_AK(self, part, attack_side_index, subkey_part, round_index, input_state_index, output_state_index):
-        #if the state if not known before the AK it cannot be computed after
-        sens = int(input_state_index > output_state_index)
-
-        self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row, column, 0] +
-                                part[attack_side_index, sens,round_index, output_state_index, row, column, 1] <= 1
-                                for row in range(self.block_row_size) for column in range(self.block_column_size))
-                                ,name = 'value_propagation_SK_:_0_in_state_not_to_1')
-        
-        #if the key is not known, the state after AK cannot be computed
-        self.model.addConstrs(( part[attack_side_index, sens, round_index, output_state_index, row, column, 1] <= subkey_part[round_index, row, column]
-                                for row in range(self.block_row_size) for column in range(self.block_column_size))
-                                ,name = 'value_propagation_SK_:_0_in_key_not_to_1')
-        
-    def propagation_values_NR(self, part, attack_side_index, input_round_index, output_round_index):
-        #an unknown value cannot lead to a value that can be computed
-        if input_round_index < output_round_index:
-            self.model.addConstrs((part[attack_side_index, 0, input_round_index, self.state_number-1, row, column, 0]
-                                    + part[attack_side_index, 0, output_round_index, 0, row, column, 1] <= 1
-                                      for row in range(self.block_row_size) for column in range(self.block_column_size)), 
-                                    name='value_propagation_NR_:_0_not_to_1')
+        if (self.trunc_diff and (round_index == self.upper_part_last_round or round_index == self.lower_part_first_round)):
+            pass
         else :
-            self.everything_all_right = False
-            print("Error in value_propagation_NR: input_round_index should be inferior from output_round_index")
-
+            self.model.addConstrs((part[attack_side_index, sens, round_index, output_state_index, row_input, column_input, 1] <=
+                                    self.values[attack_side_index, not(sens), round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1] + self.values[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1]
+                                    for row_output in range(self.block_row_size//sbox_sizes[0])
+                                    for column_output in range(self.block_column_size//sbox_sizes[1])
+                                    for sbox_row in range(sbox_sizes[0])
+                                    for sbox_column in range(sbox_sizes[1])
+                                    for row_input in range(sbox_sizes[0]*row_output, sbox_sizes[0]*row_output + sbox_sizes[0])
+                                    for column_input in range(sbox_sizes[1]*column_output, sbox_sizes[1]*column_output+sbox_sizes[1])), 
+                                    name='value_propagation_SB_:_0_not_to_1')
+        
     def propagation_differences_NR(self, part, attack_side_index, input_round_index, output_round_index):
         #an unknown value cannot lead to a value that can be computed
         if input_round_index < output_round_index:
@@ -429,16 +423,6 @@ class MILP_bricks():
             self.everything_all_right = False
             print("Error in value_propagation_NR: input_round_index should be inferior from output_round_index")
         
-        
-    def propagation_values_PR(self, part, attack_side_index, input_round_index, output_round_index):
-        #an unknown value cannot lead to a value that can be computed
-        self.model.addConstrs((part[attack_side_index, 1, input_round_index, 0, row, column, 0]
-                                + part[attack_side_index, 1, output_round_index, self.state_number-1, row, column, 1] <= 1
-                                for row in range(self.block_row_size) 
-                                for column in range(self.block_column_size)), 
-                                name='value_propagation_PR_:_0_not_to_1')
-        
-
     def propagation_differences_PR(self, part, attack_side_index, input_round_index, output_round_index):
         #an unknown value cannot lead to a value that can be computed
         self.model.addConstrs((part[attack_side_index, 1, input_round_index, 0, row, column, 1]
@@ -447,7 +431,6 @@ class MILP_bricks():
                                 for column in range(self.block_column_size)), 
                                 name='value_propagation_PR_:_0_not_to_1')
 
-
     def free_propagation(self, part, attack_side_index, round_index, input_state_index, output_state_index):
         sens = int(input_state_index > output_state_index)
         self.model.addConstrs((part[attack_side_index, sens, round_index, output_state_index, row, column, 0] 
@@ -455,7 +438,7 @@ class MILP_bricks():
                               for row in range(self.block_row_size)
                               for column in range(self.block_column_size)), name="propagation_simple")
          
-    #Progation through full ROUND
+    #Progations through full ROUND
     def forward_values_propagation(self, attack_side_index, first_round_index, last_round_index, subkey):
         condition = False
         for forward_round in range(first_round_index, last_round_index+1):
@@ -505,7 +488,7 @@ class MILP_bricks():
                 self.propagation_values_PR(self.values, attack_side_index, backward_round+1, backward_round)
     
     def forward_differences_propagation(self, attack_side_index, first_round_index, last_round_index):
-        condition = True
+        condition = False
         for forward_round in range(first_round_index, last_round_index+1):
             for state_index in range(self.state_number-1):
                 if self.operation_order[state_index] == 'SR' and condition:
@@ -520,7 +503,7 @@ class MILP_bricks():
                     if forward_round == last_round_index :
                         condition = False
                     self.propagation_SB_differences(self.differences, attack_side_index, forward_round, state_index, state_index + 1, self.sbox_sizes)
-                elif self.operation_order[state_index] == 'AK':
+                elif self.operation_order[state_index] == 'AK' and condition:
                     self.free_propagation(self.differences, attack_side_index, forward_round, state_index, state_index + 1)
                #else :
                     #self.everything_all_right = False
@@ -538,13 +521,13 @@ class MILP_bricks():
                     self.propagation_MC_differences(self.differences, self.XOR_in_mc_differences, attack_side_index, backward_round, state_index + 1, state_index)
                 elif self.operation_order[state_index] == 'MR' and condition:
                     self.propagation_MR_differences(self.differences, self.XOR_in_mr_differences, attack_side_index, backward_round, state_index + 1, state_index)
-                elif self.operation_order[state_index] == 'SB' and condition:
+                elif self.operation_order[state_index] == 'SB' :
                     if backward_round == first_round_index :
                         condition = True
                     if backward_round == last_round_index :
                         condition = False
                     self.propagation_SB_differences(self.differences, attack_side_index, backward_round, state_index + 1, state_index, self.sbox_sizes)
-                elif self.operation_order[state_index] == 'AK':
+                elif self.operation_order[state_index] == 'AK' and condition:
                     self.free_propagation(self.differences, attack_side_index, backward_round, state_index + 1, state_index)
                 #else :
                     #self.everything_all_right = False
@@ -552,7 +535,6 @@ class MILP_bricks():
             if backward_round != last_round_index:
                 self.propagation_differences_PR(self.differences, attack_side_index, backward_round+1, backward_round)
         
-
 
     def optimize_the_model(self): 
         if self.everything_all_right:

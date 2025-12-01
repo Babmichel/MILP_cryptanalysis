@@ -69,7 +69,7 @@ class Model_MILP_key_schedule(MILP_bricks):
                                                                    name = 'lower_key_guess_counter')
         
         self.model.addConstr(self.common_key_guess == gp.quicksum(self.tweakey_number*self.master_key[row, column, 2]*self.master_key[row, column, 1]
-                                                                  + (1 - self.master_key[row, column, 2]*self.master_key[row, column, 1])*(self.master_key_count_guess[row, column, 1]*(1-self.master_key[row, column, 1]) + self.master_key_count_guess[row, column, 2]*(1-self.master_key[row, column, 2]))*self.master_key_count_guess_match[row, column]
+                                                                  + (1 - self.master_key[row, column, 2]*self.master_key[row, column, 1])*(self.master_key_count_guess[row, column, 1]*(1-self.master_key[row, column, 1]) + self.master_key_count_guess[row, column, 2]*(1-self.master_key[row, column, 2]) -3)*self.master_key_count_guess_match[row, column]
                                                                   for row in range(self.block_row_size)
                                                                   for column in range(self.block_column_size)),
                                                                   name = 'match_key_guess_counter')
@@ -177,6 +177,15 @@ class Model_MILP_key_schedule(MILP_bricks):
                 line += f' {int(self.master_key_count_guess[row, column, 2].X)} '
             line += '| '
             print(line)
+        print("Master keys lower guess :")
+        for row in range(self.block_row_size):
+            line=''
+            line += '|'
+            for column in range(self.block_column_size):
+                A = (self.tweakey_number*self.master_key[row, column, 2].X*self.master_key[row, column, 1].X
+                    + (1 - self.master_key[row, column, 2].X*self.master_key[row, column, 1].X)*(self.master_key_count_guess[row, column, 1].X*(1-self.master_key[row, column, 1].X) + self.master_key_count_guess[row, column, 2].X*(1-self.master_key[row, column, 2].X) -3)*self.master_key_count_guess_match[row, column].X)
+                line += f' {A} '
+            line += '| '
+            print(line)
 
 
-        

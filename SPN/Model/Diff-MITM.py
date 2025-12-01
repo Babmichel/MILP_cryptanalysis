@@ -28,6 +28,8 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.total_rounds = self.structure_rounds + self.upper_rounds + self.lower_rounds + self.distinguisher_rounds
         self.optimal_complexity = attack_parameters.get('optimal_complexity', False)
 
+        self.trunc_diff = attack_parameters.get('truncated_differential', False)
+
     #Variables initialisation
     def value_variables_initialisation(self):
         self.values = self.model.addVars(range(2), range(2),
@@ -202,35 +204,19 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                                                   for part in range(2)
                                                   for row in range(self.block_row_size)), name="cannot cancel a single difference")
                 
-    #attack par contrainst
+    #Part constraints
     def structure(self):
         ###VALUES
-        # Upper 
+        ###Upper values 
         #Variable initialisation
         self.fix_up = self.model.addVar(vtype= gp.GRB.INTEGER, name = "fix_up")
         
         self.active_start_up = self.model.addVar(vtype= gp.GRB.INTEGER, name = "active_start_up")
 
         #Constraints
-        #First state cannot be compute by the upper part in the forward direction
-        self.model.addConstrs((self.values[0, 0, 0, self.operation_order.index('AK'), row, column, 1] == 0
-                            for row in range(self.block_row_size)
-                            for column in range(self.block_column_size)),
-                            name='no_initial_known_value_upper_structure')
-        
-        #Forward propagation of the upper values
         self.forward_values_propagation(0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
-        
-        #Last state cannot be compute by the upper part in the backward direction
-        self.model.addConstrs((self.values[0, 1, self.structure_rounds-1, self.operation_order.index('AK')+1, row, column, 1] ==0
-                              for row in range(self.block_row_size)
-                              for column in range(self.block_column_size)),
-                              name='no_initial_known_value_upper_structure')
-        
-        #Bacward propagation of upper values
         self.backward_values_propagation(0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
         
-        #Upper fix count
         fix_elements = gp.quicksum(self.values[0, 0, round_index, state_index, row, column, 2]
                                                             for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
                                                             for state_index in range(self.state_number)
@@ -249,7 +235,6 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         
         self.model.addConstr(self.fix_up == fix_elements, name='fix_up_count')
         
-        #We need to know at least as many bits in the last state of the structure as fix bits for the upper part 
         self.model.addConstr(self.active_start_up == (self.block_size//self.word_size
                                                     - gp.quicksum(self.values[0, 0, self.structure_last_round_index, self.operation_order.index('AK')+1, row, column , 0]
                                                                   for row in range(self.block_row_size) 
@@ -258,32 +243,16 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         
         self.model.addConstr(self.active_start_up==self.fix_up, name='each_up_fix_leads_to_a_known_value_in_last_state')
         
-        #Lower
+        ###Lower values
         #Variable initialisation
         self.fix_down = self.model.addVar(vtype= gp.GRB.INTEGER, name = "fix_down")
         
         self.active_start_down =  self.model.addVar(vtype= gp.GRB.INTEGER, name = "active_start_down")
         
         #Constraints
-        #Last state cannot be computed by the lower part in the backward direction
-        self.model.addConstrs((self.values[1, 1, self.structure_rounds-1, self.operation_order.index('AK')+1, row, column, 1] ==0
-                              for row in range(self.block_row_size)
-                              for column in range(self.block_column_size)),
-                              name='no_initial_known_value_lower_structure')
-        
-        #Propagation of the lower values in the bacward direction
         self.backward_values_propagation(1, self.structure_first_round_index, self.structure_last_round_index, self.lower_subkey)
+        self.forward_values_propagation(1, self.structure_first_round_index, self.structure_last_round_index, self.lower_subkey)
         
-        #First state cannot be computed by the lower part in the forward direction
-        self.model.addConstrs((self.values[1, 0, 0, self.operation_order.index('AK'), row, column, 1] == 0
-                            for row in range(self.block_row_size)
-                            for column in range(self.block_column_size)),
-                            name='no_initial_known_value_lower_structure')
-        
-        #Propagation of the upper values in the forward direction
-        self.forward_values_propagation(1, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
-        
-        #Lower fix count
         fix_elements = gp.quicksum(self.values[1, 1, round_index, state_index, row, column, 2]
                                                             for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
                                                             for state_index in range(self.state_number)
@@ -302,7 +271,6 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         
         self.model.addConstr(self.fix_down == fix_elements, name='fix_down_count')
 
-        #We need to know at least as many bits in the first state of the structure as fix bits for the lower part 
         self.model.addConstr(self.active_start_down == self.block_column_size*self.block_row_size
                                                      - gp.quicksum(self.values[1, 1, self.structure_first_round_index, self.operation_order.index('AK'), row, column , 0]
                                                                   for row in range(self.block_row_size) 
@@ -310,7 +278,29 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                             name='active_last_state_structure')
         
         self.model.addConstr(self.active_start_down==self.fix_down, name='each_down_fix_leads_to_a_known_value_in_first_state')
+        
+        
+        #Propagation initial Contrainst
+        self.model.addConstrs((self.values[0, 0, 0, self.operation_order.index('AK'), row, column, 1] == 0
+                            for row in range(self.block_row_size)
+                            for column in range(self.block_column_size)),
+                            name='no_initial_known_value_upper_structure')
 
+        self.model.addConstrs((self.values[1, 0, 0, self.operation_order.index('AK'), row, column, 1] == 0
+                            for row in range(self.block_row_size)
+                            for column in range(self.block_column_size)),
+                            name='no_initial_known_value_lower_structure')
+        
+        self.model.addConstrs((self.values[1, 1, self.structure_rounds-1, self.operation_order.index('AK')+1, row, column, 1] ==0
+                              for row in range(self.block_row_size)
+                              for column in range(self.block_column_size)),
+                              name='no_initial_known_value_lower_structure')
+        
+        self.model.addConstrs((self.values[0, 1, self.structure_rounds-1, self.operation_order.index('AK')+1, row, column, 1] ==0
+                              for row in range(self.block_row_size)
+                              for column in range(self.block_column_size)),
+                              name='no_initial_known_value_upper_structure')
+        
         # Common fix constraints          
         self.common_fix = self.model.addVar(vtype= gp.GRB.INTEGER, name = "fix_common")
         
@@ -334,6 +324,16 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.model.addConstr(self.common_fix == common_fix_elements, name='common_fix_count')
         
         self.model.addConstr(self.fix_down+self.fix_up-self.common_fix<=self.block_size//self.word_size, name='cannot_fix_more_than_the_block')
+
+        self.max_fix_up_fix_down = self.model.addVar(vtype= gp.GRB.INTEGER, name="max fix upper part")
+        self.binary_max_fix_up_fix_down = self.model.addVar(vtype= gp.GRB.INTEGER, name="max fix upper part")
+        max_max = self.block_column_size*self.block_row_size
+        self.model.addConstr(self.max_fix_up_fix_down >= self.fix_up)
+        self.model.addConstr(self.max_fix_up_fix_down >= self.fix_down)
+        self.model.addConstr(self.max_fix_up_fix_down <= self.fix_up + max_max*self.binary_max_fix_up_fix_down)
+        self.model.addConstr(self.max_fix_up_fix_down <= self.fix_down + max_max*self.binary_max_fix_up_fix_down)
+
+
 
         ### DIFEERENCES
         #Not interest in propagation of forward differences of upper part
@@ -365,8 +365,8 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
 
         self.matching_differences = self.model.addVar(vtype= gp.GRB.INTEGER, name = "match_differences")
 
-        self.model.addConstr(self.matching_differences == gp.quicksum(self.differences[0, 1, round_index, self.operation_order.index('SB') + i, row, column, 1]*self.differences[1, 0, round_index, self.operation_order.index('SB')+i, row, column, 1]
-                                                                      for i in range(2)
+        self.model.addConstr(self.matching_differences == gp.quicksum(self.differences[0, 1, round_index, self.operation_order.index('SB'), row, column, 1]+self.differences[1, 0, round_index, self.operation_order.index('SB')+1, row, column, 1]
+                                                                      - self.differences[0, 1, round_index, self.operation_order.index('SB'), row, column, 1]*self.differences[1, 0, round_index, self.operation_order.index('SB')+1, row, column, 1]
                                                                       for round_index in range(self.structure_first_round_index, self.structure_last_round_index)
                                                                       for row in range(self.block_row_size)
                                                                       for column in range(self.block_column_size)), name = "counting matching differences")
@@ -436,10 +436,10 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         for row in range(self.block_row_size) :
             for column in range(self.block_column_size):
                 if [row, column] in self.distinguisher_input :
-                    self.model.addConstr(self.differences[0, 1, self.structure_rounds+self.upper_rounds,self.state_number-1, row, column, 1] == 1,
+                    self.model.addConstr(self.differences[0, 1, self.upper_part_last_round,self.operation_order.index('SB'), row, column, 1] == 1,
                                 name='fix differcences active in the input of the structure')
                 else :
-                    self.model.addConstr(self.differences[0, 1, self.structure_rounds+self.upper_rounds,self.state_number-1, row, column, 0] == 1,
+                    self.model.addConstr(self.differences[0, 1, self.upper_part_last_round,self.operation_order.index('SB'), row, column, 0] == 1,
                                 name='fix differcences active in the input of the structure')
         
         self.backward_differences_propagation(0, self.upper_part_first_round, self.lower_part_last_round)
@@ -514,11 +514,11 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         for row in range(self.block_row_size):
             for column in range(self.block_column_size):
                 if [row, column] in self.distinguisher_output:
-                    self.model.addConstr(self.differences[1, 0, self.lower_part_first_round, 0, row, column, 1] == 1,
+                    self.model.addConstr(self.differences[1, 0, self.lower_part_first_round, self.operation_order.index('SB')+1, row, column, 1] == 1,
                                     name='fix differences active in the output of the distinguisher')
                     
                 else :
-                    self.model.addConstr(self.differences[1, 0, self.lower_part_first_round, 0, row, column, 0] == 1,
+                    self.model.addConstr(self.differences[1, 0, self.lower_part_first_round, self.operation_order.index('SB')+1, row, column, 0] == 1,
                                     name='fix differences active in the output of the distinguisher')
         
         self.forward_differences_propagation(1, self.lower_part_first_round, self.lower_part_last_round)
@@ -546,6 +546,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         
         self.model.addConstr(self.probabilist_annulation_down == probabilist_annulation_down_count, name = "counting probabilist_annulation in the lower part")                      
     
+    #Complexities and objectives
     def complexities(self):
         self.time_complexity = self.model.addVar(vtype= gp.GRB.CONTINUOUS, name = "time_complexity")
         self.memory_complexity = self.model.addVar(vtype= gp.GRB.INTEGER, name = "memory_complexity")
@@ -555,11 +556,11 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.time_complexity_down = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_down")
         self.time_complexity_match = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_match")
 
-        self.model.addConstr(self.time_complexity_up == self.upper_key_guess + self.state_test_up + self.probabilist_annulation_down + self.fix_up)
-        self.model.addConstr(self.time_complexity_down == self.lower_key_guess + self.state_test_down + self.probabilist_annulation_up + self.fix_down
+        self.model.addConstr(self.time_complexity_up == self.upper_key_guess + self.state_test_up + self.probabilist_annulation_down + self.max_fix_up_fix_down- self.fix_up)
+        self.model.addConstr(self.time_complexity_down == self.lower_key_guess + self.state_test_down + self.probabilist_annulation_up + self.max_fix_up_fix_down- self.fix_down
                               + self.active_start_down - self.active_start_up)
-        self.model.addConstr(self.time_complexity_match == self.upper_key_guess + self.lower_key_guess - self.common_key_guess + self.active_start_down
-                              + self.fix_up + self.fix_down + self.block_row_size*self.block_row_size - 3*self.common_fix - self.matching_differences)
+        self.model.addConstr(self.time_complexity_match == self.upper_key_guess + self.lower_key_guess - self.common_key_guess + self.active_start_down + self.state_test_up + self.state_test_down +
+                            self.block_row_size*self.block_row_size - self.common_fix - self.matching_differences + self.max_fix_up_fix_down - self.fix_up - self.fix_down)
     
 
         self.model.addConstr(self.time_complexity_down <= self.time_complexity, name="suboptimal time complexity down")
@@ -589,7 +590,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                                                              for row in range(self.block_row_size) 
                                                              for column in range(self.block_column_size)) )
 
-        self.model.setObjectiveN(-self.for_display, index=10, priority=0)
+        self.model.setObjectiveN(self.for_display, index=10, priority=0)
     
     def objective(self):
         self.objective_for_display()
@@ -600,6 +601,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         #self.model.setObjectiveN(self.memory_complexity, index=2, priority=5)
         self.model.setObjectiveN(self.state_test_up+self.state_test_down, index = 3, priority=2)
     
+    #Attack build
     def attack(self):
         self.value_variables_initialisation()
         self.difference_variables_initialisation()
@@ -622,10 +624,12 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         #self.model.addConstr(self.probabilist_annulation_down==1, name="at least one pb key down")
         #self.model.addConstr(self.probabilist_annulation_up==1, name="at least one pb key up")
         #self.model.addConstr(self.matching_differences>=1)
+        self.model.addConstr(self.common_fix==6)
         self.objective()
 
         self.optimize_the_model()
     
+    #Display
     def get_results(self):
         if self.optimized:
             print("----- RESULTS -----")
@@ -797,161 +801,161 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
             #             line=""
             #         print("")
 
-            print("\n lower forward propagation")
-            for row in range(self.block_row_size):
-                line = ""
-                for state_index in range(self.state_number):
-                    line += "|"
-                    for column in range(self.block_column_size):
-                        if (self.values[1, 0, round_index, state_index, row, column, 0].X == 1):
-                            line += "\033[90m ■ \033[0m"
-                        elif (self.values[1, 0, round_index, state_index, row, column, 1].X == 1):
-                            line += "\033[94m ■ \033[0m"
-                        elif (self.values[1, 0, round_index, state_index, row, column, 2].X == 1):
-                            line += "\033[94m F \033[0m"
-                        else :
-                            line += " ? "
-                            print(self.values[0, 0, round_index, state_index, row, column, 2])
-                            print(self.values[1, 1, round_index, state_index, row, column, 1])
-                    line += "|"
-                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                        line += "->"
-                    else :
-                        line += "  "
-                line += "             "
-                if round_index >= self.structure_first_round_index and round_index <=self.lower_part_last_round:
-                    for state_index in range(self.state_number):
-                        line += "|"
-                        for column in range(self.block_column_size):
-                            if (self.differences[1, 0, round_index, state_index, row, column, 0].X == 1):
-                                line += "\033[90m ■ \033[0m"
-                            elif (self.differences[1, 0, round_index, state_index, row, column, 1].X == 1):
-                                line += "\033[94m ■ \033[0m"
-                        line += "|"
-                        if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                            line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                        elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                            line += "->"
-                        else :
-                            line += "  "
+            # print("\n lower forward propagation")
+            # for row in range(self.block_row_size):
+            #     line = ""
+            #     for state_index in range(self.state_number):
+            #         line += "|"
+            #         for column in range(self.block_column_size):
+            #             if (self.values[1, 0, round_index, state_index, row, column, 0].X == 1):
+            #                 line += "\033[90m ■ \033[0m"
+            #             elif (self.values[1, 0, round_index, state_index, row, column, 1].X == 1):
+            #                 line += "\033[94m ■ \033[0m"
+            #             elif (self.values[1, 0, round_index, state_index, row, column, 2].X == 1):
+            #                 line += "\033[94m F \033[0m"
+            #             else :
+            #                 line += " ? "
+            #                 print(self.values[0, 0, round_index, state_index, row, column, 2])
+            #                 print(self.values[1, 1, round_index, state_index, row, column, 1])
+            #         line += "|"
+            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #             line += "->"
+            #         else :
+            #             line += "  "
+            #     line += "             "
+            #     if round_index >= self.structure_first_round_index and round_index <=self.lower_part_last_round:
+            #         for state_index in range(self.state_number):
+            #             line += "|"
+            #             for column in range(self.block_column_size):
+            #                 if (self.differences[1, 0, round_index, state_index, row, column, 0].X == 1):
+            #                     line += "\033[90m ■ \033[0m"
+            #                 elif (self.differences[1, 0, round_index, state_index, row, column, 1].X == 1):
+            #                     line += "\033[94m ■ \033[0m"
+            #             line += "|"
+            #             if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #                 line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #             elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #                 line += "->"
+            #             else :
+            #                 line += "  "
                 
-                line += " "
-                print(line)
-                line=""
-            print("\n lower backward propagation")
-            for row in range(self.block_row_size):
-                line = ""
-                for state_index in range(self.state_number):
-                    line += "|"
-                    for column in range(self.block_column_size):
-                        if (self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
-                            line += "\033[90m ■ \033[0m"
-                        elif (self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
-                            line += "\033[94m ■ \033[0m"
-                        elif (self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
-                            line += "\033[94m F \033[0m"
-                    line += "|"
-                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                        line += "->"
-                    else :
-                        line += "  "
-                line += "             "
-                if round_index >= self.structure_first_round_index and round_index <=self.lower_part_last_round:
-                    for state_index in range(self.state_number):
-                        line += "|"
-                        for column in range(self.block_column_size):
-                            if (self.differences[1, 1, round_index, state_index, row, column, 0].X == 1):
-                                line += "\033[90m ■ \033[0m"
-                            elif (self.differences[1, 1, round_index, state_index, row, column, 1].X == 1):
-                                line += "\033[94m ■ \033[0m"
-                        line += "|"
-                        if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                            line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                        elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                            line += "->"
-                        else :
-                            line += "  "
-                line += " "
-                print(line)
-                line=""
-            print("\n upper backward propagation")
-            for row in range(self.block_row_size):
-                line = ""
-                for state_index in range(self.state_number):
-                    line += "|"
-                    for column in range(self.block_column_size):
-                        if (self.values[0, 1, round_index, state_index, row, column, 0].X == 1):
-                            line += "\033[90m ■ \033[0m"
-                        elif (self.values[0, 1, round_index, state_index, row, column, 1].X == 1):
-                            line += "\033[91m ■ \033[0m"
-                        elif (self.values[0, 1, round_index, state_index, row, column, 2].X == 1):
-                            line += "\033[91m F \033[0m"
-                    line += "|"
-                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                        line += "->"
-                    else :
-                        line += "  "
-                line += "             "
-                if round_index >= self.structure_first_round_index and round_index <=self.lower_part_last_round:
-                    for state_index in range(self.state_number):
-                        line += "|"
-                        for column in range(self.block_column_size):
-                            if (self.differences[0, 1, round_index, state_index, row, column, 0].X == 1):
-                                line += "\033[90m ■ \033[0m"
-                            elif (self.differences[0, 1, round_index, state_index, row, column, 1].X == 1):
-                                line += "\033[91m ■ \033[0m"
-                        line += "|"
-                        if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                            line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                        elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                            line += "->"
-                        else :
-                            line += "  "
-                print(line)
-                line=""
-            print("\n upper direct propagation :")
-            for row in range(self.block_row_size):
-                line = ""
-                for state_index in range(self.state_number):
-                    line += "|"
-                    for column in range(self.block_column_size):
-                        if (self.values[0, 0, round_index, state_index, row, column, 0].X == 1):
-                            line += "\033[90m ■ \033[0m"
-                        elif (self.values[0, 0, round_index, state_index, row, column, 1].X == 1):
-                            line += "\033[91m ■ \033[0m"
-                        elif (self.values[0, 0, round_index, state_index, row, column, 2].X == 1):
-                            line += "\033[91m F \033[0m"
-                    line += "|"
-                    if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                        line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                    elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                        line += "->"
-                    else :
-                        line += "  "
-                line += "             "
-                if round_index >= self.structure_first_round_index and round_index <=self.lower_part_last_round:
-                    for state_index in range(self.state_number):
-                        line += "|"
-                        for column in range(self.block_column_size):
-                            if (self.differences[0, 0, round_index, state_index, row, column, 0].X == 1):
-                                line += "\033[90m ■ \033[0m"
-                            elif (self.differences[0, 0, round_index, state_index, row, column, 1].X == 1):
-                                line += "\033[91m ■ \033[0m"
-                        line += "|"
-                        if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                            line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                        elif row == self.block_row_size//2 and state_index != self.state_number -1:
-                            line += "->"
-                        else :
-                            line += "  "
-                print(line)
-                line=""
+            #     line += " "
+            #     print(line)
+            #     line=""
+            # print("\n lower backward propagation")
+            # for row in range(self.block_row_size):
+            #     line = ""
+            #     for state_index in range(self.state_number):
+            #         line += "|"
+            #         for column in range(self.block_column_size):
+            #             if (self.values[1, 1, round_index, state_index, row, column, 0].X == 1):
+            #                 line += "\033[90m ■ \033[0m"
+            #             elif (self.values[1, 1, round_index, state_index, row, column, 1].X == 1):
+            #                 line += "\033[94m ■ \033[0m"
+            #             elif (self.values[1, 1, round_index, state_index, row, column, 2].X == 1):
+            #                 line += "\033[94m F \033[0m"
+            #         line += "|"
+            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #             line += "->"
+            #         else :
+            #             line += "  "
+            #     line += "             "
+            #     if round_index >= self.structure_first_round_index and round_index <=self.lower_part_last_round:
+            #         for state_index in range(self.state_number):
+            #             line += "|"
+            #             for column in range(self.block_column_size):
+            #                 if (self.differences[1, 1, round_index, state_index, row, column, 0].X == 1):
+            #                     line += "\033[90m ■ \033[0m"
+            #                 elif (self.differences[1, 1, round_index, state_index, row, column, 1].X == 1):
+            #                     line += "\033[94m ■ \033[0m"
+            #             line += "|"
+            #             if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #                 line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #             elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #                 line += "->"
+            #             else :
+            #                 line += "  "
+            #     line += " "
+            #     print(line)
+            #     line=""
+            # print("\n upper backward propagation")
+            # for row in range(self.block_row_size):
+            #     line = ""
+            #     for state_index in range(self.state_number):
+            #         line += "|"
+            #         for column in range(self.block_column_size):
+            #             if (self.values[0, 1, round_index, state_index, row, column, 0].X == 1):
+            #                 line += "\033[90m ■ \033[0m"
+            #             elif (self.values[0, 1, round_index, state_index, row, column, 1].X == 1):
+            #                 line += "\033[91m ■ \033[0m"
+            #             elif (self.values[0, 1, round_index, state_index, row, column, 2].X == 1):
+            #                 line += "\033[91m F \033[0m"
+            #         line += "|"
+            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #             line += "->"
+            #         else :
+            #             line += "  "
+            #     line += "             "
+            #     if round_index >= self.structure_first_round_index and round_index <=self.lower_part_last_round:
+            #         for state_index in range(self.state_number):
+            #             line += "|"
+            #             for column in range(self.block_column_size):
+            #                 if (self.differences[0, 1, round_index, state_index, row, column, 0].X == 1):
+            #                     line += "\033[90m ■ \033[0m"
+            #                 elif (self.differences[0, 1, round_index, state_index, row, column, 1].X == 1):
+            #                     line += "\033[91m ■ \033[0m"
+            #             line += "|"
+            #             if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #                 line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #             elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #                 line += "->"
+            #             else :
+            #                 line += "  "
+            #     print(line)
+            #     line=""
+            # print("\n upper direct propagation :")
+            # for row in range(self.block_row_size):
+            #     line = ""
+            #     for state_index in range(self.state_number):
+            #         line += "|"
+            #         for column in range(self.block_column_size):
+            #             if (self.values[0, 0, round_index, state_index, row, column, 0].X == 1):
+            #                 line += "\033[90m ■ \033[0m"
+            #             elif (self.values[0, 0, round_index, state_index, row, column, 1].X == 1):
+            #                 line += "\033[91m ■ \033[0m"
+            #             elif (self.values[0, 0, round_index, state_index, row, column, 2].X == 1):
+            #                 line += "\033[91m F \033[0m"
+            #         line += "|"
+            #         if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #             line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #         elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #             line += "->"
+            #         else :
+            #             line += "  "
+            #     line += "             "
+            #     if round_index >= self.structure_first_round_index and round_index <=self.lower_part_last_round:
+            #         for state_index in range(self.state_number):
+            #             line += "|"
+            #             for column in range(self.block_column_size):
+            #                 if (self.differences[0, 0, round_index, state_index, row, column, 0].X == 1):
+            #                     line += "\033[90m ■ \033[0m"
+            #                 elif (self.differences[0, 0, round_index, state_index, row, column, 1].X == 1):
+            #                     line += "\033[91m ■ \033[0m"
+            #             line += "|"
+            #             if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
+            #                 line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
+            #             elif row == self.block_row_size//2 and state_index != self.state_number -1:
+            #                 line += "->"
+            #             else :
+            #                 line += "  "
+            #     print(line)
+            #     line=""
             
             if 'MC' in self.operation_order:
                 print('Fix values through MC')

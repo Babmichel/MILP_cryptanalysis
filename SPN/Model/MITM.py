@@ -101,8 +101,8 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.active_start_up = self.model.addVar(vtype= gp.GRB.INTEGER, name = "active_start_up")
 
         #Constraints
-        self.forward_propagation(self.values, 0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
-        self.backward_propagation(self.values, 0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
+        self.forward_values_propagation(0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
+        self.backward_values_propagation(0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
         
         fix_elements = gp.quicksum(self.values[0, 0, round_index, state_index, row, column, 2]
                                                             for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
@@ -137,8 +137,8 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.active_start_down =  self.model.addVar(vtype= gp.GRB.INTEGER, name = "active_start_down")
         
         #Constraints
-        self.backward_propagation(self.values, 1, self.structure_first_round_index, self.structure_last_round_index, self.lower_subkey)
-        self.forward_propagation(self.values, 1, self.structure_first_round_index, self.structure_last_round_index, self.lower_subkey)
+        self.backward_values_propagation(1, self.structure_first_round_index, self.structure_last_round_index, self.lower_subkey)
+        self.forward_values_propagation(1, self.structure_first_round_index, self.structure_last_round_index, self.lower_subkey)
         
         fix_elements = gp.quicksum(self.values[1, 1, round_index, state_index, row, column, 2]
                                                             for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
@@ -213,12 +213,12 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         
         self.model.addConstr(self.fix_down+self.fix_up-self.common_fix<=self.block_size//self.word_size, name='cannot_fix_more_than_the_block')
 
-    def forward_value_propagation_upper_part(self):
+    def upper_part(self):
         #Variable initialisation 
         self.state_test_up = self.model.addVar(vtype= gp.GRB.INTEGER, name = "state_test_up")
 
         #Constraints :
-        self.forward_propagation(self.values, 0, self.corps_first_round_index, self.corps_last_round_index, self.upper_subkey)
+        self.forward_values_propagation(0, self.corps_first_round_index, self.corps_last_round_index, self.upper_subkey)
         
         self.model.addConstrs((self.values[0, 1, round_index, part, row, column, 0]==1
                               for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
@@ -250,12 +250,12 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                               for row in range(self.block_row_size) 
                               for column in range(self.block_column_size))
         
-    def backward_value_propagation_lower_part(self):
+    def lower_part(self):
         #Variable initialisation
         self.state_test_down = self.model.addVar(vtype= gp.GRB.INTEGER, name = "state_test_down")
         
         #Constraints
-        self.backward_propagation(self.values, 1, self.corps_first_round_index, self.corps_last_round_index, self.lower_subkey)
+        self.backward_values_propagation(1, self.corps_first_round_index, self.corps_last_round_index, self.lower_subkey)
         
         self.model.addConstrs((self.values[1, 0, round_index, part, row, column, 0]==1
                               for round_index in range(self.corps_first_round_index, self.corps_last_round_index+1)
@@ -350,8 +350,8 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.model.addConstr(self.common_fix == self.fix_up)
         self.model.addConstr(self.common_fix == self.fix_down)
 
-        self.forward_value_propagation_upper_part()
-        self.backward_value_propagation_lower_part()
+        self.upper_part()
+        self.lower_part()
 
         self.match()
 

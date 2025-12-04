@@ -14,17 +14,17 @@ class Model_MILP_key_schedule(MILP_bricks):
         self.d = 28
 
     def master_key_initialisation(self):
-        self.master_key = self.model.addVars(range(self.total_round+1), range(8), range(self.key_size//8), range(3),
+        self.master_key = self.model.addVars(range(self.total_round), range(8), range(self.key_size//8), range(3),
                            vtype=gp.GRB.BINARY, name="master_key")
         
         self.model.addConstrs((gp.quicksum(self.master_key[round_index, row, column, value] for value in range(3)) >= 1 
-                             for round_index in range(self.total_round+1)
+                             for round_index in range(self.total_round)
                              for row in range(8) 
                              for column in range(self.key_size//8)),
                              name='master_key_known_or_unknown')
 
         self.model.addConstrs((self.master_key[round_index, row, column, 0] + self.master_key[round_index, row, column, value] <=1
-                              for round_index in range(self.total_round+1)
+                              for round_index in range(self.total_round)
                               for row in range(8)
                               for column in range(32)
                               for value in [1, 2]), 
@@ -36,10 +36,10 @@ class Model_MILP_key_schedule(MILP_bricks):
     
     def round_key_initialisation(self):
         #round_keys
-        self.upper_subkey = self.model.addVars(range(self.total_round+1), range(4), range(self.key_size//8),
+        self.upper_subkey = self.model.addVars(range(self.total_round), range(4), range(self.key_size//8),
                            vtype=gp.GRB.BINARY, name="round_key")
         
-        self.lower_subkey = self.model.addVars(range(self.total_round+1), range(4), range(self.key_size//8),
+        self.lower_subkey = self.model.addVars(range(self.total_round), range(4), range(self.key_size//8),
                            vtype=gp.GRB.BINARY, name="round_key")
         
     def keyschedule(self):
@@ -101,11 +101,11 @@ class Model_MILP_key_schedule(MILP_bricks):
                               for column in range(self.key_size//8)),
                               name='lower_subkey_and_master_key_start')
 
-        self.model.addConstr(self.upper_key_guess == gp.quicksum(self.upper_subkey[round_index, row, column] for round_index in range(self.total_round+1) for row in range(4) for column in range(self.key_size//8))
+        self.model.addConstr(self.upper_key_guess == gp.quicksum(self.upper_subkey[round_index, row, column] for round_index in range(self.total_round) for row in range(4) for column in range(self.key_size//8))
                               - gp.quicksum(self.upper_subkey[round_index, row, column]*self.master_key[round_index, 4*(round_index%2) + row, column, 1] for round_index in range(2, self.total_round+1) for row in range(4) for column in range(self.key_size//8)),
                               name='upper_key_guess')
         
-        self.model.addConstr(self.lower_key_guess == gp.quicksum(self.lower_subkey[round_index, row, column] for round_index in range(self.total_round+1) for row in range(4) for column in range(self.key_size//8))
+        self.model.addConstr(self.lower_key_guess == gp.quicksum(self.lower_subkey[round_index, row, column] for round_index in range(self.total_round) for row in range(4) for column in range(self.key_size//8))
                               - gp.quicksum(self.lower_subkey[round_index, row, column]*self.master_key[round_index, 4*(round_index%2) + row, column, 2] for round_index in range(2, self.total_round+1) for row in range(4) for column in range(self.key_size//8)),
                               name='lower_key_guess')
 
@@ -118,7 +118,7 @@ class Model_MILP_key_schedule(MILP_bricks):
         
     def display_master_key(self):
         print("Master keys :")
-        for round_index in range(self.total_round+1):
+        for round_index in range(self.total_round):
             for row in range(8):
                 line=''
                 line += '|'

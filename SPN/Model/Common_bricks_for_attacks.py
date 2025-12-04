@@ -11,67 +11,71 @@ class MILP_bricks():
         
         #Block parameters
         self.block_size = cipher_parameters.get('block_size', 64)
-        self.block_column_size = cipher_parameters.get('block_column_size', 4)
-        self.block_row_size = cipher_parameters.get('block_row_size', 4)
+        self.block_column_size = cipher_parameters.get('column_size', 4)
+        self.block_row_size = cipher_parameters.get('row_size', 4)
         self.word_size = int(self.block_size/(self.block_column_size*self.block_row_size))
 
         #Operations parameters
-        self.operation_order = cipher_parameters.get('operation_order', ['AK', 'SR', 'MC', 'SB'])
-        self.shift_rows = cipher_parameters.get('shift_rows', [0, 1, 2, 3])
-        matrixes = cipher_parameters.get('matrixes', [])
+        self.operation_order = cipher_parameters.get('operation_order', None)
+        self.shift_rows = cipher_parameters.get('shift_rows', None)
+        matrixes = cipher_parameters.get('matrixes', None)
         self.sbox_sizes = cipher_parameters.get('sbox_sizes', [1, 1])   
+        self.permutations = cipher_parameters.get('permutations', None)
         
         #Extension of the given parameters
         self.state_number = len(self.operation_order)+1
-        self.shift_rows_inverse = [(self.block_column_size - shift) % self.block_column_size for shift in self.shift_rows]
-        matrixes_inverses = []
-        matrixes_transposes = []
-        matrixes_transposes_inverses = []
-        for element in matrixes : #Computing the inverse of the matrixes
-            M = Matrix(GF(2), element)
-            M_inv = M.inverse()
-            M_transpose = M.transpose()
-            M_transpose_inv = M_inv.transpose()
-            matrixes_inverses.append([[int(M_inv[j][i])for i in range(M_inv.ncols())] for j in range(M_inv.nrows())])
-            matrixes_transposes.append([[int(M_transpose[j][i])for i in range(M_transpose.ncols())] for j in range(M_transpose.nrows())])
-            matrixes_transposes_inverses.append([[int(M_transpose_inv[j][i])for i in range(M_transpose_inv.ncols())] for j in range(M_transpose_inv.nrows())])
-        self.matrixes = [matrixes, matrixes_inverses]
-        self.matrixes_transposes = [matrixes_transposes, matrixes_transposes_inverses]
+        if self.shift_rows != None :
+            self.shift_rows_inverse = [(self.block_column_size - shift) % self.block_column_size for shift in self.shift_rows]
         
-        self.matrixes_sets = {s: [set(map(tuple, round_mc)) for round_mc in self.matrixes[s]]for s in (0,1)}
-        self.matrixes_index_map = {s: [{tuple(v): idx for idx, v in enumerate(round_mc)}for round_mc in self.matrixes[s]]for s in (0,1)}
-        self.matrixes_transposes_sets =  {s: [set(map(tuple, round_mc)) for round_mc in self.matrixes_transposes[s]]for s in (0,1)}
-        self.matrixes_transposes_index_map = {s: [{tuple(v): idx for idx, v in enumerate(round_mc)}for round_mc in self.matrixes_transposes[s]]for s in (0,1)}
+        if matrixes != None:
+            matrixes_inverses = []
+            matrixes_transposes = []
+            matrixes_transposes_inverses = []
+            for element in matrixes : #Computing the inverse of the matrixes
+                M = Matrix(GF(2), element)
+                M_inv = M.inverse()
+                M_transpose = M.transpose()
+                M_transpose_inv = M_inv.transpose()
+                matrixes_inverses.append([[int(M_inv[j][i])for i in range(M_inv.ncols())] for j in range(M_inv.nrows())])
+                matrixes_transposes.append([[int(M_transpose[j][i])for i in range(M_transpose.ncols())] for j in range(M_transpose.nrows())])
+                matrixes_transposes_inverses.append([[int(M_transpose_inv[j][i])for i in range(M_transpose_inv.ncols())] for j in range(M_transpose_inv.nrows())])
+            self.matrixes = [matrixes, matrixes_inverses]
+            self.matrixes_transposes = [matrixes_transposes, matrixes_transposes_inverses]
+            
+            self.matrixes_sets = {s: [set(map(tuple, round_mc)) for round_mc in self.matrixes[s]]for s in (0,1)}
+            self.matrixes_index_map = {s: [{tuple(v): idx for idx, v in enumerate(round_mc)}for round_mc in self.matrixes[s]]for s in (0,1)}
+            self.matrixes_transposes_sets =  {s: [set(map(tuple, round_mc)) for round_mc in self.matrixes_transposes[s]]for s in (0,1)}
+            self.matrixes_transposes_index_map = {s: [{tuple(v): idx for idx, v in enumerate(round_mc)}for round_mc in self.matrixes_transposes[s]]for s in (0,1)}
 
-        #MC objects
-        self.column_range = [[set() for _ in range(len(self.matrixes[0]))], [set() for _ in range(len(self.matrixes[1]))]]
-        self.possible_XORs_MC = [[],[]]
-        for m in self.matrixes[0]:
-            self.possible_XORs_MC[0].append(self.unpack_possible_XORs_M(m))
-        for m in self.matrixes[1]:
-            self.possible_XORs_MC[1].append(self.unpack_possible_XORs_M(m))
-        for i in range(2):
-            for m_index, m in enumerate(self.possible_XORs_MC[i]):
-                for row in m:
-                    for vector_combination in row:
-                        for vector in vector_combination:
-                            self.column_range[i][m_index].add(tuple(vector))
-                            self.column_range[not(i)][m_index].add(tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[not(i)][m_index]), axis=0))))
+            #MC objects
+            self.column_range = [[set() for _ in range(len(self.matrixes[0]))], [set() for _ in range(len(self.matrixes[1]))]]
+            self.possible_XORs_MC = [[],[]]
+            for m in self.matrixes[0]:
+                self.possible_XORs_MC[0].append(self.unpack_possible_XORs_M(m))
+            for m in self.matrixes[1]:
+                self.possible_XORs_MC[1].append(self.unpack_possible_XORs_M(m))
+            for i in range(2):
+                for m_index, m in enumerate(self.possible_XORs_MC[i]):
+                    for row in m:
+                        for vector_combination in row:
+                            for vector in vector_combination:
+                                self.column_range[i][m_index].add(tuple(vector))
+                                self.column_range[not(i)][m_index].add(tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[not(i)][m_index]), axis=0))))
 
-        self.row_range = [[set() for _ in range(len(self.matrixes[0]))], [set() for _ in range(len(self.matrixes[1]))]]
-        self.possible_XORs_MR = [[],[]]
-        for m in self.matrixes[0]:
-            self.possible_XORs_MR[0].append(self.unpack_possible_XORs_M(m))
-        for m in self.matrixes[1]:
-            self.possible_XORs_MR[1].append(self.unpack_possible_XORs_M(m))    
-        for i in range(2):
-            for m_index, m in enumerate(self.possible_XORs_MR[i]):
-                for row in m:
-                    for vector_combination in row:
-                        for vector in vector_combination:
-                            self.row_range[i][m_index].add(tuple(vector))
-                            self.row_range[not(i)][m_index].add(tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[not(i)][m_index]), axis=0))))
-
+            self.row_range = [[set() for _ in range(len(self.matrixes[0]))], [set() for _ in range(len(self.matrixes[1]))]]
+            self.possible_XORs_MR = [[],[]]
+            for m in self.matrixes[0]:
+                self.possible_XORs_MR[0].append(self.unpack_possible_XORs_M(m))
+            for m in self.matrixes[1]:
+                self.possible_XORs_MR[1].append(self.unpack_possible_XORs_M(m))    
+            for i in range(2):
+                for m_index, m in enumerate(self.possible_XORs_MR[i]):
+                    for row in m:
+                        for vector_combination in row:
+                            for vector in vector_combination:
+                                self.row_range[i][m_index].add(tuple(vector))
+                                self.row_range[not(i)][m_index].add(tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[not(i)][m_index]), axis=0))))
+            
         #Model Creation
         self.model=model
         if self.model==None:
@@ -330,6 +334,13 @@ class MILP_bricks():
                                 for column in range(self.block_column_size)), 
                                 name='value_propagation_PR_:_0_not_to_1')
 
+    def propagation_PB_values(self, part, attack_side_index, round_index, input_state_index, output_state_index, permutation):
+        sens = int(input_state_index > output_state_index)
+        self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row, column, 0]
+                                + part[attack_side_index, sens, round_index, output_state_index, permutation[row*self.block_column_size + column]//self.block_column_size, permutation[row*self.block_column_size + column]%self.block_column_size , 1] <= 1
+                                for row in range(self.block_row_size) for column in range(self.block_column_size)),
+                                name = "value_propagation_:_PB_0_not_to_1")
+
     #Propagation of DIFFERENCES through OPERATIONS
     def propagation_SR_differences(self, part, attack_side_index, round_index, input_state_index, output_state_index, shift_rows):
         sens = int(input_state_index > output_state_index)
@@ -506,7 +517,14 @@ class MILP_bricks():
                                == part[attack_side_index, sens, round_index, input_state_index, row, column, 0]
                               for row in range(self.block_row_size)
                               for column in range(self.block_column_size)), name="propagation_simple")
-         
+    
+    def propagation_PB_differences(self, part, attack_side_index, round_index, input_state_index, output_state_index, permutation):
+        sens = int(input_state_index > output_state_index)
+        self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row, column, 1]
+                                == part[attack_side_index, sens, round_index, output_state_index, permutation[row*self.block_column_size + column]//self.block_column_size, permutation[row*self.block_column_size + column]%self.block_column_size , 1]
+                                for row in range(self.block_row_size) for column in range(self.block_column_size)),
+                                name = "differential_propagation_:_PB_0_not_to_1")
+        
     #Propagation of values in rounds
     def forward_values_propagation(self, attack_side_index, first_round_index, last_round_index, subkey):
         condition = False
@@ -514,6 +532,10 @@ class MILP_bricks():
             for state_index in range(self.state_number-1):
                 if self.operation_order[state_index] == 'SR' and condition:
                     self.propagation_SR_values(self.values, attack_side_index, forward_round, state_index, state_index + 1, self.shift_rows)
+                elif self.operation_order[state_index] == 'PB' and condition:
+                    self.propagation_PB_values(self.values, attack_side_index, forward_round, state_index, state_index + 1, self.permutations[forward_round%len(self.permutations)])
+                elif self.operation_order[state_index] == 'PB' and condition:
+                    self.propagation_MC_values(self.values, self.XOR_in_mc_values, attack_side_index, forward_round, state_index, state_index + 1)
                 elif self.operation_order[state_index] == 'MC' and condition:
                     self.propagation_MC_values(self.values, self.XOR_in_mc_values, attack_side_index, forward_round, state_index, state_index + 1)
                 elif self.operation_order[state_index] == 'MR' and condition:
@@ -538,6 +560,8 @@ class MILP_bricks():
             for state_index in range(self.state_number-1):
                 if self.operation_order[state_index] == 'SR' and condition:
                     self.propagation_SR_values(self.values, attack_side_index, backward_round, state_index + 1, state_index, self.shift_rows_inverse)
+                elif self.operation_order[state_index] == 'PB' and condition:
+                    self.propagation_PB_values(self.values, attack_side_index, backward_round, state_index + 1, state_index, self.permutations[backward_round%len(self.permutations)])
                 elif self.operation_order[state_index] == 'MC' and condition:
                     self.propagation_MC_values(self.values, self.XOR_in_mc_values, attack_side_index, backward_round, state_index + 1, state_index)
                 elif self.operation_order[state_index] == 'MR' and condition:
@@ -563,6 +587,8 @@ class MILP_bricks():
             for state_index in range(self.state_number-1):
                 if self.operation_order[state_index] == 'SR' and condition:
                     self.propagation_SR_differences(self.differences, attack_side_index, forward_round, state_index, state_index + 1, self.shift_rows)
+                elif self.operation_order[state_index] == 'PB' and condition:
+                    self.propagation_PB_differences(self.differences, attack_side_index, forward_round, state_index, state_index +1, self.permutations[forward_round%len(self.permutations)])
                 elif self.operation_order[state_index] == 'MC' and condition:
                     self.propagation_MC_differences(self.differences, self.XOR_in_mc_differences, attack_side_index, forward_round, state_index, state_index + 1)
                 elif self.operation_order[state_index] == 'MR' and condition:
@@ -587,6 +613,8 @@ class MILP_bricks():
             for state_index in range(self.state_number-1):
                 if self.operation_order[state_index] == 'SR' and condition:
                     self.propagation_SR_differences(self.differences, attack_side_index, backward_round, state_index + 1, state_index, self.shift_rows_inverse)
+                elif self.operation_order[state_index] == 'PB' and condition:
+                    self.propagation_PB_differences(self.differences, attack_side_index, backward_round, state_index +1, state_index, self.permutations[backward_round%len(self.permutations)])
                 elif self.operation_order[state_index] == 'MC' and condition:
                     self.propagation_MC_differences(self.differences, self.XOR_in_mc_differences, attack_side_index, backward_round, state_index + 1, state_index)
                 elif self.operation_order[state_index] == 'MR' and condition:
@@ -612,6 +640,8 @@ class MILP_bricks():
             for state_index in range(self.state_number-1):
                 if self.operation_order[state_index] == 'SR' and condition:
                     self.propagation_SR_differences(self.differences, attack_side_index, forward_round, state_index, state_index + 1, self.shift_rows)
+                elif self.operation_order[state_index] == 'PB' and condition:
+                    self.propagation_PB_values(self.differences, attack_side_index, forward_round, state_index, state_index +1, self.permutations[forward_round%len(self.permutations)])
                 elif self.operation_order[state_index] == 'MC' and condition:
                     self.propagation_MC_values(self.differences, self.XOR_in_mc_differences, attack_side_index, forward_round, state_index, state_index + 1)
                 elif self.operation_order[state_index] == 'MR' and condition:
@@ -636,6 +666,8 @@ class MILP_bricks():
             for state_index in range(self.state_number-1):
                 if self.operation_order[state_index] == 'SR' and condition:
                     self.propagation_SR_differences(self.differences, attack_side_index, backward_round, state_index + 1, state_index, self.shift_rows_inverse)
+                elif self.operation_order[state_index] == 'PB' and condition:
+                    self.propagation_PB_values(self.differences, attack_side_index, backward_round, state_index+1, state_index, self.permutations[backward_round%len(self.permutations)])
                 elif self.operation_order[state_index] == 'MC' and condition:
                     self.propagation_MC_values(self.differences, self.XOR_in_mc_differences, attack_side_index, backward_round, state_index + 1, state_index)
                 elif self.operation_order[state_index] == 'MR' and condition:

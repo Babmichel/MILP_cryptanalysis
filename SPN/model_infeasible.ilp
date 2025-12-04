@@ -1,6 +1,6 @@
 \ Model _copy
 \ LP format - for model browsing. Use MPS format to capture full model detail.
-\ Signature: 0xb1fd46424bf62b18
+\ Signature: 0xab85f285a1efff75
 Minimize multi-objectives
   OBJ0: Priority=10 Weight=1 AbsTol=1e-06 RelTol=0
   
@@ -25,20 +25,18 @@ Minimize multi-objectives
   OBJ10: Priority=0 Weight=1 AbsTol=1e-06 RelTol=0
   
 Subject To
- unique_value_in_difference_constraints[1,0,12,1,0,9]:
-   state[1,0,12,1,0,9,0] + state[1,0,12,1,0,9,1] = 1
- unique_value_in_difference_constraints[1,0,12,2,1,9]:
-   state[1,0,12,2,1,9,0] + state[1,0,12,2,1,9,1] = 1
- fix_differences_active_in_the_output_of_the_distinguisher:
-   state[1,0,12,2,0,9,1] = 1
- fix_differences_active_in_the_output_of_the_distinguisher:
-   state[1,0,12,2,1,9,0] = 1
- value_propagation_SB___0_not_to_1[0,9,1,0,0,9]: state[1,0,12,1,0,9,1]
-   - state[1,0,12,2,1,9,1] <= 0
- value_propagation_SB___0_not_to_1[0,9,0,0,0,9]: state[1,0,12,1,0,9,0]
-   + state[1,0,12,2,0,9,1] <= 1
+ upper_subkey_is_not_applied_on_the_two_first_bit_of_each_sbox[2,4,1]:
+   upper_subkey[2,0,5] = 1
+ upper_subkey_is_not_applied_on_the_two_first_bit_of_each_sbox[0,4,1]:
+   lower_subkey[0,0,5] = 1
+ unique_value_in_master_key[0,3]: master_key[0,3,0] + master_key[0,3,1]
+   + master_key[0,3,2] = 1
+ upper_subkey_and_master_key_direct_link[2,3,0]: upper_subkey[2,0,5]
+   - master_key[0,3,1] = 0
+ upper_subkey_and_master_key_direct_link[0,3,0]: lower_subkey[0,0,5]
+   - master_key[0,3,2] = 0
 Bounds
 Binaries
- state[1,0,12,1,0,9,0] state[1,0,12,1,0,9,1] state[1,0,12,2,0,9,1]
- state[1,0,12,2,1,9,0] state[1,0,12,2,1,9,1]
+ upper_subkey[2,0,5] lower_subkey[0,0,5] master_key[0,3,0]
+ master_key[0,3,1] master_key[0,3,2]
 End

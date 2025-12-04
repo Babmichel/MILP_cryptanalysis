@@ -603,7 +603,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                                                              for row in range(self.block_row_size) 
                                                              for column in range(self.block_column_size)) )
 
-        self.model.setObjectiveN(-self.for_display, index=10, priority=0)
+        self.model.setObjectiveN(self.for_display, index=10, priority=0)
     
     def objective(self):
         self.objective_for_display()
@@ -681,9 +681,9 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                 pass
             else :
                 print("ROUND ", round_index)
-                key_line = ""
+                key_line = "KEY : \n"
                 for row in range(self.block_row_size):
-                    key_line += "        |"
+                    key_line += "|"
                     for column in range(self.block_column_size):
                         if self.upper_subkey[round_index, row, column].X == 0 and self.lower_subkey[round_index, row, column].X == 0:
                             key_line += "\033[90m ■ \033[0m"
@@ -697,7 +697,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                             key_line += " ? "
                     key_line += "|\n"
                 print(key_line)
-                
+                print('\n')
 
                 if self.block_column_size <= 12:
                     for row in range(self.block_row_size):

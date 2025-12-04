@@ -1,6 +1,6 @@
 \ Model _copy
 \ LP format - for model browsing. Use MPS format to capture full model detail.
-\ Signature: 0xded37c2435028a59
+\ Signature: 0xb1fd46424bf62b18
 Minimize multi-objectives
   OBJ0: Priority=10 Weight=1 AbsTol=1e-06 RelTol=0
   
@@ -25,15 +25,20 @@ Minimize multi-objectives
   OBJ10: Priority=0 Weight=1 AbsTol=1e-06 RelTol=0
   
 Subject To
- no_backward_propagation_of_upper_values_in_corps[6,3,1,2]:
-   state[0,1,6,3,1,2,1] = 0
- fix_differcences_active_in_the_input_of_the_structure:
-   state[0,1,6,4,1,2,1] = 1
- value_propagation_SB___0_not_to_1[1,2,0,0,1,2]: - state[0,1,6,3,1,2,1]
-   + state[0,1,6,4,1,2,1] = 0
- value_propagation_SB___0_not_to_1[1,2,0,0,1,2]: - state[0,1,6,3,1,2,1]
-   + state[0,1,6,3,1,2,1] <= 0
+ unique_value_in_difference_constraints[1,0,12,1,0,9]:
+   state[1,0,12,1,0,9,0] + state[1,0,12,1,0,9,1] = 1
+ unique_value_in_difference_constraints[1,0,12,2,1,9]:
+   state[1,0,12,2,1,9,0] + state[1,0,12,2,1,9,1] = 1
+ fix_differences_active_in_the_output_of_the_distinguisher:
+   state[1,0,12,2,0,9,1] = 1
+ fix_differences_active_in_the_output_of_the_distinguisher:
+   state[1,0,12,2,1,9,0] = 1
+ value_propagation_SB___0_not_to_1[0,9,1,0,0,9]: state[1,0,12,1,0,9,1]
+   - state[1,0,12,2,1,9,1] <= 0
+ value_propagation_SB___0_not_to_1[0,9,0,0,0,9]: state[1,0,12,1,0,9,0]
+   + state[1,0,12,2,0,9,1] <= 1
 Bounds
 Binaries
- state[0,1,6,3,1,2,1] state[0,1,6,3,1,2,1] state[0,1,6,4,1,2,1]
+ state[1,0,12,1,0,9,0] state[1,0,12,1,0,9,1] state[1,0,12,2,0,9,1]
+ state[1,0,12,2,1,9,0] state[1,0,12,2,1,9,1]
 End

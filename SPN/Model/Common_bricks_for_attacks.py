@@ -47,9 +47,9 @@ class MILP_bricks():
         self.column_range = [[set() for _ in range(len(self.matrixes[0]))], [set() for _ in range(len(self.matrixes[1]))]]
         self.possible_XORs_MC = [[],[]]
         for m in self.matrixes[0]:
-            self.possible_XORs_MC[0].append(self.unpack_possible_XORs_MC(m))
+            self.possible_XORs_MC[0].append(self.unpack_possible_XORs_M(m))
         for m in self.matrixes[1]:
-            self.possible_XORs_MC[1].append(self.unpack_possible_XORs_MC(m))
+            self.possible_XORs_MC[1].append(self.unpack_possible_XORs_M(m))
         for i in range(2):
             for m_index, m in enumerate(self.possible_XORs_MC[i]):
                 for row in m:
@@ -57,20 +57,21 @@ class MILP_bricks():
                         for vector in vector_combination:
                             self.column_range[i][m_index].add(tuple(vector))
                             self.column_range[not(i)][m_index].add(tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[not(i)][m_index]), axis=0))))
-        
-        self.row_range = [[set() for _ in range(len(self.matrixes_transposes[0]))], [set() for _ in range(len(self.matrixes_transposes[1]))]]
+
+        self.row_range = [[set() for _ in range(len(self.matrixes[0]))], [set() for _ in range(len(self.matrixes[1]))]]
         self.possible_XORs_MR = [[],[]]
-        for m in self.matrixes_transposes[0]:
-            self.possible_XORs_MR[0].append(self.unpack_possible_XORs_MC(m))
-        for m in self.matrixes_transposes[1]:
-            self.possible_XORs_MR[1].append(self.unpack_possible_XORs_MC(m))    
+        for m in self.matrixes[0]:
+            self.possible_XORs_MR[0].append(self.unpack_possible_XORs_M(m))
+        for m in self.matrixes[1]:
+            self.possible_XORs_MR[1].append(self.unpack_possible_XORs_M(m))    
         for i in range(2):
             for m_index, m in enumerate(self.possible_XORs_MR[i]):
-                for column in m:
-                    for vector_combination in column:
+                for row in m:
+                    for vector_combination in row:
                         for vector in vector_combination:
                             self.row_range[i][m_index].add(tuple(vector))
-                            self.row_range[not(i)][m_index].add(tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[not(i)][m_index]).T, axis=1))))
+                            self.row_range[not(i)][m_index].add(tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[not(i)][m_index]), axis=0))))
+
         #Model Creation
         self.model=model
         if self.model==None:
@@ -155,9 +156,9 @@ class MILP_bricks():
 
         return final_results
 
-    def unpack_possible_XORs_MC(self, matrixe):
-        possible_XOR_list = [[] for _ in range(self.block_row_size)]
-        for row in range(self.block_row_size):
+    def unpack_possible_XORs_M(self, matrixe):
+        possible_XOR_list = [[] for _ in range(len(matrixe))]
+        for row in range(len(matrixe)):
                 possible_XOR_list[row]=self.unpack_possible_XORs_vector(matrixe[row])
         return possible_XOR_list
             
@@ -229,21 +230,21 @@ class MILP_bricks():
     
     def propagation_MR_values(self, part, XOR_in_part, attack_side_index, round_index, input_state_index, output_state_index):
         sens = int(input_state_index > output_state_index)
-        mc_index = round_index % len(self.matrixes[sens])
+        m_index = round_index % len(self.matrixes[sens])
 
         #First we fix to 0 all the input XOR that cannot be computed
         for row in range(self.block_row_size):
             for column in range(self.block_column_size):
-                for c_vector_element in self.row_range[sens][mc_index]:
-                    if c_vector_element[row] == 1:
+                for c_vector_element in self.row_range[sens][m_index]:
+                    if c_vector_element[column] == 1:
                         XOR_var = XOR_in_part[(attack_side_index, sens, round_index, row) + c_vector_element + (1,)]
                         #If propagation is forward in the upper part of bacward for the lower part : we can use the opposite propagation
                         if attack_side_index == sens:
                             # if the considered vector is in MC than we check if it is known form the opposite propagation
-                            if c_vector_element in self.matrixes_transposes_sets[sens][mc_index]:
+                            if c_vector_element in self.matrixes_sets[sens][m_index]:
                                 AND_elements = [part[attack_side_index, sens, round_index, input_state_index, row, column, 0],
                                             part[attack_side_index, not(sens), round_index, input_state_index, row, column, 0],
-                                            part[attack_side_index, not(sens), round_index, output_state_index, self.matrixes_transposes_index_map[sens][mc_index][c_vector_element], column, 0]]
+                                            part[attack_side_index, not(sens), round_index, output_state_index, row, self.matrixes_index_map[sens][m_index][c_vector_element], 0]]
                             else:
                                 AND_elements = [part[attack_side_index, sens, round_index, input_state_index, row, column, 0],
                                             part[attack_side_index, not(sens), round_index, input_state_index, row, column, 0]]
@@ -268,7 +269,7 @@ class MILP_bricks():
         for row in range(self.block_row_size):
             for column in range(self.block_column_size):
                 or_vars = []
-                for combination in self.possible_XORs_MR[sens][round_index%(len(self.matrixes[0]))][row]:
+                for combination in self.possible_XORs_MR[sens][round_index%(len(self.matrixes[0]))][column]:
                         or_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"or_var_MR_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
                         not_or_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"not_or_var_MR_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
                         if len(combination) >= 1:
@@ -345,7 +346,7 @@ class MILP_bricks():
         for row in range(self.block_row_size):
             for column in range(self.block_column_size):
                 for c_vector_element in self.column_range[sens][mc_index]:
-                    if c_vector_element[row] == 1:
+                    if c_vector_element[column] == 1:
                         XOR_var = XOR_in_part[(attack_side_index, sens, round_index, column) + c_vector_element + (0,)]
                         input_var = part[attack_side_index, sens, round_index, input_state_index, row, column, 1]
                         self.model.addConstr(input_var + XOR_var <= 1,
@@ -355,11 +356,10 @@ class MILP_bricks():
                         self.model.addConstr(input_var + XOR_var <= 1,
                                                 name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_2")
                         
-        
         for row in range(self.block_row_size):
             for column in range(self.block_column_size):
                 or_vars = []
-                for combination in self.possible_XORs_MC[sens][round_index%(len(self.matrixes[0]))][row]:
+                for combination in self.possible_XORs_MC[sens][round_index%(len(self.matrixes[0]))][column]:
                         or_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"or_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
                         if len(combination) >= 1:
                             #Model the OR with linear constraint for efficiency
@@ -374,12 +374,67 @@ class MILP_bricks():
                     self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, column, 0] >= elements, name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
                     self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, column, 0]<= gp.quicksum(or_vars), name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
     
+    def propagation_MR_differences(self, part, XOR_in_part, attack_side_index, round_index, input_state_index, output_state_index):
+        sens = int(input_state_index > output_state_index)
+        mr_index = round_index % len(self.matrixes[sens])
+        
+        #First we fix to 0 all the input XOR that cannot be computed
+        for row in range(self.block_row_size):
+            for column in range(self.block_column_size):
+                for c_vector_element in self.row_range[sens][mr_index]:
+                    if c_vector_element[row] == 1:
+                        XOR_var = XOR_in_part[(attack_side_index, sens, round_index, row) + c_vector_element + (0,)]
+                        input_var = part[attack_side_index, sens, round_index, input_state_index, row, column, 1]
+                        self.model.addConstr(input_var + XOR_var <= 1,
+                                                name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_1_not_to_0")
+                        XOR_var = XOR_in_part[(attack_side_index, sens, round_index, row) + c_vector_element + (2,)]
+                        input_var = part[attack_side_index, sens, round_index, input_state_index, row, column, 0]
+                        self.model.addConstr(input_var + XOR_var <= 1,
+                                                name=f"MC_fix_input_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_2")
+
+        for row in range(self.block_row_size):
+            for column in range(self.block_column_size):
+                or_vars = []
+                for combination in self.possible_XORs_MR[sens][round_index%(len(self.matrixes[0]))][row]:
+                        or_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"or_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
+                        if len(combination) >= 1:
+                            #Model the OR with linear constraint for efficiency
+                            for element in combination :
+                                self.model.addConstr(or_var >= XOR_in_part[(attack_side_index, sens, round_index, row)+tuple(element)+(1,)])
+                            self.model.addConstr(or_var <= gp.quicksum(XOR_in_part[(attack_side_index, sens, round_index, row)+tuple(element)+(1,)] for element in combination), name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
+                        else :
+                            self.model.addConstr(or_var == XOR_in_part[(attack_side_index, sens, round_index, row)+tuple(combination[0])+(1,)])
+                        or_vars.append(1-or_var)  
+                #linear mode for the OR constraint
+                for elements in or_vars:
+                    self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, row, 0] >= elements, name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+                    self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, row, 0]<= gp.quicksum(or_vars), name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+             
+        
+        for row in range(self.block_row_size):
+            for column in range(self.block_column_size):
+                or_vars = []
+                for combination in self.possible_XORs_MR[sens][round_index%(len(self.matrixes[0]))][column]:
+                        or_var = self.model.addVar(vtype= gp.GRB.BINARY, name = f"or_var_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
+                        if len(combination) >= 1:
+                            #Model the OR with linear constraint for efficiency
+                            for element in combination :
+                                self.model.addConstr(or_var >= XOR_in_part[(attack_side_index, sens, round_index, row)+tuple(element)+(1,)])
+                            self.model.addConstr(or_var <= gp.quicksum(XOR_in_part[(attack_side_index, sens, round_index, row)+tuple(element)+(1,)] for element in combination), name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}")
+                        else :
+                            self.model.addConstr(or_var == XOR_in_part[(attack_side_index, sens, round_index, row)+tuple(combination[0])+(1,)])
+                        or_vars.append(1-or_var)  
+                #linear mode for the OR constraint
+                for elements in or_vars:
+                    self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, column, 0] >= elements, name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+                    self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, column, 0]<= gp.quicksum(or_vars), name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+
     def propagation_SB_differences(self, part, attack_side_index, round_index, input_state_index, output_state_index, sbox_sizes):
         #if you have an unknow value in the input of the sbox all the outputs cannot be computed
         sens = int(input_state_index > output_state_index)
         if round_index >= self.upper_part_first_round and round_index <= self.lower_part_last_round :
             self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row_input, column_input, 1]
-                                    == part[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1]
+                                    <= part[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1]
                                     for row_output in range(self.block_row_size//sbox_sizes[0])
                                     for column_output in range(self.block_column_size//sbox_sizes[1])
                                     for sbox_row in range(sbox_sizes[0])
@@ -387,23 +442,37 @@ class MILP_bricks():
                                     for row_input in range(sbox_sizes[0]*row_output, sbox_sizes[0]*row_output + sbox_sizes[0])
                                     for column_input in range(sbox_sizes[1]*column_output, sbox_sizes[1]*column_output+sbox_sizes[1])), 
                                     name='value_propagation_SB_:_0_not_to_1')
-        
-        else : 
-            self.model.addConstrs((part[attack_side_index, sens, round_index, input_state_index, row_input, column_input, 0]
-                                 + part[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1] <= 1
-                                 for row_output in range(self.block_row_size//sbox_sizes[0])
-                                 for column_output in range(self.block_column_size//sbox_sizes[1])
-                                 for sbox_row in range(sbox_sizes[0])
-                                 for sbox_column in range(sbox_sizes[1])
-                                 for row_input in range(sbox_sizes[0]*row_output, sbox_sizes[0]*row_output + sbox_sizes[0])
-                                 for column_input in range(sbox_sizes[1]*column_output, sbox_sizes[1]*column_output+sbox_sizes[1])), 
-                                 name='value_propagation_SB_:_0_not_to_1')
-        
+
         if (self.trunc_diff and (round_index == self.upper_part_last_round or round_index == self.lower_part_first_round)):
             pass
         else :
             self.model.addConstrs((part[attack_side_index, sens, round_index, output_state_index, row_input, column_input, 1] <=
-                                    self.values[attack_side_index, not(sens), round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1] + self.values[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1]
+                                    self.values[attack_side_index, not(sens), round_index, input_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1] + self.values[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 2]
+                                    for row_output in range(self.block_row_size//sbox_sizes[0])
+                                    for column_output in range(self.block_column_size//sbox_sizes[1])
+                                    for sbox_row in range(sbox_sizes[0])
+                                    for sbox_column in range(sbox_sizes[1])
+                                    for row_input in range(sbox_sizes[0]*row_output, sbox_sizes[0]*row_output + sbox_sizes[0])
+                                    for column_input in range(sbox_sizes[1]*column_output, sbox_sizes[1]*column_output+sbox_sizes[1])), 
+                                    name='value_propagation_SB_:_0_not_to_1')
+    
+    def propagation_SB_differences_structure(self, part, attack_side_index, round_index, input_state_index, output_state_index, sbox_sizes):
+        #if you have an unknow value in the input of the sbox all the outputs cannot be computed
+        sens = int(input_state_index > output_state_index)
+    
+        self.model.addConstrs((part[attack_side_index, sens, round_index, output_state_index, row_input, column_input, 0]
+                                >= part[attack_side_index, sens, round_index, input_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 0]
+                                for row_output in range(self.block_row_size//sbox_sizes[0])
+                                for column_output in range(self.block_column_size//sbox_sizes[1])
+                                for sbox_row in range(sbox_sizes[0])
+                                for sbox_column in range(sbox_sizes[1])
+                                for row_input in range(sbox_sizes[0]*row_output, sbox_sizes[0]*row_output + sbox_sizes[0])
+                                for column_input in range(sbox_sizes[1]*column_output, sbox_sizes[1]*column_output+sbox_sizes[1])), 
+                                name='value_propagation_SB_:_0_not_to_1')
+
+
+        self.model.addConstrs((part[attack_side_index, sens, round_index, output_state_index, row_input, column_input, 1] <=
+                                    self.values[attack_side_index, not(sens), round_index, input_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1] + self.values[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 2]
                                     for row_output in range(self.block_row_size//sbox_sizes[0])
                                     for column_output in range(self.block_column_size//sbox_sizes[1])
                                     for sbox_row in range(sbox_sizes[0])
@@ -438,7 +507,7 @@ class MILP_bricks():
                               for row in range(self.block_row_size)
                               for column in range(self.block_column_size)), name="propagation_simple")
          
-    #Progations through full ROUND
+    #Propagation of values in rounds
     def forward_values_propagation(self, attack_side_index, first_round_index, last_round_index, subkey):
         condition = False
         for forward_round in range(first_round_index, last_round_index+1):
@@ -487,6 +556,7 @@ class MILP_bricks():
             if backward_round != last_round_index:
                 self.propagation_values_PR(self.values, attack_side_index, backward_round+1, backward_round)
     
+    #Propagation of differences in upper and lower parts
     def forward_differences_propagation(self, attack_side_index, first_round_index, last_round_index):
         condition = False
         for forward_round in range(first_round_index, last_round_index+1):
@@ -534,7 +604,56 @@ class MILP_bricks():
                     #print("One of the round operator name is not recognized in the lower part value propagation")
             if backward_round != last_round_index:
                 self.propagation_differences_PR(self.differences, attack_side_index, backward_round+1, backward_round)
-        
+    
+    #Propagation of differences in structure :
+    def forward_differences_propagation_in_structure(self, attack_side_index, first_round_index, last_round_index):
+        condition = False
+        for forward_round in range(first_round_index, last_round_index+1):
+            for state_index in range(self.state_number-1):
+                if self.operation_order[state_index] == 'SR' and condition:
+                    self.propagation_SR_differences(self.differences, attack_side_index, forward_round, state_index, state_index + 1, self.shift_rows)
+                elif self.operation_order[state_index] == 'MC' and condition:
+                    self.propagation_MC_values(self.differences, self.XOR_in_mc_differences, attack_side_index, forward_round, state_index, state_index + 1)
+                elif self.operation_order[state_index] == 'MR' and condition:
+                    self.propagation_MR_values(self.differences, self.XOR_in_mr_differences, attack_side_index, forward_round, state_index, state_index + 1)
+                elif self.operation_order[state_index] == 'SB' and condition:
+                    self.propagation_SB_differences_structure(self.differences, attack_side_index, forward_round, state_index, state_index + 1, self.sbox_sizes)
+                elif self.operation_order[state_index] == 'AK':
+                    if forward_round == first_round_index :
+                        condition = True
+                    if forward_round == last_round_index :
+                        condition = False
+                    self.free_propagation(self.differences, attack_side_index, forward_round, state_index, state_index + 1)
+               #else :
+                    #self.everything_all_right = False
+                    #print("One of the round operator name is not recognized in the upper part value propagation")
+            if forward_round != last_round_index:
+                self.propagation_differences_NR(self.differences, attack_side_index, forward_round, forward_round+1)
+    
+    def backward_differences_propagation_in_structure(self, attack_side_index, first_round_index, last_round_index):
+        condition = False
+        for backward_round in range(first_round_index, last_round_index+1):
+            for state_index in range(self.state_number-1):
+                if self.operation_order[state_index] == 'SR' and condition:
+                    self.propagation_SR_differences(self.differences, attack_side_index, backward_round, state_index + 1, state_index, self.shift_rows_inverse)
+                elif self.operation_order[state_index] == 'MC' and condition:
+                    self.propagation_MC_values(self.differences, self.XOR_in_mc_differences, attack_side_index, backward_round, state_index + 1, state_index)
+                elif self.operation_order[state_index] == 'MR' and condition:
+                    self.propagation_MR_values(self.differences, self.XOR_in_mr_differences, attack_side_index, backward_round, state_index + 1, state_index)
+                elif self.operation_order[state_index] == 'SB' and condition:
+                    
+                    self.propagation_SB_differences_structure(self.differences, attack_side_index, backward_round, state_index + 1, state_index, self.sbox_sizes)
+                elif self.operation_order[state_index] == 'AK':
+                    if backward_round == first_round_index :
+                        condition = True
+                    if backward_round == last_round_index :
+                        condition = False
+                    self.free_propagation(self.differences, attack_side_index, backward_round, state_index + 1, state_index)
+                #else :
+                    #self.everything_all_right = False
+                    #print("One of the round operator name is not recognized in the lower part value propagation")
+            if backward_round != last_round_index:
+                self.propagation_differences_PR(self.differences, attack_side_index, backward_round+1, backward_round)
 
     def optimize_the_model(self): 
         if self.everything_all_right:

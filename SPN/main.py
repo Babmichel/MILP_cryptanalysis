@@ -2,7 +2,8 @@ import sys
 import importlib
 cipher_name = sys.argv[1]  
 attack_type = sys.argv[2]
-parameters = importlib.import_module(f"Attack_parameters.{cipher_name}_{attack_type}_attack")
+file_number = sys.argv[3]
+parameters = importlib.import_module(f"Attack_parameters.{cipher_name}_{attack_type}_attack_{file_number}")
 cipher = importlib.import_module(f"Cipher.{parameters.attack_parameters.get('Cipher')}_parameters")
 key_schedule = importlib.import_module(f"Key_schedule.{parameters.attack_parameters.get('Key_schedule')}_key_schedule")
 attack_model = importlib.import_module(f"Model.{attack_type}")

@@ -2,7 +2,7 @@ attack_parameters = {
     "Cipher": "ARADI",
     "Key_schedule": "ARADI",
     "attack_type": "Diff-MITM",
-    "structure_rounds": 1,
+    "structure_rounds": 2,
     "upper_rounds": 2,
     "lower_rounds": 2,
     "distinguisher_probability" : 123,

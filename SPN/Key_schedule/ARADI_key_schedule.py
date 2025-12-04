@@ -102,11 +102,11 @@ class Model_MILP_key_schedule(MILP_bricks):
                               name='lower_subkey_and_master_key_start')
 
         self.model.addConstr(self.upper_key_guess == gp.quicksum(self.upper_subkey[round_index, row, column] for round_index in range(self.total_round) for row in range(4) for column in range(self.key_size//8))
-                              - gp.quicksum(self.upper_subkey[round_index, row, column]*self.master_key[round_index, 4*(round_index%2) + row, column, 1] for round_index in range(2, self.total_round+1) for row in range(4) for column in range(self.key_size//8)),
+                              - gp.quicksum(self.upper_subkey[round_index, row, column]*self.master_key[round_index, 4*(round_index%2) + row, column, 1] for round_index in range(2, self.total_round) for row in range(4) for column in range(self.key_size//8)),
                               name='upper_key_guess')
         
         self.model.addConstr(self.lower_key_guess == gp.quicksum(self.lower_subkey[round_index, row, column] for round_index in range(self.total_round) for row in range(4) for column in range(self.key_size//8))
-                              - gp.quicksum(self.lower_subkey[round_index, row, column]*self.master_key[round_index, 4*(round_index%2) + row, column, 2] for round_index in range(2, self.total_round+1) for row in range(4) for column in range(self.key_size//8)),
+                              - gp.quicksum(self.lower_subkey[round_index, row, column]*self.master_key[round_index, 4*(round_index%2) + row, column, 2] for round_index in range(2, self.total_round) for row in range(4) for column in range(self.key_size//8)),
                               name='lower_key_guess')
 
         self.model.addConstr(self.common_key_guess == gp.quicksum(self.lower_subkey[round_index, row, column]*self.upper_subkey[round_index, row, column]*self.master_key[0, row, column, 1]*self.master_key[0, row, column,2] for row in range(4) for column in range(self.key_size//8)),

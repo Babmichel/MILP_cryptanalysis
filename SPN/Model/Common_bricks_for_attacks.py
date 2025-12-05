@@ -19,11 +19,17 @@ class MILP_bricks():
         self.operation_order = cipher_parameters.get('operation_order', None)
         self.shift_rows = cipher_parameters.get('shift_rows', None)
         matrixes = cipher_parameters.get('matrixes', None)
-        self.sbox_sizes = cipher_parameters.get('sbox_sizes', [1, 1])   
+        self.sbox_sizes = cipher_parameters.get('sbox_sizes', None)   
         self.permutations = cipher_parameters.get('permutations', None)
         
         #Extension of the given parameters
         self.state_number = len(self.operation_order)+1
+        if self.permutations !=None:
+            self.permutations_inverse = [[0 for i in range(len(self.permutations[i]))] for i in range(len(self.permutations))]
+            for i in range(len(self.permutations)):
+                for j in range(len(self.permutations[i])):
+                    self.permutations_inverse[i][j]=self.permutations[i].index(j)
+
         if self.shift_rows != None :
             self.shift_rows_inverse = [(self.block_column_size - shift) % self.block_column_size for shift in self.shift_rows]
         
@@ -458,7 +464,7 @@ class MILP_bricks():
             pass
         else :
             self.model.addConstrs((part[attack_side_index, sens, round_index, output_state_index, row_input, column_input, 1] <=
-                                    self.values[attack_side_index, not(sens), round_index, input_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1] + self.values[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 2]
+                                    self.values[attack_side_index, not(sens), round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1] + self.values[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 2]
                                     for row_output in range(self.block_row_size//sbox_sizes[0])
                                     for column_output in range(self.block_column_size//sbox_sizes[1])
                                     for sbox_row in range(sbox_sizes[0])
@@ -483,7 +489,7 @@ class MILP_bricks():
 
 
         self.model.addConstrs((part[attack_side_index, sens, round_index, output_state_index, row_input, column_input, 1] <=
-                                    self.values[attack_side_index, not(sens), round_index, input_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1] + self.values[attack_side_index, sens, round_index, output_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 2]
+                                    self.value_in_structure[attack_side_index, not(attack_side_index), round_index, input_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 1] + self.values[attack_side_index, sens, round_index, input_state_index, sbox_sizes[0]*row_output + sbox_row, sbox_sizes[1]*column_output + sbox_column, 2]
                                     for row_output in range(self.block_row_size//sbox_sizes[0])
                                     for column_output in range(self.block_column_size//sbox_sizes[1])
                                     for sbox_row in range(sbox_sizes[0])
@@ -561,7 +567,7 @@ class MILP_bricks():
                 if self.operation_order[state_index] == 'SR' and condition:
                     self.propagation_SR_values(self.values, attack_side_index, backward_round, state_index + 1, state_index, self.shift_rows_inverse)
                 elif self.operation_order[state_index] == 'PB' and condition:
-                    self.propagation_PB_values(self.values, attack_side_index, backward_round, state_index + 1, state_index, self.permutations[backward_round%len(self.permutations)])
+                    self.propagation_PB_values(self.values, attack_side_index, backward_round, state_index + 1, state_index, self.permutations_inverse[backward_round%len(self.permutations)])
                 elif self.operation_order[state_index] == 'MC' and condition:
                     self.propagation_MC_values(self.values, self.XOR_in_mc_values, attack_side_index, backward_round, state_index + 1, state_index)
                 elif self.operation_order[state_index] == 'MR' and condition:
@@ -579,6 +585,60 @@ class MILP_bricks():
                     #print("One of the round operator name is not recognized in the lower part value propagation")
             if backward_round != last_round_index:
                 self.propagation_values_PR(self.values, attack_side_index, backward_round+1, backward_round)
+    
+    def forward_values_propagation_in_structure(self, attack_side_index, first_round_index, last_round_index, subkey):
+        condition = False
+        for forward_round in range(first_round_index, last_round_index+1):
+            for state_index in range(self.state_number-1):
+                if self.operation_order[state_index] == 'SR' and condition:
+                    self.propagation_SR_values(self.value_in_structure, attack_side_index, forward_round, state_index, state_index + 1, self.shift_rows)
+                elif self.operation_order[state_index] == 'PB' and condition:
+                    self.propagation_PB_values(self.value_in_structure, attack_side_index, forward_round, state_index, state_index + 1, self.permutations[forward_round%len(self.permutations)])
+                elif self.operation_order[state_index] == 'PB' and condition:
+                    self.propagation_MC_values(self.value_in_structure, self.XOR_in_mc_values, attack_side_index, forward_round, state_index, state_index + 1)
+                elif self.operation_order[state_index] == 'MC' and condition:
+                    self.propagation_MC_values(self.value_in_structure, self.XOR_in_mc_values, attack_side_index, forward_round, state_index, state_index + 1)
+                elif self.operation_order[state_index] == 'MR' and condition:
+                    self.propagation_MR_values(self.value_in_structure, self.XOR_in_mr_values, attack_side_index, forward_round, state_index, state_index + 1)
+                elif self.operation_order[state_index] == 'SB' and condition:
+                    self.propagation_SB_values(self.value_in_structure, attack_side_index, forward_round, state_index, state_index + 1, self.sbox_sizes)
+                elif self.operation_order[state_index] == 'AK':
+                    if forward_round == first_round_index :
+                        condition = True
+                    if forward_round == last_round_index :
+                        condition = False
+                    self.propagation_AK(self.value_in_structure, attack_side_index, subkey, forward_round, state_index, state_index + 1)
+               #else :
+                    #self.everything_all_right = False
+                    #print("One of the round operator name is not recognized in the upper part value propagation")
+            if forward_round != last_round_index:
+                self.propagation_values_NR(self.value_in_structure, attack_side_index, forward_round, forward_round+1)
+
+    def backward_values_propagation_in_structure(self, attack_side_index, first_round_index, last_round_index, subkey):
+        condition = False
+        for backward_round in range(first_round_index, last_round_index+1):
+            for state_index in range(self.state_number-1):
+                if self.operation_order[state_index] == 'SR' and condition:
+                    self.propagation_SR_values(self.value_in_structure, attack_side_index, backward_round, state_index + 1, state_index, self.shift_rows_inverse)
+                elif self.operation_order[state_index] == 'PB' and condition:
+                    self.propagation_PB_values(self.value_in_structure, attack_side_index, backward_round, state_index + 1, state_index, self.permutations_inverse[backward_round%len(self.permutations)])
+                elif self.operation_order[state_index] == 'MC' and condition:
+                    self.propagation_MC_values(self.value_in_structure, self.XOR_in_mc_values, attack_side_index, backward_round, state_index + 1, state_index)
+                elif self.operation_order[state_index] == 'MR' and condition:
+                    self.propagation_MR_values(self.value_in_structure, self.XOR_in_mr_values, attack_side_index, backward_round, state_index + 1, state_index)
+                elif self.operation_order[state_index] == 'SB' and condition:
+                    self.propagation_SB_values(self.value_in_structure, attack_side_index, backward_round, state_index + 1, state_index, self.sbox_sizes)
+                elif self.operation_order[state_index] == 'AK':
+                    if backward_round == first_round_index :
+                        condition = True
+                    if backward_round == last_round_index :
+                        condition = False
+                    self.propagation_AK(self.value_in_structure, attack_side_index, subkey, backward_round, state_index + 1, state_index)
+                #else :
+                    #self.everything_all_right = False
+                    #print("One of the round operator name is not recognized in the lower part value propagation")
+            if backward_round != last_round_index:
+                self.propagation_values_PR(self.value_in_structure, attack_side_index, backward_round+1, backward_round)
     
     #Propagation of differences in upper and lower parts
     def forward_differences_propagation(self, attack_side_index, first_round_index, last_round_index):
@@ -614,7 +674,7 @@ class MILP_bricks():
                 if self.operation_order[state_index] == 'SR' and condition:
                     self.propagation_SR_differences(self.differences, attack_side_index, backward_round, state_index + 1, state_index, self.shift_rows_inverse)
                 elif self.operation_order[state_index] == 'PB' and condition:
-                    self.propagation_PB_differences(self.differences, attack_side_index, backward_round, state_index +1, state_index, self.permutations[backward_round%len(self.permutations)])
+                    self.propagation_PB_differences(self.differences, attack_side_index, backward_round, state_index +1, state_index, self.permutations_inverse[backward_round%len(self.permutations)])
                 elif self.operation_order[state_index] == 'MC' and condition:
                     self.propagation_MC_differences(self.differences, self.XOR_in_mc_differences, attack_side_index, backward_round, state_index + 1, state_index)
                 elif self.operation_order[state_index] == 'MR' and condition:
@@ -624,7 +684,8 @@ class MILP_bricks():
                         condition = True
                     if backward_round == last_round_index :
                         condition = False
-                    self.propagation_SB_differences(self.differences, attack_side_index, backward_round, state_index + 1, state_index, self.sbox_sizes)
+                    if backward_round != self.upper_part_last_round:
+                        self.propagation_SB_differences(self.differences, attack_side_index, backward_round, state_index + 1, state_index, self.sbox_sizes)
                 elif self.operation_order[state_index] == 'AK' and condition:
                     self.free_propagation(self.differences, attack_side_index, backward_round, state_index + 1, state_index)
                 #else :
@@ -641,7 +702,7 @@ class MILP_bricks():
                 if self.operation_order[state_index] == 'SR' and condition:
                     self.propagation_SR_differences(self.differences, attack_side_index, forward_round, state_index, state_index + 1, self.shift_rows)
                 elif self.operation_order[state_index] == 'PB' and condition:
-                    self.propagation_PB_values(self.differences, attack_side_index, forward_round, state_index, state_index +1, self.permutations[forward_round%len(self.permutations)])
+                    self.propagation_PB_differences(self.differences, attack_side_index, forward_round, state_index, state_index +1, self.permutations[forward_round%len(self.permutations)])
                 elif self.operation_order[state_index] == 'MC' and condition:
                     self.propagation_MC_values(self.differences, self.XOR_in_mc_differences, attack_side_index, forward_round, state_index, state_index + 1)
                 elif self.operation_order[state_index] == 'MR' and condition:
@@ -667,13 +728,12 @@ class MILP_bricks():
                 if self.operation_order[state_index] == 'SR' and condition:
                     self.propagation_SR_differences(self.differences, attack_side_index, backward_round, state_index + 1, state_index, self.shift_rows_inverse)
                 elif self.operation_order[state_index] == 'PB' and condition:
-                    self.propagation_PB_values(self.differences, attack_side_index, backward_round, state_index+1, state_index, self.permutations[backward_round%len(self.permutations)])
+                    self.propagation_PB_differences(self.differences, attack_side_index, backward_round, state_index+1, state_index, self.permutations_inverse[backward_round%len(self.permutations)])
                 elif self.operation_order[state_index] == 'MC' and condition:
                     self.propagation_MC_values(self.differences, self.XOR_in_mc_differences, attack_side_index, backward_round, state_index + 1, state_index)
                 elif self.operation_order[state_index] == 'MR' and condition:
                     self.propagation_MR_values(self.differences, self.XOR_in_mr_differences, attack_side_index, backward_round, state_index + 1, state_index)
-                elif self.operation_order[state_index] == 'SB' and condition:
-                    
+                elif self.operation_order[state_index] == 'SB' and condition:              
                     self.propagation_SB_differences_structure(self.differences, attack_side_index, backward_round, state_index + 1, state_index, self.sbox_sizes)
                 elif self.operation_order[state_index] == 'AK':
                     if backward_round == first_round_index :

@@ -12,7 +12,13 @@ class Model_MILP_key_schedule(MILP_bricks):
     def master_key(self):
         self.master_key = self.model.addVars(range(8), range(16), range(3), vtype=gp.GRB.BINARY, name=f'master_key')
 
-        self.model.addConstrs((gp.quicksum(self.master_key[key_index, bit_index, value] for value in range(3)) == 1
+        self.model.addConstrs((gp.quicksum(self.master_key[key_index, bit_index, value] for value in range(3)) >= 1
+                              for key_index in range(8)
+                              for bit_index in range(16)), 
+                              name="unique value in master key")
+        
+        self.model.addConstrs((self.master_key[key_index, bit_index, 0] + self.master_key[key_index, bit_index, value] <= 1
+                              for value in range(1,3)
                               for key_index in range(8)
                               for bit_index in range(16)), 
                               name="unique value in master key")
@@ -38,12 +44,12 @@ class Model_MILP_key_schedule(MILP_bricks):
         self.master_key()
        
        #link between subkey and master key
-        self.model.addConstrs((self.upper_subkey[round_index,0,  4*word_index + index +2] == self.master_key[((round_index-round_index%2)%8)+index, word_index, 1]
+        self.model.addConstrs((self.upper_subkey[round_index,0,  (4*word_index - index +3 +(index*4+(1-index)*24)*(round_index%4))%64] == self.master_key[2*(round_index)%8+index, word_index, 1]
                               for round_index in range(self.total_round)
                               for word_index in range(16)
                               for index in range(2)), name='upper_subkey and master key direct link')
         
-        self.model.addConstrs((self.lower_subkey[round_index, 0, 4*word_index + index +2] == self.master_key[((round_index-round_index%2)%8)+index, word_index, 2]
+        self.model.addConstrs((self.lower_subkey[round_index, 0, (4*word_index - index +3 +(index*4+(1-index)*24)*(round_index%4))%64] == self.master_key[2*(round_index)%8+index, word_index, 2]
                               for round_index in range(self.total_round)
                               for word_index in range(16)
                               for index in range(2)), name='upper_subkey and master key direct link')

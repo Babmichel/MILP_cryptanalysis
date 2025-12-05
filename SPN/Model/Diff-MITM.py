@@ -25,12 +25,16 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.lower_part_first_round = self.upper_part_last_round + self.distinguisher_rounds
         self.lower_part_last_round = self.lower_part_first_round + self.lower_rounds
 
+        self.key_size = cipher_parameters.get('key_size', self.block_size*2)
+        self.key_space_size = attack_parameters.get('key_space_size', self.key_size)
+
         self.total_rounds = self.structure_rounds + self.upper_rounds + self.lower_rounds + self.distinguisher_rounds
         self.optimal_complexity = attack_parameters.get('optimal_complexity', False)
 
         self.trunc_diff = attack_parameters.get('truncated_differential', False)
 
     #Variables initialisation
+    #values to construct the structure and the upper and lower parts
     def value_variables_initialisation(self):
         self.values = self.model.addVars(range(2), range(2),
                                             range(self.total_rounds),
@@ -57,6 +61,34 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                              for row in range(self.block_row_size) 
                              for column in range(self.block_column_size)), 
                              name='same fix elements in both propagation')
+        
+        #value in the structure for the matching differences
+        self.value_in_structure=self.model.addVars(range(2), range(2),
+                                            range(self.structure_first_round_index, self.structure_last_round_index+1),
+                                            range(self.state_number),
+                                            range(self.block_row_size),
+                                            range(self.block_column_size),
+                                            range(3),
+                                            vtype=gp.GRB.BINARY,
+                                            name='value_in_structure')
+
+        self.model.addConstrs((gp.quicksum(self.value_in_structure[part, sens, round_index, state_index, row, column, value] for value in range(3)) == 1 
+                                for part in range(2)
+                                for sens in range(2)
+                                for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
+                                for state_index in range(self.state_number) 
+                                for row in range(self.block_row_size) 
+                                for column in range(self.block_column_size)), 
+                                name='unique_value_in_state_constraints')
+        
+        self.model.addConstrs((self.value_in_structure[part, sens, round_index, state_index, row, column, 2] == 0
+                             for part in range(2)
+                             for sens in range(2)
+                             for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
+                             for state_index in range(self.state_number) 
+                             for row in range(self.block_row_size) 
+                             for column in range(self.block_column_size)), 
+                             name='no fix for value propagation')
         
         #MC fix values
         for element in self.operation_order:
@@ -109,6 +141,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                                         name='same fix for backward and forward propagation')
     
     def difference_variables_initialisation(self):
+        #Difference propagation
         self.differences = self.model.addVars(range(2), range(2),
                                             range(self.total_rounds),
                                             range(self.state_number),
@@ -369,7 +402,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.binary_matching_differences_quantity = self.model.addVars(range(self.structure_rounds-1), vtype=gp.GRB.BINARY, name="match quantity_binary")
         
 
-        self.model.addConstrs((self.matching_differences[round_index] == gp.quicksum(self.differences[0, 1, round_index+self.structure_first_round_index, self.operation_order.index('SB'), row, column, 1]*self.differences[1, 0, round_index+self.structure_first_round_index, self.operation_order.index('SB')+i, row, column, 1]
+        self.model.addConstrs((self.matching_differences[round_index] == gp.quicksum(self.differences[0, 1, round_index+self.structure_first_round_index, self.operation_order.index('SB')+i, row, column, 1]*self.differences[1, 0, round_index+self.structure_first_round_index, self.operation_order.index('SB')+i, row, column, 1]
                                                                       for i in range(2)
                                                                       for row in range(self.block_row_size)
                                                                       for column in range(self.block_column_size))
@@ -401,6 +434,37 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                                                                 for row in range(self.block_row_size)
                                                                 for vector in self.row_range[sens][round_index%len(self.matrixes[sens])]) 
 
+        #Propagation of values for difference matching
+        #Not interest in propagation of bacward lower values
+        self.model.addConstrs((self.value_in_structure[1, 1, round_index, state, row, column, 0] == 1
+                               for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
+                               for state in range(self.state_number)
+                               for row in range(self.block_row_size)
+                               for column in range(self.block_column_size)), 
+                               name = "no bacward lower values propagation in the structure for matching differences")
+        
+        #Not interest in propagation of bacward lower values
+        self.model.addConstrs((self.value_in_structure[0, 0, round_index, state, row, column, 0] == 1
+                               for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
+                               for state in range(self.state_number)
+                               for row in range(self.block_row_size)
+                               for column in range(self.block_column_size)), 
+                               name = "no bacward lower values propagation in the structure for matching differences")
+        
+        #first state of the begining of the structure is know by the upper part :
+        self.model.addConstrs((self.value_in_structure[1, 0, 0, 0, row, column, 1]==1
+                             for row in range(self.block_row_size)
+                             for column in range(self.block_column_size)), 
+                             name = "first state of structure is know by the lower part")
+        
+        self.model.addConstrs((self.value_in_structure[0, 1, self.structure_last_round_index, self.state_number-1, row, column, 1]==1
+                             for row in range(self.block_row_size)
+                             for column in range(self.block_column_size)), 
+                             name = "first state of structure is know by the lower part")
+        
+        self.forward_values_propagation_in_structure(1, self.structure_first_round_index, self.structure_last_round_index, self.lower_subkey)
+        self.backward_values_propagation_in_structure(0, self.structure_first_round_index, self.structure_last_round_index, self.upper_subkey)
+               
     def upper_part(self):
         ### Values
         #Variable initialisation 
@@ -527,11 +591,11 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         for row in range(self.block_row_size):
             for column in range(self.block_column_size):
                 if [row, column] in self.distinguisher_output:
-                    self.model.addConstr(self.differences[1, 0, self.lower_part_first_round, self.operation_order.index('SB')+1, row, column, 1] == 1,
+                    self.model.addConstr(self.differences[1, 0, self.lower_part_first_round, self.operation_order.index('SB'), row, column, 1] == 1,
                                     name='fix differences active in the output of the distinguisher')
                     
                 else :
-                    self.model.addConstr(self.differences[1, 0, self.lower_part_first_round, self.operation_order.index('SB')+1, row, column, 0] == 1,
+                    self.model.addConstr(self.differences[1, 0, self.lower_part_first_round, self.operation_order.index('SB'), row, column, 0] == 1,
                                     name='fix differences active in the output of the distinguisher')
         
         self.forward_differences_propagation(1, self.lower_part_first_round, self.lower_part_last_round)
@@ -569,12 +633,25 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.time_complexity_down = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_down")
         self.time_complexity_match = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_match")
 
-        self.model.addConstr(self.time_complexity_up == self.upper_key_guess + self.state_test_up + self.probabilist_annulation_down + self.max_fix_up_fix_down- self.fix_up)
-        self.model.addConstr(self.time_complexity_down == self.lower_key_guess + self.state_test_down + self.probabilist_annulation_up + self.max_fix_up_fix_down- self.fix_down
-                              + self.active_start_down - self.active_start_up)
-        self.model.addConstr(self.time_complexity_match == self.upper_key_guess + self.lower_key_guess - self.common_key_guess + self.active_start_down + self.state_test_up + self.state_test_down +
-                            self.block_row_size*self.block_row_size - self.common_fix - self.matching_differences_quantity + self.max_fix_up_fix_down - self.fix_up - self.fix_down)
-    
+        self.key_guess_quantity = self.model.addVar(vtype= gp.GRB.INTEGER, name = "time_complexity_up")
+        if self.structure_rounds <=2 :
+            self.model.addConstr(self.key_guess_quantity == self.upper_key_guess + self.lower_key_guess - self.common_key_guess + (self.matching_differences_quantity - self.common_fix)/2)
+        else :
+            self.model.addConstr(self.key_guess_quantity == self.upper_key_guess + self.lower_key_guess - self.common_key_guess + (self.matching_differences_quantity - self.common_fix))
+        
+        T_complexity_up = self.upper_key_guess + self.state_test_up + self.probabilist_annulation_down + self.max_fix_up_fix_down- self.fix_up
+        T_complexity_down = self.lower_key_guess + self.state_test_down + self.probabilist_annulation_up + self.max_fix_up_fix_down- self.fix_down
+        T_complexity_match = (self.upper_key_guess + self.lower_key_guess - self.common_key_guess + self.state_test_up + self.state_test_down +
+                             self.block_row_size*self.block_column_size+ 2*self.max_fix_up_fix_down - self.fix_up - self.fix_down -self.common_fix -self.matching_differences_quantity +
+                              self.key_space_size - self.key_guess_quantity)
+
+        if self.trunc_diff :
+            T_complexity_down += self.active_start_down - self.active_start_up
+            T_complexity_match += self.active_start_down
+
+        self.model.addConstr(self.time_complexity_up == T_complexity_up)
+        self.model.addConstr(self.time_complexity_down == T_complexity_down)
+        self.model.addConstr(self.time_complexity_match == T_complexity_match)
 
         self.model.addConstr(self.time_complexity_down <= self.time_complexity, name="suboptimal time complexity down")
         self.model.addConstr(self.time_complexity_up <= self.time_complexity, name="suboptimal time complexity up")
@@ -632,8 +709,8 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         #Not optimal to repeat the attack more than the number of time needed to verify the probability of the trail
         self.model.addConstr(self.distinguisher_probability + self.word_size*self.common_fix >= self.block_size+1)
         
-        #self.model.addConstr(self.state_test_up==1, name="at least one state test up")
-        #self.model.addConstr(self.state_test_down==1, name="at least one state test down")
+        #self.model.addConstr(self.state_test_up==0, name="at least one state test up")
+        #self.model.addConstr(self.state_test_down==0, name="at least one state test down")
         #self.model.addConstr(self.probabilist_annulation_down==0, name="at least one pb key down")
         #self.model.addConstr(self.probabilist_annulation_up==0, name="at least one pb key up")
         #self.model.addConstr(self.matching_differences_quantity>=2, name="at least 2 matching differences")
@@ -666,6 +743,8 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
             print("Common key bits guessed :", self.common_key_guess.X)
             print("Matching differences :", self.matching_differences_quantity.X)
             print("Complexity match :", self.time_complexity_match.X)
+            print("total_key_quantity_guess :", self.key_guess_quantity.X)
+            print("attack_key_space :", self.key_space_size)
             print("\n")
             print("OVERALL :")
             print("Time complexity :", self.word_size*self.time_complexity.X+self.distinguisher_probability)
@@ -779,14 +858,10 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                                     print(self.values[0, 0, round_index, state_index, row, column, 2])
                                     print(self.values[1, 1, round_index, state_index, row, column, 1])
                             line += "|"
-                            if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                                line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                            elif row == self.block_row_size//2:
-                                line += "->"
-                            elif row == self.block_row_size//2 - 1 and state_index == self.state_number -1:
-                                line += "NR"
+                            if row == self.block_row_size//2 and state_index != self.state_number-1:
+                                line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}->"
                             else :
-                                line += "  "
+                                line += "    "
                             line += "             "
                             line += "|"
                             for column in range(self.block_column_size):
@@ -799,14 +874,10 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                                 elif self.differences[0, 1, round_index, state_index, row, column, 1].X == 1 and self.differences[1, 0, round_index, state_index, row, column, 1].X == 1:
                                     line+="\033[95m ■ \033[0m"
                             line += "|"
-                            if row == self.block_row_size//2 - 1 and state_index != self.state_number -1:
-                                line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}"
-                            elif row == self.block_row_size//2:
-                                line += "->"
-                            elif row == self.block_row_size//2 - 1 and state_index == self.state_number -1:
-                                line += "NR"
+                            if row == self.block_row_size//2 and state_index != self.state_number-1:
+                                line += f"{self.operation_order[state_index][0]}{self.operation_order[state_index][1]}->"
                             else :
-                                line += "  "
+                                line += "    "
                             line += ""
                             print(line)
                         print("")

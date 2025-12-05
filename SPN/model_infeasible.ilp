@@ -1,6 +1,6 @@
 \ Model _copy
 \ LP format - for model browsing. Use MPS format to capture full model detail.
-\ Signature: 0xab85f285a1efff75
+\ Signature: 0xded37c2435028a59
 Minimize multi-objectives
   OBJ0: Priority=10 Weight=1 AbsTol=1e-06 RelTol=0
   
@@ -25,18 +25,17 @@ Minimize multi-objectives
   OBJ10: Priority=0 Weight=1 AbsTol=1e-06 RelTol=0
   
 Subject To
- upper_subkey_is_not_applied_on_the_two_first_bit_of_each_sbox[2,4,1]:
-   upper_subkey[2,0,5] = 1
- upper_subkey_is_not_applied_on_the_two_first_bit_of_each_sbox[0,4,1]:
-   lower_subkey[0,0,5] = 1
- unique_value_in_master_key[0,3]: master_key[0,3,0] + master_key[0,3,1]
-   + master_key[0,3,2] = 1
- upper_subkey_and_master_key_direct_link[2,3,0]: upper_subkey[2,0,5]
-   - master_key[0,3,1] = 0
- upper_subkey_and_master_key_direct_link[0,3,0]: lower_subkey[0,0,5]
-   - master_key[0,3,2] = 0
+ unique_value_in_state_constraints[0,0,0,0,0,0]:
+   value_in_structure[0,0,0,0,0,0,0] + value_in_structure[0,0,0,0,0,0,1]
+   + value_in_structure[0,0,0,0,0,0,2] = 1
+ no_fix_for_value_propagation[0,0,0,0,0,0]:
+   value_in_structure[0,0,0,0,0,0,2] = 0
+ no_bacward_lower_values_propagation_in_the_structure_for_matching_differences[0,0,0,0,0]:
+   value_in_structure[0,0,0,0,0,0,0] = 0
+ no_bacward_lower_values_propagation_in_the_structure_for_matching_differences[0,0,0,0,1]:
+   value_in_structure[0,0,0,0,0,0,1] = 0
 Bounds
 Binaries
- upper_subkey[2,0,5] lower_subkey[0,0,5] master_key[0,3,0]
- master_key[0,3,1] master_key[0,3,2]
+ value_in_structure[0,0,0,0,0,0,0] value_in_structure[0,0,0,0,0,0,1]
+ value_in_structure[0,0,0,0,0,0,2]
 End

@@ -514,10 +514,10 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
             for column in range(self.block_column_size):
                 if [row, column] in self.distinguisher_input :
                     self.model.addConstr(self.differences[0, 1, self.upper_part_last_round,self.operation_order.index('SB'), row, column, 1] == 1,
-                                name='fix differcences active in the input of the structure')
+                                name='fix differcences active in the input of the distinguisher')
                 else :
                     self.model.addConstr(self.differences[0, 1, self.upper_part_last_round,self.operation_order.index('SB'), row, column, 0] == 1,
-                                name='fix differcences active in the input of the structure')
+                                name='fix differcences active in the input of the distinguisher')
         
         self.backward_differences_propagation(0, self.upper_part_first_round, self.lower_part_last_round)
 
@@ -634,20 +634,18 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.time_complexity_match = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_match")
 
         self.key_guess_quantity = self.model.addVar(vtype= gp.GRB.INTEGER, name = "time_complexity_up")
-        if self.structure_rounds <=2 :
+        if (self.structure_rounds <=1 and self.cipher_name == 'SKINNY') or (self.structure_rounds <=2 and self.cipher_name == 'GIFT'):
             self.model.addConstr(self.key_guess_quantity == self.upper_key_guess + self.lower_key_guess - self.common_key_guess + (self.matching_differences_quantity - self.common_fix)/2)
         else :
             self.model.addConstr(self.key_guess_quantity == self.upper_key_guess + self.lower_key_guess - self.common_key_guess + (self.matching_differences_quantity - self.common_fix))
         
         T_complexity_up = self.upper_key_guess + self.state_test_up + self.probabilist_annulation_down + self.max_fix_up_fix_down- self.fix_up
         T_complexity_down = self.lower_key_guess + self.state_test_down + self.probabilist_annulation_up + self.max_fix_up_fix_down- self.fix_down
-        T_complexity_match = (self.upper_key_guess + self.lower_key_guess - self.common_key_guess + self.state_test_up + self.state_test_down +
-                             self.block_row_size*self.block_column_size+ 2*self.max_fix_up_fix_down - self.fix_up - self.fix_down -self.common_fix -self.matching_differences_quantity +
-                              self.key_space_size - self.key_guess_quantity)
+        T_complexity_match = self.key_space_size//self.word_size - self.matching_differences_quantity #+ self.state_test_up + self.state_test_down
 
         if self.trunc_diff :
-            T_complexity_down += self.active_start_down - self.active_start_up
-            T_complexity_match += self.active_start_down
+            T_complexity_down += self.distinguisher_output_quantity - self.distinguisher_input_quantity
+            T_complexity_match += self.distinguisher_output_quantity
 
         self.model.addConstr(self.time_complexity_up == T_complexity_up)
         self.model.addConstr(self.time_complexity_down == T_complexity_down)
@@ -657,9 +655,11 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.model.addConstr(self.time_complexity_up <= self.time_complexity, name="suboptimal time complexity up")
         self.model.addConstr(self.time_complexity_match <= self.time_complexity, name="suboptimal time complexity match")
 
-        self.model.addConstr(self.memory_complexity == self.upper_key_guess + self.state_test_up - self.common_fix + (self.block_size//self.word_size - self.fix_up),
+        # self.model.addConstr(self.time_complexity_match + self.time_complexity_down +self.time_complexity_up <= self.time_complexity, name="suboptimal time complexity match")
+
+        self.model.addConstr(self.memory_complexity <= self.upper_key_guess + self.state_test_up - self.common_fix + (self.block_size//self.word_size - self.fix_up),
                               name='memory_complexity_up_definition')
-        self.model.addConstr(self.memory_complexity == self.lower_key_guess + self.state_test_down - self.common_fix + (self.block_size//self.word_size - self.fix_down),
+        self.model.addConstr(self.memory_complexity <= self.lower_key_guess + self.state_test_down - self.common_fix + (self.block_size//self.word_size - self.fix_down),
                               name='memory_complexity_down_definition')
         
         self.model.addConstr(self.data_complexity == self.block_size//self.word_size - gp.quicksum(self.values[1, 1, 0, 0, row, column, 2] for row in range(self.block_row_size) for column in range(self.block_column_size)), name='data_definition')
@@ -687,21 +687,22 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.complexities()
 
         self.model.setObjectiveN(self.time_complexity, index=0, priority=10)
-        #self.model.setObjectiveN(self.data_complexity, index=1, priority=8)
-        #self.model.setObjectiveN(self.memory_complexity, index=2, priority=5)
+        self.model.setObjectiveN(self.data_complexity, index=1, priority=8)
+        self.model.setObjectiveN(-self.memory_complexity, index=2, priority=5)
         self.model.setObjectiveN(self.state_test_up+self.state_test_down, index = 3, priority=2)
     
     #Attack build
     def attack(self):
         self.value_variables_initialisation()
         self.difference_variables_initialisation()
-
+        
         self.structure()
 
         self.upper_part()
 
         self.lower_part()
 
+        
         #global constraints
         #The total probability of the attack cannot exceed the size of the block
         self.model.addConstr(self.word_size*self.probabilist_annulation_down+self.word_size*self.probabilist_annulation_up+self.distinguisher_probability <= self.block_size)
@@ -730,21 +731,34 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
             print("Probabilist annulation up :", self.probabilist_annulation_up.X)
             print("Key bits guessed up :", self.upper_key_guess.X)
             print("Complexity up :", self.time_complexity_up.X)
+            print("Total complexity up :", self.time_complexity_up.X*self.word_size + self.distinguisher_probability)
             print("\n")
             print("LOWER PART :")
             print("Fix down :", self.fix_down.X)
             print("State tested down :", self.state_test_down.X)
             print("Probabilist annulation down :", self.probabilist_annulation_down.X)
             print("Key bits guessed down :", self.lower_key_guess.X)
+            if self.trunc_diff :
+                print('delta_in - delta_out :', self.distinguisher_output_quantity - self.distinguisher_input_quantity)
             print("Complexity down :", self.time_complexity_down.X)
+            print("Total complexity up :", self.time_complexity_down.X*self.word_size + self.distinguisher_probability)
             print("\n")
             print("MATHC PART :")
-            print("Common fix :", self.common_fix.X)
-            print("Common key bits guessed :", self.common_key_guess.X)
             print("Matching differences :", self.matching_differences_quantity.X)
-            print("Complexity match :", self.time_complexity_match.X)
-            print("total_key_quantity_guess :", self.key_guess_quantity.X)
             print("attack_key_space :", self.key_space_size)
+            if self.trunc_diff :
+                print("truncated end :", self.distinguisher_output_quantity)
+            print("Complexity match :", self.time_complexity_match.X)
+            print("Total complexity up :", self.time_complexity_match.X*self.word_size + self.distinguisher_probability)
+            print("\n")
+            print("STRUCTURE Parameters")
+            print("Common fix :", self.common_fix.X)
+            print("max Fin Fout :", self.max_fix_up_fix_down.X )
+            print('\n')
+            print('Information on the key :')
+            print("total_key_quantity_guess :", self.key_guess_quantity.X)
+            print("total_key_quantity_guess :", self.common_key_guess.X)
+
             print("\n")
             print("OVERALL :")
             print("Time complexity :", self.word_size*self.time_complexity.X+self.distinguisher_probability)
@@ -885,7 +899,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                 if round_index == self.structure_last_round_index:
                     print("------------------------------------------------------------- FIN STRUCTURE -------------------------------------------------------------")
                 if round_index == self.upper_part_last_round:
-                    print("------------------------------------------------------------- DISTINGUISHER -------------------------------------------------------------")
+                    print(f"------------------------------------------------------------- DISTINGUISHER - {self.distinguisher_rounds} -------------------------------------------------------------")
 
                 # print("\n lower forward propagation")
                 # for row in range(self.block_row_size):
@@ -1044,6 +1058,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                 #     line=""
                 
                 if 'MC' in self.operation_order:
+                    line=""
                     print('Fix values through MC')
                     for column in range(self.block_column_size):
                         for vector in self.column_range[0][round_index%len(self.matrixes[0])]:
@@ -1067,6 +1082,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                 line=""
                 print("\n")
                 if 'MR' in self.operation_order:
+                    line=""
                     print('Fix values through MC')
                     for row in range(self.block_row_size):
                         for vector in self.row_range[0][round_index%len(self.matrixes[0])]:
@@ -1075,6 +1091,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                                     line += f"\033[91m c:{column} / {vector} : F\033[0m \n"
                                 if self.XOR_in_mr_values[(1, 0, round_index, row)+vector+(2,)].X == 1 :
                                     line += f"\033[94m c:{column} / {tuple(map(int,np.bitwise_xor.reduce(np.array(vector)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0)))} : F\033[0m \n"
+                    print(line)
                     line=""
                     print('Fix differences through MR')
                     for row in range(self.block_row_size):
@@ -1087,7 +1104,6 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                     print(line)
                     line=""
                     line+="\n"
-                print(line)
                 line=""
                 print("\n")
         print("END OF THE ATTACK")

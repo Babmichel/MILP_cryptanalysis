@@ -4,8 +4,8 @@ cipher_parameters = {
 
     #block parameters
     "block_size": 128,
-    "block_column_size": 32,
-    "bloc_row_size": 1,
+    "column_size": 32,
+    "row_size": 4,
 
     #key parameters
     "key_size": 256,

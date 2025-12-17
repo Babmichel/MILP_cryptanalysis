@@ -641,7 +641,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         
         T_complexity_up = self.upper_key_guess + self.state_test_up + self.probabilist_annulation_down + self.max_fix_up_fix_down- self.fix_up
         T_complexity_down = self.lower_key_guess + self.state_test_down + self.probabilist_annulation_up + self.max_fix_up_fix_down- self.fix_down
-        T_complexity_match = self.key_space_size//self.word_size - self.matching_differences_quantity #+ self.state_test_up + self.state_test_down
+        T_complexity_match = self.key_space_size//self.word_size - self.matching_differences_quantity + self.state_test_up + self.state_test_down
 
         if self.trunc_diff :
             T_complexity_down += self.distinguisher_output_quantity - self.distinguisher_input_quantity
@@ -764,6 +764,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
             print("Time complexity :", self.word_size*self.time_complexity.X+self.distinguisher_probability)
             print("Memory complexity :", self.word_size*self.memory_complexity.X)
             print("Data complexity :", self.word_size*self.data_complexity.X)
+            print("Attaque Valide :", self.time_complexity.X*self.word_size + self.distinguisher_probability <= self.key_space_size)
             print("\n")
         else :
             print('The Model at no been optimize yet')

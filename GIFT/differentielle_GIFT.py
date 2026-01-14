@@ -29,9 +29,9 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
     other elements of informations depends on the value of multi_search 
     """
     options = {
-            "WLSACCESSID" : "ffd7aab1-ddce-4db1-b37a-cf70288fb87c",
-            "WLSSECRET" : "1746d0d5-a916-47fb-b0aa-9f67cb800c57",
-            "LICENSEID" : 2602460 }
+            'WLSACCESSID': '58d21f89-b596-40cf-bd3e-52b062898036',
+    	    'WLSSECRET': '21c59555-2f72-4b43-a903-efbf7a725c2d',
+            'LICENSEID': 2534357 }
     
     with gp.Env(params=options) as env, gp.Model(env=env) as model:
         
@@ -201,17 +201,17 @@ def diff_gift(round_number = 10, multi_search = False, number_of_solution = 1000
         
 
         #Fixing the differences of the key
-        """
+        
         for key_elem in [0, 1, 3, 4, 5, 6, 7]:
             for bit in range(16):
                 model.addConstr(key[key_elem, bit] == 0, name = f"fixing the key element to 0 : {key_elem}-{bit}")
 
         for bit in range(16):
-            if bit in [10, 12]:
+            if bit in []:
                 model.addConstr(key[2, bit] == 1, name = f"fixing the key element to 1 : 3-{bit}")
             else :
               model.addConstr(key[2, bit] == 0, name = f"fixing the key element to 0 : 3-{bit}")
-        """
+        
 
         #Counting information
         key_diff_count = gp.quicksum(key[k, index] for k in range(8) for index in range(16)) #quantity of differences in the key 

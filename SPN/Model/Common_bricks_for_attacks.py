@@ -37,12 +37,12 @@ class MILP_bricks():
             self.shift_rows_inverse = [(self.block_column_size - shift) % self.block_column_size for shift in self.shift_rows]
         
         if matrixes != None:
-            # matrixes_inverses = []
-            # for element in matrixes : #Computing the inverse of the matrixes
-            #     M = Matrix(GF(2), element)
-            #     M_inv = M.inverse()
-            #     matrixes_inverses.append([[int(M_inv[j][i])for i in range(M_inv.ncols())] for j in range(M_inv.nrows())])
-            # self.matrixes = [matrixes, matrixes_inverses]
+            matrixes_inverses = []
+            for element in matrixes : #Computing the inverse of the matrixes
+                M = Matrix(GF(2), element)
+                M_inv = M.inverse()
+                matrixes_inverses.append([[int(M_inv[j][i])for i in range(M_inv.ncols())] for j in range(M_inv.nrows())])            
+            self.matrixes = [matrixes, matrixes_inverses]
             
             self.matrixes_sets = {s: [set(map(tuple, round_mc)) for round_mc in self.matrixes[s]]for s in (0,1)}
             self.matrixes_index_map = {s: [{tuple(v): idx for idx, v in enumerate(round_mc)}for round_mc in self.matrixes[s]]for s in (0,1)}
@@ -92,7 +92,7 @@ class MILP_bricks():
             self.model.setParam("PreSparsify", 1) #AND and OR constraints sparsification
             self.model.setParam("Aggregate", 0) #AND and OR constraints aggregation
             self.model.setParam("MIPFocus", 1) #balances search between feasible solutions and optimality proof
-            self.model.setParam("Threads", 12) 
+            #self.model.setParam("Threads", 16) 
             self.model.setParam("ConcurrentMIP", 1) #exploration paralléle
 
         # Double Check of cipher model

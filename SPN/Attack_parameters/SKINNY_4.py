@@ -2,7 +2,7 @@ attack_parameters = {
     "Cipher": "SKINNY",
     "Key_schedule": "SKINNY",
     "attack_type": "Diff-MITM",
-    "structure_rounds": 2,
+    "structure_rounds": 3,
     "upper_rounds": 6,
     "lower_rounds": 6,
     "distinguisher_probability" : 54,
@@ -11,5 +11,6 @@ attack_parameters = {
     "distinguisher_inputs" : [[2, 2]],
     "distinguisher_outputs": [[2, 2]],
     "optimal_complexity": False,
-    "truncated_differential" : False
+    "truncated_differential" : False,
+    "filter_state_test": True
 }

@@ -10,7 +10,13 @@ cipher_parameters = {
     #key parameters
     "key_size": 256,
     "key_column_size": 32,
-    "key_row_size": 1,
+    "key_row_size": 4,
+
+    #Key schedule parameters
+    "a": 1,
+    "b": 3,
+    "c": 9,
+    "d": 28,
 
     #Round function parameters
     "operation_order": ['AK', 'SB', 'MR'],

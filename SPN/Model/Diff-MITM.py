@@ -33,6 +33,8 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
 
         self.trunc_diff = attack_parameters.get('truncated_differential', False)
 
+        self.filter_state_test = attack_parameters.get('filter_state_test', False)
+
     #Variables initialisation
     #values to construct the structure and the upper and lower parts
     def value_variables_initialisation(self):
@@ -642,7 +644,9 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         T_complexity_up = self.upper_key_guess + self.state_test_up + self.probabilist_annulation_down + self.max_fix_up_fix_down- self.fix_up
         T_complexity_down = self.lower_key_guess + self.state_test_down + self.probabilist_annulation_up + self.max_fix_up_fix_down- self.fix_down
         T_complexity_match = self.key_space_size//self.word_size - self.matching_differences_quantity + self.state_test_up + self.state_test_down
-
+        if self.filter_state_test :
+            T_complexity_match += -self.state_test_up -self.state_test_down
+    
         if self.trunc_diff :
             T_complexity_down += self.distinguisher_output_quantity - self.distinguisher_input_quantity
             T_complexity_match += self.distinguisher_output_quantity
@@ -663,6 +667,8 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                               name='memory_complexity_down_definition')
         
         self.model.addConstr(self.data_complexity == self.block_size//self.word_size - gp.quicksum(self.values[1, 1, 0, 0, row, column, 2] for row in range(self.block_row_size) for column in range(self.block_column_size)), name='data_definition')
+        
+        self.model.addConstr(self.data_complexity >= self.distinguisher_probability//self.word_size, name='data_definition')
         
     def objective_for_display(self):
         self.for_display = self.model.addVar(vtype= gp.GRB.INTEGER, name = "for_display")
@@ -688,7 +694,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
 
         self.model.setObjectiveN(self.time_complexity, index=0, priority=10)
         self.model.setObjectiveN(self.data_complexity, index=1, priority=8)
-        self.model.setObjectiveN(-self.memory_complexity, index=2, priority=5)
+        #self.model.setObjectiveN(-self.memory_complexity, index=2, priority=5)
         self.model.setObjectiveN(self.state_test_up+self.state_test_down, index = 3, priority=2)
     
     #Attack build
@@ -741,7 +747,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
             if self.trunc_diff :
                 print('delta_in - delta_out :', self.distinguisher_output_quantity - self.distinguisher_input_quantity)
             print("Complexity down :", self.time_complexity_down.X)
-            print("Total complexity up :", self.time_complexity_down.X*self.word_size + self.distinguisher_probability)
+            print("Total complexity down :", self.time_complexity_down.X*self.word_size + self.distinguisher_probability)
             print("\n")
             print("MATHC PART :")
             print("Matching differences :", self.matching_differences_quantity.X)
@@ -749,7 +755,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
             if self.trunc_diff :
                 print("truncated end :", self.distinguisher_output_quantity)
             print("Complexity match :", self.time_complexity_match.X)
-            print("Total complexity up :", self.time_complexity_match.X*self.word_size + self.distinguisher_probability)
+            print("Total complexity match :", self.time_complexity_match.X*self.word_size + self.distinguisher_probability)
             print("\n")
             print("STRUCTURE Parameters")
             print("Common fix :", self.common_fix.X)

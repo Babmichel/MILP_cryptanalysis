@@ -8,10 +8,10 @@ class Model_MILP_key_schedule(MILP_bricks):
         self.key_size = cipher_parameters.get('key_size', 256)
         self.total_round = total_round
         self.model=model
-        self.a = 1
-        self.b = 3
-        self.c = 9
-        self.d = 28
+        self.a = cipher_parameters.get('a', 1)
+        self.b = cipher_parameters.get('b', 3)
+        self.c = cipher_parameters.get('c', 9)
+        self.d = cipher_parameters.get('d', 28)
 
     def master_key_initialisation(self):
         self.master_key = self.model.addVars(range(self.total_round), range(8), range(self.key_size//8), range(3),
@@ -26,7 +26,7 @@ class Model_MILP_key_schedule(MILP_bricks):
         self.model.addConstrs((self.master_key[round_index, row, column, 0] + self.master_key[round_index, row, column, value] <=1
                               for round_index in range(self.total_round)
                               for row in range(8)
-                              for column in range(32)
+                              for column in range(self.key_size//8)
                               for value in [1, 2]), 
                               name = "master_key_cannot_be_known_and_unknown")
 
@@ -122,7 +122,7 @@ class Model_MILP_key_schedule(MILP_bricks):
             for row in range(8):
                 line=''
                 line += '|'
-                for column in range(32):
+                for column in range(self.key_size//8):
                     if self.master_key[round_index, row, column, 0].X == 1:
                         line += "\033[90m ■ \033[0m"
                     elif self.master_key[round_index, row, column, 1].X == 1 and self.master_key[round_index, row, column, 2].X == 0 :

@@ -9,7 +9,7 @@ attack_parameters = {
     "distinguisher_rounds" : 13, 
     "key_space_size": 124,
     "distinguisher_inputs" : [[0, 54], [0, 62]],
-    "distinguisher_outputs": [[0, 31], [0, 29]],
+    "distinguisher_outputs": [[0, 31], [0, 29], [0, 63], [0, 61]],
     "optimal_complexity": True,
     "truncated_differential" : False
 }

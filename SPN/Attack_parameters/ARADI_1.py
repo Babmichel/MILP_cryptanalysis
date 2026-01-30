@@ -11,5 +11,6 @@ attack_parameters = {
     "distinguisher_inputs" : [[1, 0], [1, 19], [1, 30]],
     "distinguisher_outputs": [[0, 4], [0, 9], [0, 27]],
     "optimal_complexity": False,
-    "truncated_differential" : False
+    "truncated_differential" : False,
+    "filter_state_test": True
 }

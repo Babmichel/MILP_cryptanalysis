@@ -2,6 +2,7 @@ import sys
 import importlib
 cipher_name = sys.argv[1]  
 file_number = sys.argv[2]
+from sage.all import *
 
 parameters = importlib.import_module(f"Attack_parameters.{cipher_name}_{file_number}")
 cipher = importlib.import_module(f"Cipher.{parameters.attack_parameters.get('Cipher')}_parameters")

@@ -41,6 +41,7 @@ class MILP_bricks():
             for element in matrixes : #Computing the inverse of the matrixes
                 M = Matrix(GF(2), element)
                 M_inv = M.inverse()
+                print(M_inv)
                 matrixes_inverses.append([[int(M_inv[j][i])for i in range(M_inv.ncols())] for j in range(M_inv.nrows())])            
             self.matrixes = [matrixes, matrixes_inverses]
             

@@ -44,12 +44,12 @@ class Model_MILP_key_schedule(MILP_bricks):
         self.master_key()
        
        #link between subkey and master key
-        self.model.addConstrs((self.upper_subkey[round_index,0,  (4*word_index - index +3 +(index*4+(1-index)*24)*(round_index%4))%64] == self.master_key[2*(round_index)%8+index, word_index, 1]
+        self.model.addConstrs((self.upper_subkey[round_index,0,  (4*word_index - index +3 +4*(index*2+(1-index)*12)*(round_index//4))%64] == self.master_key[2*(round_index%4)+index, word_index, 1]
                               for round_index in range(self.total_round)
                               for word_index in range(16)
                               for index in range(2)), name='upper_subkey and master key direct link')
         
-        self.model.addConstrs((self.lower_subkey[round_index, 0, (4*word_index - index +3 +(index*4+(1-index)*24)*(round_index%4))%64] == self.master_key[2*(round_index)%8+index, word_index, 2]
+        self.model.addConstrs((self.lower_subkey[round_index, 0, (4*word_index - index +3 +4*(index*2+(1-index)*12)*(round_index//4))%64] == self.master_key[2*(round_index%4)+index, word_index, 2]
                               for round_index in range(self.total_round)
                               for word_index in range(16)
                               for index in range(2)), name='upper_subkey and master key direct link')

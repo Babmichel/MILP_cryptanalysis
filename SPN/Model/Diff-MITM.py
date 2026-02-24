@@ -35,6 +35,8 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
 
         self.filter_state_test = attack_parameters.get('filter_state_test', False)
 
+        self.state_test_use = attack_parameters.get('state_test_use', True)
+        
     #Variables initialisation
     #values to construct the structure and the upper and lower parts
     def value_variables_initialisation(self):
@@ -141,6 +143,19 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                                         for row in range(self.block_row_size)
                                         for xor_combination in self.row_range[0][round_index%len(self.matrixes[0])]),
                                         name='same fix for backward and forward propagation')
+                
+
+        #state_test
+        if not self.state_test_use :
+            self.model.addConstr((gp.quicksum(self.values[part, sens, round_index, state_index, row, column, 2]
+                                for part in range(2)
+                                for sens in range(2)
+                                for round_index in range(self.upper_part_first_round, self.lower_part_last_round+1)
+                                for state_index in range(self.state_number)
+                                for row in range(self.block_row_size)
+                                for column in range(self.block_column_size)) == 0), 
+                                name='no_state_test_constraints')
+
     
     def difference_variables_initialisation(self):
         #Difference propagation
@@ -149,7 +164,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                                             range(self.state_number),
                                             range(self.block_row_size),
                                             range(self.block_column_size),
-                                            range(2), #valeur{0=active, 1=unactive, 2=Fix}
+                                            range(2), #valeur{0=active, 1=unactive}
                                             vtype=gp.GRB.BINARY,
                                             name='state')
         
@@ -634,8 +649,14 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.time_complexity_up = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_up")
         self.time_complexity_down = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_down")
         self.time_complexity_match = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_match")
+        self.time_complexity_brute_force = self.model.addVar(lb = 0,vtype= gp.GRB.INTEGER, name = "time_complexity_brute_force")
+
+        self.data_fixe = self.model.addVar(vtype= gp.GRB.INTEGER, name = "data_fixe")
 
         self.key_guess_quantity = self.model.addVar(vtype= gp.GRB.INTEGER, name = "time_complexity_up")
+
+        self.attack_repetition = self.model.addVar(vtype= gp.GRB.INTEGER, name = "attack_repetition")
+
         if (self.structure_rounds <=1 and self.cipher_name == 'SKINNY') or (self.structure_rounds <=2 and self.cipher_name == 'GIFT'):
             self.model.addConstr(self.key_guess_quantity == self.upper_key_guess + self.lower_key_guess - self.common_key_guess + (self.matching_differences_quantity - self.common_fix)/2)
         else :
@@ -643,7 +664,9 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         
         T_complexity_up = self.upper_key_guess + self.state_test_up + self.probabilist_annulation_down + self.max_fix_up_fix_down- self.fix_up
         T_complexity_down = self.lower_key_guess + self.state_test_down + self.probabilist_annulation_up + self.max_fix_up_fix_down- self.fix_down
-        T_complexity_match = self.key_space_size//self.word_size - self.matching_differences_quantity + self.state_test_up + self.state_test_down
+        T_complexity_match = T_complexity_up + T_complexity_down - self.matching_differences_quantity + self.block_size//self.word_size - self.common_fix*2 - self.common_key_guess
+        T_complexit_brute_force = self.key_space_size + (T_complexity_match-self.key_guess_quantity)*(1-self.attack_repetition)
+        
         if self.filter_state_test :
             T_complexity_match += -self.state_test_up -self.state_test_down
     
@@ -654,10 +677,12 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.model.addConstr(self.time_complexity_up == T_complexity_up)
         self.model.addConstr(self.time_complexity_down == T_complexity_down)
         self.model.addConstr(self.time_complexity_match == T_complexity_match)
+        self.model.addConstr(self.time_complexity_brute_force == T_complexit_brute_force)
 
         self.model.addConstr(self.time_complexity_down <= self.time_complexity, name="suboptimal time complexity down")
         self.model.addConstr(self.time_complexity_up <= self.time_complexity, name="suboptimal time complexity up")
         self.model.addConstr(self.time_complexity_match <= self.time_complexity, name="suboptimal time complexity match")
+        #self.model.addConstr(self.time_complexity_brute_force <= self.time_complexity, name="suboptimal time complexity brute force")
 
         # self.model.addConstr(self.time_complexity_match + self.time_complexity_down +self.time_complexity_up <= self.time_complexity, name="suboptimal time complexity match")
 
@@ -666,10 +691,10 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.model.addConstr(self.memory_complexity <= self.lower_key_guess + self.state_test_down - self.common_fix + (self.block_size//self.word_size - self.fix_down),
                               name='memory_complexity_down_definition')
         
-        self.model.addConstr(self.data_complexity == self.block_size//self.word_size - gp.quicksum(self.values[1, 1, 0, 0, row, column, 2] for row in range(self.block_row_size) for column in range(self.block_column_size)), name='data_definition')
+        self.model.addConstr(self.data_complexity >= self.block_size//self.word_size - gp.quicksum(self.values[1, 1, 0, 0, row, column, 2] for row in range(self.block_row_size) for column in range(self.block_column_size)), name='data_definition')
         
         self.model.addConstr(self.data_complexity >= self.distinguisher_probability//self.word_size, name='data_definition')
-        
+
     def objective_for_display(self):
         self.for_display = self.model.addVar(vtype= gp.GRB.INTEGER, name = "for_display")
 
@@ -693,7 +718,8 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.complexities()
 
         self.model.setObjectiveN(self.time_complexity, index=0, priority=10)
-        #self.model.setObjectiveN(self.data_complexity, index=1, priority=8)
+        #self.model.setObjectiveN(self.d
+        # a_complexity, index=1, priority=8)
         #self.model.setObjectiveN(-self.memory_complexity, index=2, priority=5)
         self.model.setObjectiveN(self.state_test_up+self.state_test_down, index = 3, priority=2)
     

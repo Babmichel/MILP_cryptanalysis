@@ -2,7 +2,7 @@ attack_parameters = {
     "Cipher": "SKINNY",
     "Key_schedule": "SKINNY",
     "attack_type": "Diff-MITM",
-    "structure_rounds": 2,
+    "structure_rounds": 3,
     "upper_rounds": 6,
     "lower_rounds": 6,
     "distinguisher_probability" : 52,

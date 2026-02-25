@@ -36,7 +36,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.filter_state_test = attack_parameters.get('filter_state_test', False)
 
         self.state_test_use = attack_parameters.get('state_test_use', True)
-        
+
     #Variables initialisation
     #values to construct the structure and the upper and lower parts
     def value_variables_initialisation(self):
@@ -718,8 +718,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.complexities()
 
         self.model.setObjectiveN(self.time_complexity, index=0, priority=10)
-        #self.model.setObjectiveN(self.d
-        # a_complexity, index=1, priority=8)
+        #self.model.setObjectiveN(self.data_complexity, index=1, priority=8)
         #self.model.setObjectiveN(-self.memory_complexity, index=2, priority=5)
         self.model.setObjectiveN(self.state_test_up+self.state_test_down, index = 3, priority=2)
     

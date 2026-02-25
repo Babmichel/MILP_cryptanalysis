@@ -85,16 +85,21 @@ class MILP_bricks():
             # Parameters of the Gurobi model
             self.model.params.FeasibilityTol = 1e-9
             self.model.params.OptimalityTol = 1e-9
+            self.model.Params.PreQLinearize = 2   # linéarisation plus agressive des quadratiques
+            self.model.Params.MIQCPMethod = 1     # branche sur les contraintes quadratiques
             self.model.setParam("IntFeasTol", 1e-9)
             self.model.setParam("Presolve", 1) #keep the logical structure without doing agressiv presolve
-            self.model.setParam("Cuts", 2) #Aggressive cuts for logic models
-            self.model.setParam("Heuristics", 0.05) #Less heuristics to focus on proving optimality
-            self.model.setParam("VarBranch", 1) #Robust branching for logic models
+            self.model.setParam("Cuts", 3) #Aggressive cuts for logic models
+            self.model.setParam("Heuristics", 0.15) #Less heuristics to focus on proving optimality
+            self.model.setParam("VarBranch", -1) #Robust branching for logic models
             self.model.setParam("PreSparsify", 1) #AND and OR constraints sparsification
-            self.model.setParam("Aggregate", 0) #AND and OR constraints aggregation
+            self.model.setParam("Aggregate", 1) #AND and OR constraints aggregation
             self.model.setParam("MIPFocus", 1) #balances search between feasible solutions and optimality proof
             #self.model.setParam("Threads", 16) 
-            self.model.setParam("ConcurrentMIP", 1) #exploration paralléle
+            self.model.setParam("ConcurrentMIP", 1) #pas d'exploration paralléle
+            self.model.setParam("NonConvex", 2) #MIQCP non convexe
+            self.model.setParam("MIPGap", 0.03) #diminuer l'écart pour prouver l'optimalité
+
 
         # Double Check of cipher model
         self.everything_all_right = True

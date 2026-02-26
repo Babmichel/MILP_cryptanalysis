@@ -61,7 +61,21 @@ class Model_MILP_key_schedule(MILP_bricks):
 
         self.model.addConstr(self.upper_key_guess == gp.quicksum(self.master_key[key_index, bit_index, 1] for key_index in range(8) for bit_index in range(16)))
         self.model.addConstr(self.lower_key_guess == gp.quicksum(self.master_key[key_index, bit_index, 2] for key_index in range(8) for bit_index in range(16)))
-        self.model.addConstr(self.common_key_guess == gp.quicksum(self.master_key[key_index, bit_index, 1]*self.master_key[key_index, bit_index, 2] for key_index in range(8) for bit_index in range(16)))
+
+        #Here, we use McCormick constraints to count the common key bits without using multiplication and keeping a linear model
+        self.common_key_guess_McCormick = self.model.addVars(range(8), range(16), vtype=gp.GRB.BINARY, name='common_key_guess_McCormick')
+
+        self.model.addConstrs((self.common_key_guess_McCormick[key_index, bit_index] <= self.master_key[key_index, bit_index, 1]
+                              for key_index in range(8)
+                              for bit_index in range(16)), name='common_key_guess_McCormick upper key')
+        self.model.addConstrs((self.common_key_guess_McCormick[key_index, bit_index] <= self.master_key[key_index, bit_index, 2]
+                              for key_index in range(8)
+                              for bit_index in range(16)), name='common_key_guess_McCormick lower key')
+        self.model.addConstrs((self.common_key_guess_McCormick[key_index, bit_index] >= self.master_key[key_index, bit_index, 1] + self.master_key[key_index, bit_index, 2] - 1
+                              for key_index in range(8)
+                              for bit_index in range(16)), name='common_key_guess_McCormick both keys')
+        
+        self.model.addConstr(self.common_key_guess == gp.quicksum(self.common_key_guess_McCormick[key_index, bit_index] for key_index in range(8) for bit_index in range(16)))
 
     def display_master_key(self):
         print("Master keys :")

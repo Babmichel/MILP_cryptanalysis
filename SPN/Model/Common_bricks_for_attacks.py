@@ -83,22 +83,15 @@ class MILP_bricks():
             self.model = gp.Model(env=gp.Env(params={'WLSACCESSID': licence_parameters.get('WLSACCESSID'), 'WLSSECRET': licence_parameters.get('WLSSECRET'), 'LICENSEID': licence_parameters.get('LICENSEID')}))
 
             # Parameters of the Gurobi model
-            self.model.params.FeasibilityTol = 1e-9
-            self.model.params.OptimalityTol = 1e-9
-            self.model.Params.PreQLinearize = 2   # linéarisation plus agressive des quadratiques
-            self.model.Params.MIQCPMethod = 1     # branche sur les contraintes quadratiques
-            self.model.setParam("IntFeasTol", 1e-9)
-            self.model.setParam("Presolve", 1) #keep the logical structure without doing agressiv presolve
-            self.model.setParam("Cuts", 3) #Aggressive cuts for logic models
-            self.model.setParam("Heuristics", 0.15) #Less heuristics to focus on proving optimality
-            self.model.setParam("VarBranch", -1) #Robust branching for logic models
-            self.model.setParam("PreSparsify", 1) #AND and OR constraints sparsification
-            self.model.setParam("Aggregate", 1) #AND and OR constraints aggregation
+            self.model.setParam("Presolve", 2) #agressive presolve (0= no presolve, 1=conservative presolve, 2=aggressive presolve)
+            self.model.setParam("Cuts", 3) #Aggressive cuts for dense logic models
+            self.model.setParam("Heuristics", 0.15) #more heuristics to focus less on optimality and more on fiding nice solutions (base 0.05)
+            self.model.setParam("VarBranch", 1) #Robust branching for logic models, use 3 if gap is high
+            self.model.setParam("Aggregate", 2) #AND and OR constraints aggregation
             self.model.setParam("MIPFocus", 1) #balances search between feasible solutions and optimality proof
             #self.model.setParam("Threads", 16) 
             self.model.setParam("ConcurrentMIP", 1) #pas d'exploration paralléle
-            self.model.setParam("NonConvex", 2) #MIQCP non convexe
-            self.model.setParam("MIPGap", 0.03) #diminuer l'écart pour prouver l'optimalité
+            self.model.setParam("MIPGap", 0.05) #diminuer l'écart pour prouver l'optimalité
 
 
         # Double Check of cipher model
@@ -424,8 +417,8 @@ class MILP_bricks():
                         or_vars.append(or_var)  
                 #linear mode for the OR constraint
                 for elements in or_vars:
-                    self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, row, 1] >= elements, name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
-                    self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, row, 1]<= gp.quicksum(or_vars), name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+                    self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, column, 1] >= elements, name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
+                    self.model.addConstr(part[attack_side_index, sens, round_index, output_state_index, row, column, 1]<= gp.quicksum(or_vars), name = f"OR_MC_part_side{attack_side_index}_r{round_index}_row{row}_col{column}_0_not_to_1")
              
         
         for row in range(self.block_row_size):

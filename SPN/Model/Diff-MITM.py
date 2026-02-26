@@ -37,6 +37,12 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
 
         self.state_test_use = attack_parameters.get('state_test_use', True)
 
+        self.use_upper_bound = attack_parameters.get('use_upper_bound', False)
+        self.known_upper_bound = attack_parameters.get('known_upper_bound', None)
+
+        self.specific_solution_search = attack_parameters.get('specific_solution_search', False)
+        self.solution_value = attack_parameters.get('solution_value', None)
+
     #Variables initialisation
     #values to construct the structure and the upper and lower parts
     def value_variables_initialisation(self):
@@ -155,8 +161,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                                 for row in range(self.block_row_size)
                                 for column in range(self.block_column_size)) == 0), 
                                 name='no_state_test_constraints')
-
-    
+  
     def difference_variables_initialisation(self):
         #Difference propagation
         self.differences = self.model.addVars(range(2), range(2),
@@ -351,29 +356,105 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
                               for column in range(self.block_column_size)),
                               name='no_initial_known_value_upper_structure')
         
-        # Common fix constraints          
-        self.common_fix = self.model.addVar(vtype= gp.GRB.INTEGER, name = "fix_common")
+        # Common fix compting constraints constraints     
+        # Consider a common fix if the nibble is fix in the upper and lower part
+        # Here we use McCormik constraints rather than multiplication to keep a linear model and not MIQCP
+        # Counting the fix     
+        self.common_fix_count = self.model.addVar(vtype= gp.GRB.INTEGER, name = "fix_common")
+
+        self.common_fix = self.model.addVars(range(self.structure_first_round_index, self.structure_last_round_index+1),
+                                            range(self.state_number),
+                                            range(self.block_row_size),
+                                            range(self.block_column_size),
+                                            vtype=gp.GRB.BINARY, name='common_fix')
         
-        common_fix_elements = gp.quicksum(self.values[1, 1, round_index, state_index, row, column, 2]*self.values[0, 0, round_index, state_index, row, column, 2]
+        self.model.addConstrs((self.common_fix[round_index, state_index, row, column] <= self.values[0, 0, round_index, state_index, row, column, 2]
+                                for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
+                                for state_index in range(self.state_number)
+                                for row in range(self.block_row_size)
+                                for column in range(self.block_column_size)), name='common_fix_upper_part_McCormik_constraints')
+        
+        self.model.addConstrs((self.common_fix[round_index, state_index, row, column] <= self.values[1, 1, round_index, state_index, row, column, 2]
+                                for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
+                                for state_index in range(self.state_number)
+                                for row in range(self.block_row_size)
+                                for column in range(self.block_column_size)), name='common_fix_lower_part_McCormik_constraints') 
+        
+        self.model.addConstrs((self.common_fix[round_index, state_index, row, column] >= self.values[0, 0, round_index, state_index, row, column, 2] + self.values[1, 1, round_index, state_index, row, column, 2] - 1
+                                for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1)
+                                for state_index in range(self.state_number)
+                                for row in range(self.block_row_size)
+                                for column in range(self.block_column_size)), name='common_fix_common_part_McCormik_constraints')    
+        
+        common_fix_count_elements = gp.quicksum(self.common_fix[round_index, state_index, row, column]
                                                                 for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
                                                                 for state_index in range(self.state_number) 
                                                                 for row in range(self.block_row_size) 
-                                                                for column in range(self.block_column_size) )
+                                                                for column in range(self.block_column_size))
+        
+    
+
         if 'MC' in self.operation_order:
-            common_fix_elements += gp.quicksum(self.XOR_in_mc_values[(0, 0, round_index, column)+xor_combination+(2,)]*self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0))) +(2,)]
+            self.common_fix_in_MC = self.model.addVars((((round_index, column) + (xor_combination))
+                                                        for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
+                                                        for column in range(self.block_column_size)
+                                                        for xor_combination in self.column_range[0][round_index%len(self.matrixes[0])]), vtype=gp.GRB.INTEGER, name="common_fix_in_mc")
+            
+            self.model.addConstrs((self.common_fix_in_MC[(round_index, column) + xor_combination] <= self.XOR_in_mc_values[(0, 0, round_index, column) + xor_combination + (2,)]
+                                    for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
+                                    for column in range(self.block_column_size)
+                                    for xor_combination in self.column_range[0][round_index%len(self.matrixes[0])]),
+                                    name='common_fix_in_mc_upper_part_constraints')
+            
+            self.model.addConstrs((self.common_fix_in_MC[(round_index, column) + xor_combination] <= self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0))) + (2,)]
+                                    for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
+                                    for column in range(self.block_column_size)
+                                    for xor_combination in self.column_range[0][round_index%len(self.matrixes[0])]),
+                                    name='common_fix_in_mc_lower_part_constraints')
+            
+            self.model.addConstrs((self.common_fix_in_MC[(round_index, column) + xor_combination] >= self.XOR_in_mc_values[(0, 0, round_index, column) + xor_combination + (2,)] + self.XOR_in_mc_values[(1, 1, round_index, column) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0))) + (2,)] - 1
+                                    for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
+                                    for column in range(self.block_column_size)
+                                    for xor_combination in self.column_range[0][round_index%len(self.matrixes[0])]),
+                                    name='common_fix_in_mc_common_part_constraints')
+            
+            common_fix_count_elements += gp.quicksum(self.common_fix_in_MC[(round_index, column) + xor_combination]
                                                                 for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
                                                                 for column in range(self.block_column_size)
-                                                                for xor_combination in self.column_range[0][round_index%len(self.matrixes[1])])
+                                                                for xor_combination in self.column_range[0][round_index%len(self.matrixes[0])])
         
         if 'MR' in self.operation_order:
-            common_fix_elements += gp.quicksum(self.XOR_in_mr_values[(0, 0, round_index, row)+xor_combination+(2,)]*self.XOR_in_mr_values[(1, 1, round_index, row) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0))) +(2,)]
+            self.common_fix_in_MR = self.model.addVars((((round_index, row) + (xor_combination))
+                                                        for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
+                                                        for row in range(self.block_row_size)
+                                                        for xor_combination in self.row_range[0][round_index%len(self.matrixes[0])]), vtype=gp.GRB.INTEGER, name="common_fix_in_mr")
+            
+            self.model.addConstrs((self.common_fix_in_MR[(round_index, row) + xor_combination] <= self.XOR_in_mr_values[(0, 0, round_index, row) + xor_combination + (2,)]
+                                    for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
+                                    for row in range(self.block_row_size)
+                                    for xor_combination in self.row_range[0][round_index%len(self.matrixes[0])]),
+                                    name='common_fix_in_mr_upper_part_constraints')
+            
+            self.model.addConstrs((self.common_fix_in_MR[(round_index, row) + xor_combination] <= self.XOR_in_mr_values[(1, 1, round_index, row) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0))) + (2,)]
+                                    for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
+                                    for row in range(self.block_row_size)
+                                    for xor_combination in self.row_range[0][round_index%len(self.matrixes[0])]),
+                                    name='common_fix_in_mr_lower_part_constraints')
+            
+            self.model.addConstrs((self.common_fix_in_MR[(round_index, row) + xor_combination] >= self.XOR_in_mr_values[(0, 0, round_index, row) + xor_combination + (2,)] + self.XOR_in_mr_values[(1, 1, round_index, row) + tuple(map(int,np.bitwise_xor.reduce(np.array(xor_combination)[:,None]*np.array(self.matrixes[1][round_index%len(self.matrixes[1])]), axis=0))) + (2,)] - 1
+                                    for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
+                                    for row in range(self.block_row_size)
+                                    for xor_combination in self.row_range[0][round_index%len(self.matrixes[0])]),
+                                    name='common_fix_in_mr_common_part_constraints')    
+            
+            common_fix_count_elements += gp.quicksum(self.common_fix_in_MR[(round_index, row) + xor_combination]
                                                                 for round_index in range(self.structure_first_round_index, self.structure_last_round_index+1) 
                                                                 for row in range(self.block_row_size)
-                                                                for xor_combination in self.row_range[0][round_index%len(self.matrixes[1])])
+                                                                for xor_combination in self.row_range[0][round_index%len(self.matrixes[0])])
         
-        self.model.addConstr(self.common_fix == common_fix_elements, name='common_fix_count')
+        self.model.addConstr(self.common_fix_count == common_fix_count_elements, name='common_fix_count')
         
-        self.model.addConstr(self.fix_down+self.fix_up-self.common_fix<=self.block_size//self.word_size, name='cannot_fix_more_than_the_block')
+        self.model.addConstr(self.fix_down+self.fix_up-self.common_fix_count<=self.block_size//self.word_size, name='cannot_fix_more_than_the_block')
 
         self.max_fix_up_fix_down = self.model.addVar(vtype= gp.GRB.INTEGER, name="max fix upper part")
         self.binary_max_fix_up_fix_down = self.model.addVar(vtype= gp.GRB.INTEGER, name="max fix upper part")
@@ -382,8 +463,6 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.model.addConstr(self.max_fix_up_fix_down >= self.fix_down)
         self.model.addConstr(self.max_fix_up_fix_down <= self.fix_up + max_max*self.binary_max_fix_up_fix_down)
         self.model.addConstr(self.max_fix_up_fix_down <= self.fix_down + max_max*self.binary_max_fix_up_fix_down)
-
-
 
         ### DIFEERENCES
         #Not interest in propagation of forward differences of upper part
@@ -414,26 +493,67 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.backward_differences_propagation_in_structure(0, self.structure_first_round_index, self.structure_last_round_index)
 
         max_max = self.block_column_size*self.block_row_size
-        self.matching_differences = self.model.addVars(range(self.structure_rounds-1), vtype= gp.GRB.INTEGER, name = "match_differences per round")
+        self.matching_differences_count = self.model.addVars(range(self.structure_rounds-1), vtype= gp.GRB.INTEGER, name = "match_differences per round")
         self.matching_differences_quantity = self.model.addVar(lb=0, ub=max_max, vtype=gp.GRB.INTEGER, name="match quantity")
         self.binary_matching_differences_quantity = self.model.addVars(range(self.structure_rounds-1), vtype=gp.GRB.BINARY, name="match quantity_binary")
         
+        #counting the matching diffrences
+        #Here we use McCormik constraints rather than multiplication to keep a linear model and not MIQCP
 
-        self.model.addConstrs((self.matching_differences[round_index] == gp.quicksum(self.differences[0, 1, round_index+self.structure_first_round_index, self.operation_order.index('SB')+i, row, column, 1]*self.differences[1, 0, round_index+self.structure_first_round_index, self.operation_order.index('SB')+i, row, column, 1]
-                                                                      for i in range(2)
-                                                                      for row in range(self.block_row_size)
-                                                                      for column in range(self.block_column_size))
-                                                                      - gp.quicksum(self.differences[0, 1, round_index+self.structure_first_round_index, self.operation_order.index('SB'), row, column, 1]*self.differences[1, 0, round_index+self.structure_first_round_index, self.operation_order.index('SB')+1, row, column, 1]
-                                                                      for row in range(self.block_row_size)
-                                                                      for column in range(self.block_column_size))
-                                                                      for round_index in range(self.structure_rounds-1)), name = "counting matching differences")
+        #First we count the differences we known in the state before and after the Sbox
+        self.matching_differences = self.model.addVars(range(self.structure_rounds-1), range(2), range(self.block_row_size), range(self.block_column_size), vtype= gp.GRB.BINARY, name = "match_differences per round")
+        
+        self.model.addConstrs((self.matching_differences[round_index, i, row, column] <= self.differences[0, 1, round_index+self.structure_first_round_index, self.operation_order.index('SB')+i, row, column, 1]
+                                for round_index in range(self.structure_rounds-1)
+                                for i in range(2)
+                                for row in range(self.block_row_size)
+                                for column in range(self.block_column_size)), name="difference_is_known by_upper_part")
+        
+        self.model.addConstrs((self.matching_differences[round_index, i, row, column] <= self.differences[1, 0, round_index+self.structure_first_round_index, self.operation_order.index('SB')+i, row, column, 1]
+                                for round_index in range(self.structure_rounds-1)
+                                for i in range(2)
+                                for row in range(self.block_row_size)
+                                for column in range(self.block_column_size)), name="difference_is_known by_lower_part")
+        
+        self.model.addConstrs((self.matching_differences[round_index, i, row, column] >= self.differences[0, 1, round_index+self.structure_first_round_index, self.operation_order.index('SB')+i, row, column, 1] + self.differences[1, 0, round_index+self.structure_first_round_index, self.operation_order.index('SB')+i, row, column, 1] - 1
+                                for round_index in range(self.structure_rounds-1)
+                                for i in range(2)
+                                for row in range(self.block_row_size)
+                                for column in range(self.block_column_size)), name="difference_is_known by_both_parts")
+        
+        #Then we count words on witch the difference is known before and after the Sbox
+        self.matching_differences_not_twice = self.model.addVars(range(self.structure_rounds-1), range(self.block_row_size), range(self.block_column_size), vtype= gp.GRB.BINARY, name = "match_differences per round not twice")
+    
+        self.model.addConstrs((self.matching_differences_not_twice[round_index, row, column] <= self.differences[0, 1, round_index+self.structure_first_round_index, self.operation_order.index('SB'), row, column, 1]
+                                for round_index in range(self.structure_rounds-1)
+                                for row in range(self.block_row_size)
+                                for column in range(self.block_column_size)), name="difference is known before the sbox")
+        
+        self.model.addConstrs((self.matching_differences_not_twice[round_index, row, column] <= self.differences[1, 0, round_index+self.structure_first_round_index, self.operation_order.index('SB')+1, row, column, 1]
+                                for round_index in range(self.structure_rounds-1)
+                                for row in range(self.block_row_size)
+                                for column in range(self.block_column_size)), name="difference is known after the sbox")
+        
+        self.model.addConstrs((self.matching_differences_not_twice[round_index, row, column] >= self.differences[0, 1, round_index+self.structure_first_round_index, self.operation_order.index('SB'), row, column, 1] + self.differences[1, 0, round_index+self.structure_first_round_index, self.operation_order.index('SB')+1, row, column, 1] - 1
+                                for round_index in range(self.structure_rounds-1)
+                                for row in range(self.block_row_size)
+                                for column in range(self.block_column_size)), name="difference is known before and after the sbox")
+        
+        #To count the differences we count all the known deferences around the sbox and substract the ones known twice.
+        self.model.addConstrs((self.matching_differences_count[round_index] == gp.quicksum(self.matching_differences[round_index, i, row, column]
+                                                                                      for i in range(2) for row in range(self.block_row_size)
+                                                                                      for column in range(self.block_column_size))
+                                                                                    - gp.quicksum(self.matching_differences_not_twice[round_index, row, column]
+                                                                                      for row in range(self.block_row_size) 
+                                                                                      for column in range(self.block_column_size))
+                                                                                    for round_index in range(self.structure_rounds-1)), name="counting matching differences")
         
         for round_index in range(self.structure_rounds-1) :
-            self.model.addConstr(self.matching_differences_quantity >= self.matching_differences[round_index], name = "difference matching in structure max 1")
-            self.model.addConstr(self.matching_differences_quantity <= self.matching_differences[round_index] + max_max*(1-self.binary_matching_differences_quantity[round_index]), name = "difference matching in structure max 2")
+            self.model.addConstr(self.matching_differences_quantity >= self.matching_differences_count[round_index], name = "difference matching in structure max 1")
+            self.model.addConstr(self.matching_differences_quantity <= self.matching_differences_count[round_index] + max_max*(1-self.binary_matching_differences_quantity[round_index]), name = "difference matching in structure max 2")
         self.model.addConstr(gp.quicksum(self.binary_matching_differences_quantity[round_index] for round_index in range(self.structure_rounds-1) ) == 1, name = "at least one max")
         
-        self.model.addConstr(self.matching_differences_quantity >= self.common_fix)
+        self.model.addConstr(self.matching_differences_quantity >= self.common_fix_count)
         #No probabilisit propagation in structure :
         if 'MC' in self.operation_order :
             self.model.addConstrs(self.XOR_in_mc_differences[(attack_side_index, sens, round_index, column) + vector + (2,)]==0
@@ -658,15 +778,14 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.attack_repetition = self.model.addVar(vtype= gp.GRB.INTEGER, name = "attack_repetition")
 
         if (self.structure_rounds <=1 and self.cipher_name == 'SKINNY') or (self.structure_rounds <=2 and self.cipher_name == 'GIFT'):
-            self.model.addConstr(self.key_guess_quantity == self.upper_key_guess + self.lower_key_guess - self.common_key_guess + (self.matching_differences_quantity - self.common_fix)/2)
+            self.model.addConstr(self.key_guess_quantity == self.upper_key_guess + self.lower_key_guess - self.common_key_guess + (self.matching_differences_quantity - self.common_fix_count)/2)
         else :
-            self.model.addConstr(self.key_guess_quantity == self.upper_key_guess + self.lower_key_guess - self.common_key_guess + (self.matching_differences_quantity - self.common_fix))
+            self.model.addConstr(self.key_guess_quantity == self.upper_key_guess + self.lower_key_guess - self.common_key_guess + (self.matching_differences_quantity - self.common_fix_count))
         
         T_complexity_up = self.upper_key_guess + self.state_test_up + self.probabilist_annulation_down + self.max_fix_up_fix_down- self.fix_up
         T_complexity_down = self.lower_key_guess + self.state_test_down + self.probabilist_annulation_up + self.max_fix_up_fix_down- self.fix_down
-        T_complexity_match = T_complexity_up + T_complexity_down - self.matching_differences_quantity + self.block_size//self.word_size - self.common_fix*2 - self.common_key_guess
-        T_complexit_brute_force = self.key_space_size + (T_complexity_match-self.key_guess_quantity)*(1-self.attack_repetition)
-        
+        T_complexity_match = T_complexity_up + T_complexity_down - self.matching_differences_quantity + self.block_size//self.word_size - self.common_fix_count*2 - self.common_key_guess
+    
         if self.filter_state_test :
             T_complexity_match += -self.state_test_up -self.state_test_down
     
@@ -677,7 +796,6 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
         self.model.addConstr(self.time_complexity_up == T_complexity_up)
         self.model.addConstr(self.time_complexity_down == T_complexity_down)
         self.model.addConstr(self.time_complexity_match == T_complexity_match)
-        self.model.addConstr(self.time_complexity_brute_force == T_complexit_brute_force)
 
         self.model.addConstr(self.time_complexity_down <= self.time_complexity, name="suboptimal time complexity down")
         self.model.addConstr(self.time_complexity_up <= self.time_complexity, name="suboptimal time complexity up")
@@ -686,9 +804,9 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
 
         # self.model.addConstr(self.time_complexity_match + self.time_complexity_down +self.time_complexity_up <= self.time_complexity, name="suboptimal time complexity match")
 
-        self.model.addConstr(self.memory_complexity <= self.upper_key_guess + self.state_test_up - self.common_fix + (self.block_size//self.word_size - self.fix_up),
+        self.model.addConstr(self.memory_complexity <= self.upper_key_guess + self.state_test_up - self.common_fix_count + (self.block_size//self.word_size - self.fix_up),
                               name='memory_complexity_up_definition')
-        self.model.addConstr(self.memory_complexity <= self.lower_key_guess + self.state_test_down - self.common_fix + (self.block_size//self.word_size - self.fix_down),
+        self.model.addConstr(self.memory_complexity <= self.lower_key_guess + self.state_test_down - self.common_fix_count + (self.block_size//self.word_size - self.fix_down),
                               name='memory_complexity_down_definition')
         
         self.model.addConstr(self.data_complexity >= self.block_size//self.word_size - gp.quicksum(self.values[1, 1, 0, 0, row, column, 2] for row in range(self.block_row_size) for column in range(self.block_column_size)), name='data_definition')
@@ -724,30 +842,45 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
     
     #Attack build
     def attack(self):
+
+        #initialization
         self.value_variables_initialisation()
+
         self.difference_variables_initialisation()
         
+
+        #Constraints of each part
         self.structure()
 
         self.upper_part()
 
         self.lower_part()
 
-        
-        #global constraints
+        #Global constraints
         #The total probability of the attack cannot exceed the size of the block
         self.model.addConstr(self.word_size*self.probabilist_annulation_down+self.word_size*self.probabilist_annulation_up+self.distinguisher_probability <= self.block_size)
         
         #Not optimal to repeat the attack more than the number of time needed to verify the probability of the trail
-        self.model.addConstr(self.distinguisher_probability + self.word_size*self.common_fix >= self.block_size+1)
+        self.model.addConstr(self.distinguisher_probability + self.word_size*self.common_fix_count >= self.block_size+1)
         
         #self.model.addConstr(self.state_test_up==0, name="at least one state test up")
         #self.model.addConstr(self.state_test_down==0, name="at least one state test down")
         #self.model.addConstr(self.probabilist_annulation_down==0, name="at least one pb key down")
         #self.model.addConstr(self.probabilist_annulation_up==0, name="at least one pb key up")
         #self.model.addConstr(self.matching_differences_quantity>=2, name="at least 2 matching differences")
+
+        #Objective functions
         self.objective()
 
+        if self.use_upper_bound :
+            self.model.addConstr(self.time_complexity <= self.known_upper_bound - 1, name='upper_bound_cut')
+        
+        if self.specific_solution_search :
+            self.model.setParam("MIPGap",     1.0)   #stop when at least one solution is find
+            self.model.setParam("MIPFocus",   1)     #search only for solution not optimality
+            self.model.setParam("Heuristics", 0.5)   #Use many heuristics to focus on finding a solution
+            self.model.addConstr(self.time_complexity <= 64,name='target_bound')
+        
         self.optimize_the_model()
     
     #Display
@@ -783,7 +916,7 @@ class attack_model(Common_bricks_for_attacks.MILP_bricks):
             print("Total complexity match :", self.time_complexity_match.X*self.word_size + self.distinguisher_probability)
             print("\n")
             print("STRUCTURE Parameters")
-            print("Common fix :", self.common_fix.X)
+            print("Common fix :", self.common_fix_count.X)
             print("max Fin Fout :", self.max_fix_up_fix_down.X )
             print('\n')
             print('Information on the key :')

@@ -13,7 +13,8 @@ cipher_parameters = {
     "key_row_size": 4,
 
     #Round function parameters
-    "operation_order": ['AK', 'SR', 'MC', 'SB'],
+    "operation_order_up": ['AK', 'SR', 'MC', 'SB'],
+    "operation_order_down": ['AK', 'SR', 'MC', 'SB'],
     "shift_rows": [0, 1, 2, 3],
     "matrixes": [[[1, 0, 1, 1], [1, 0, 0, 0], [0, 1, 1, 0], [1, 0, 1, 0]]],
     "sbox_sizes": [1,1]

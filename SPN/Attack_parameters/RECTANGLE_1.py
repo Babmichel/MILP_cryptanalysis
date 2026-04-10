@@ -1,28 +1,28 @@
 attack_parameters = {
     #Cipher parameters
-    "Cipher": "SKINNY",
-    "Key_schedule": "SKINNY",
+    "Cipher": "RECTANGLE",
+    "Key_schedule": "RECTANGLE",
     "attack_type": "Diff-MITM",
-    "structure_position": "lower",
+    "structure_position": "upper",
 
     #Attack sizes
-    "structure_rounds": 2,
-    "upper_rounds": 6,
-    "lower_rounds": 6,
+    "structure_rounds": 3,
+    "upper_rounds": 2,
+    "lower_rounds": 2,
 
     #Distinguisher parameters
-    "distinguisher_probability" : 52,
-    "distinguisher_rounds" : 9,
-    "key_space_size": 192,
-    "distinguisher_inputs" : [[3, 3]],
-    "distinguisher_outputs": [[0, 1], [1, 0]],
+    "distinguisher_probability" : 60.5,
+    "distinguisher_rounds" : 15,
+    "key_space_size": 128,
+    "distinguisher_inputs" : [[0, 5], [0, 12], [1, 5]],
+    "distinguisher_outputs": [[0, 6]],
 
     #Use exponential complexity(can turn the search to impossible)
     "optimal_complexity": False,
 
     #Attack parameters
-    "truncated_differential" : True,
-    "state_test_use": True,
+    "truncated_differential" : False,
+    "state_test_use": False,
     "filter_state_test": False,
 
     #Upper bound parameters
@@ -37,5 +37,5 @@ attack_parameters = {
     "filter_extra_key_guess" : False,
 
     #specific key filtering
-    "specific_key_filtering" : True,
+    "specific_key_filtering" : False,
 }

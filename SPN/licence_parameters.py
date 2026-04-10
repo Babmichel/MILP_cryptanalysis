@@ -1,5 +1,5 @@
 licence_parameters = {
-    'WLSACCESSID': '58d21f89-b596-40cf-bd3e-52b062898036',
-    'WLSSECRET': '21c59555-2f72-4b43-a903-efbf7a725c2d',
+    'WLSACCESSID': 'c1625bdf-95b0-4f66-a5d1-38ebc6b2f774',
+    'WLSSECRET': '37930063-acc2-4a59-8e45-a3abdf6f0eae',
     'LICENSEID': 2534357
 }

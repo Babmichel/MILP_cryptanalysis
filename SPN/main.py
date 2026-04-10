@@ -24,6 +24,9 @@ key_schedule = key_schedule.Model_MILP_key_schedule(cipher.cipher_parameters,
 
 key_schedule.keyschedule()
 
+if parameters.attack_parameters.get('specific_key_filtering'):
+    attack.specific_key_filtering_quantity = key_schedule.key_filter
+
 attack.upper_subkey = key_schedule.upper_subkey
 attack.lower_subkey = key_schedule.lower_subkey
 attack.upper_key_guess = key_schedule.upper_key_guess
@@ -31,9 +34,17 @@ attack.lower_key_guess = key_schedule.lower_key_guess
 attack.common_key_guess = key_schedule.common_key_guess
 
 
+""" key_schedule.model.addConstr(key_schedule.upper_subkey[4, 0, 1] == 0)
+key_schedule.model.addConstr(key_schedule.upper_subkey[4, 0, 3] == 0)
+key_schedule.model.addConstrs((key_schedule.upper_subkey[4, 1, c] == 0 for c in range(4)))
+key_schedule.model.addConstrs((key_schedule.upper_subkey[5, r, c] == 0 for r in range(2) for c in range(4)))
+key_schedule.model.addConstrs((key_schedule.upper_subkey[round_index, r, c] == 0 for round_index in range(5, attack.total_rounds) for r in range(2) for c in range(4)))
+
+ """
 attack.attack()
 
 if attack.optimized:
+    key_schedule.display_master_key()
     attack.display_console()
     attack.get_results()
-    key_schedule.display_master_key()
+    

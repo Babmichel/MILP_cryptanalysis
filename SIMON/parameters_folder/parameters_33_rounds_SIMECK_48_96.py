@@ -21,6 +21,7 @@ attack_parameters = {
     "key_schedule_linearity" : 0,
     "state_test" : 1,
     "probabilistic_key_recovery" : 1,
+    "non_free_access_model" : 0,
 
     "pdf_display" : 1,
     "pdf_name" : "33_rounds_SIMECK_48-96"

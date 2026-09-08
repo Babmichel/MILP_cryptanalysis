@@ -2,17 +2,17 @@
 # that are used to find the attack against 36 rounds of SIMON 64-128
 
 attack_parameters = {
-    "block_size" :64,
-    "key_size" : 128, 
+    "block_size" :128,
+    "key_size" : 256, 
 
-    "distinguisher_size" : 23,
-    "distinguisher_probability" : 61.5, 
-    "distinguisher_active_input_bits" : [0, 4, 38],
-    "distinguisher_active_output_bits" : [6, 32, 36],
+    "distinguisher_size" : 41,
+    "distinguisher_probability" : 113, 
+    "distinguisher_active_input_bits" : [6, 64, 68, 72],
+    "distinguisher_active_output_bits" : [0, 4, 8, 70],
 
     "structure_size" : 3,
-    "upper_part_size" : 5,
-    "lower_part_size" : 5,
+    "upper_part_size" : 6,
+    "lower_part_size" : 6,
     
     "first_branch_shift" : 8,
     "second_branch_shift" : 1, 
@@ -23,6 +23,6 @@ attack_parameters = {
     "probabilistic_key_recovery" : 1,
     "non_free_access_model" : 1,
 
-    "pdf_display" : 0,
-    "pdf_name" : "36_rounds_SIMON_64-128"
+    "pdf_display" : 1,
+    "pdf_name" : "56_rounds_SIMON_128-256"
 }

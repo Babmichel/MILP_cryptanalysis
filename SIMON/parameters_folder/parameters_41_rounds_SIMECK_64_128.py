@@ -18,9 +18,10 @@ attack_parameters = {
     "second_branch_shift" : 5, 
     "third_branch_shift" : 1,
 
-    "key_schedule_linearity" : 0,
+    "key_schedule_linearity" : 1,
     "state_test" : 1,
     "probabilistic_key_recovery" : 1,
+    "non_free_access_model" : 0,
 
     "pdf_display" : 1,
     "pdf_name" : "41_rounds_SIMECK_64-128"

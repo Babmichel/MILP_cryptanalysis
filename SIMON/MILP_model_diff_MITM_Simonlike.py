@@ -66,10 +66,20 @@ def differential_Meet_in_the_middle(user_parameters, licence):
                 key_schedule_linearity = user_parameters['key_schedule_linearity']
                 state_test, proba_key_rec = user_parameters['state_test'], user_parameters['state_test']
 
+                # If set to 1, the time complexity is also lower bounded by a realistic memory-access cost model
+                non_free_access_model = user_parameters.get('non_free_access_model', 0)
+
                 # Parameters of the Gurobi model
                 model.params.FeasibilityTol = 1e-9
                 model.params.OptimalityTol = 1e-9
-                model.setParam("OutputFlag", 1) 
+                if non_free_access_model :
+                        # the realistic memory phase adds a large-coefficient term to the complexity equation, so we ask
+                        # Gurobi to be careful with numerics to avoid spurious infeasibility
+                        model.params.NumericFocus = 3
+                # Optional solve time limit (seconds) : the model still writes solution.csv with the best incumbent found
+                if user_parameters.get('time_limit', 0) :
+                        model.params.TimeLimit = user_parameters['time_limit']
+                model.setParam("OutputFlag", 1)
                 model.setParam("LogToConsole", 1)
 
                 # Parameters for the model
@@ -272,23 +282,30 @@ def differential_Meet_in_the_middle(user_parameters, licence):
                 memory_complexity_up = model.addVar(lb = state_size, ub = key_size,vtype= GRB.INTEGER, name = "memory_complexity_up")
                 memory_complexity_down = model.addVar(lb = state_size, ub = key_size,vtype= GRB.INTEGER, name = "memory_complexity_down")
 
+                # cap the TIME 2^i decomposition at 2*state_size + 10 : the raw time complexity (before adding
+                # distinguisher_proba) is on the order of 2*state_size, so this keeps the coefficients small.
+                # The MEMORY decomposition needs a larger domain (memory bits reach ~key_size), so it uses its own.
+                time_search_bound = 2*int(state_size) + 10
+                memory_search_bound = min(128, int(key_size) + 10)
+
                 if state_size<=60 :
-                        time_complexity_up = model.addVar(lb = state_size, ub = 128,vtype= GRB.INTEGER, name = "time_complexity_up")
-                        time_complexity_down = model.addVar(lb = state_size, ub = 128,vtype= GRB.INTEGER, name = "time_complexity_down")
-                        time_complexity_match = model.addVar(lb = state_size, ub = 128,vtype= GRB.INTEGER, name = "time_complexity_match")
+                        time_complexity_up = model.addVar(lb = state_size, ub = time_search_bound,vtype= GRB.INTEGER, name = "time_complexity_up")
+                        time_complexity_down = model.addVar(lb = state_size, ub = time_search_bound,vtype= GRB.INTEGER, name = "time_complexity_down")
+                        time_complexity_match = model.addVar(lb = state_size, ub = time_search_bound,vtype= GRB.INTEGER, name = "time_complexity_match")
 
-                else : 
-                        time_complexity_up = model.addVar(lb = state_size, ub = state_size*2,vtype= GRB.INTEGER, name = "time_complexity_up")
-                        time_complexity_down = model.addVar(lb = state_size, ub = state_size*2,vtype= GRB.INTEGER, name = "time_complexity_down")
-                        time_complexity_match = model.addVar(lb = state_size, ub = state_size*2,vtype= GRB.INTEGER, name = "time_complexity_match")
+                else :
+                        time_complexity_up = model.addVar(lb = state_size, ub = int(state_size*5//2),vtype= GRB.INTEGER, name = "time_complexity_up")
+                        time_complexity_down = model.addVar(lb = state_size, ub = int(state_size*5//2),vtype= GRB.INTEGER, name = "time_complexity_down")
+                        time_complexity_match = model.addVar(lb = state_size, ub = int(state_size*5//2),vtype= GRB.INTEGER, name = "time_complexity_match")
 
-                search_domain = range(int(state_size), int(128))
+                search_domain = range(int(state_size), time_search_bound)
+                memory_search_domain = range(int(state_size), memory_search_bound)
 
                 binary_time_complexity_up = {i: model.addVar(vtype=GRB.BINARY, name=f"binary_time_complexity_up_{i}") for i in search_domain}
                 binary_time_complexity_down = {i: model.addVar(vtype=GRB.BINARY, name=f"binary_time_complexity_up_{i}") for i in search_domain}
                 binary_time_complexity_match = {i: model.addVar(vtype=GRB.BINARY, name=f"binary_time_complexity_up_{i}") for i in search_domain}
-                binary_memory_complexity_up = {i: model.addVar(vtype=GRB.BINARY, name=f"binary_time_complexity_up_{i}") for i in search_domain}
-                binary_memory_complexity_down = {i: model.addVar(vtype=GRB.BINARY, name=f"binary_time_complexity_up_{i}") for i in search_domain}
+                binary_memory_complexity_up = {i: model.addVar(vtype=GRB.BINARY, name=f"binary_time_complexity_up_{i}") for i in memory_search_domain}
+                binary_memory_complexity_down = {i: model.addVar(vtype=GRB.BINARY, name=f"binary_time_complexity_up_{i}") for i in memory_search_domain}
 
                 #---------------------------------------------------------------------------------------------------------------------------------------
                 #OBJECTIVE FUCNTION
@@ -335,22 +352,73 @@ def differential_Meet_in_the_middle(user_parameters, licence):
                 model.addConstr(memory_complexity_up == key_quantity_up + state_test_up_quantity - structure_fix, name="memory_complexity_up_constraints")
                 model.addConstr(memory_complexity_down == key_quantity_down + state_test_down_quantity + (state_size-structure_fix), name="memory_complexity_down_constraints")
 
+                #---------------------------------------------------------------------------------------------------------------------------------------
+                # Realistic memory model (shared setup). In the actual frame the reported time is
+                #   T = distinguisher_proba + log2(2^tcu + 2^tcd + 2^tcm)
+                # and the realistic memory-access cost imposes  T >= 1 + M + log2(M) + attack_repetition, where M is the
+                # real memory (min of the two stored tables, as used by the display) and
+                #   attack_repetition = max(0, distinguisher_proba + p_in + p_out - (2*state_size - structure_fix)).
+                # The display already adds distinguisher_proba to the time, so it must NOT be added again to the memory
+                # term : the bound on the raw time is  raw_time >= 1 + M + log2(M) + attack_repetition - distinguisher_proba
+                # (=: realistic_raw_bits), where distinguisher_proba cancels the display shift.
+                realistic_complexity_term = 0
+                if non_free_access_model :
+                        # Real memory M = min of the two stored tables (same expression as the display)
+                        memory_table_up = model.addVar(lb=0, ub=2*key_size, vtype=GRB.INTEGER, name="memory_table_up")
+                        memory_table_down = model.addVar(lb=0, ub=2*key_size, vtype=GRB.INTEGER, name="memory_table_down")
+                        model.addConstr(memory_table_up == key_quantity_up + state_test_up_quantity + 2*state_size - structure_fix, name="realistic memory table up")
+                        model.addConstr(memory_table_down == key_quantity_down + state_test_down_quantity + 2*state_size - structure_fix, name="realistic memory table down")
+
+                        realistic_memory_bits = model.addVar(lb=1, ub=2*key_size, vtype=GRB.INTEGER, name="realistic_memory_bits")
+                        model.addGenConstrMin(realistic_memory_bits, [memory_table_up, memory_table_down], name="realistic memory is min of the two tables")
+
+                        # log2(M) linearized through a one-hot decomposition of M
+                        memory_bit_domain = range(1, 2*int(key_size) + 1)
+                        realistic_memory_select = {i: model.addVar(vtype=GRB.BINARY, name=f"realistic_memory_select_{i}") for i in memory_bit_domain}
+                        model.addConstr(gp.quicksum(realistic_memory_select[i] for i in memory_bit_domain) == 1, name="realistic unique memory bit value")
+                        model.addConstr(realistic_memory_bits == gp.quicksum(i * realistic_memory_select[i] for i in memory_bit_domain), name="realistic memory bits value")
+                        realistic_log2_memory_bits = model.addVar(lb=0, vtype=GRB.CONTINUOUS, name="realistic_log2_memory_bits")
+                        model.addConstr(realistic_log2_memory_bits == gp.quicksum(math.log2(i) * realistic_memory_select[i] for i in memory_bit_domain), name="realistic log2 memory bits value")
+
+                        # Number of repetitions of the attack (>= 0), in bits (integer : partie entiere superieure)
+                        attack_repetition = model.addVar(lb=0, vtype=GRB.INTEGER, name="attack_repetition")
+                        model.addConstr(attack_repetition >= distinguisher_proba + probabilistic_key_recovery_up + probabilistic_key_recovery_down - (2*state_size - structure_fix), name="attack repetition count")
+
+                        # Realistic lower bound on the RAW time complexity (distinguisher_proba cancels the display shift)
+                        realistic_raw_bits = model.addVar(lb=0, vtype=GRB.CONTINUOUS, name="realistic_raw_bits")
+                        model.addConstr(realistic_raw_bits == 1 + realistic_memory_bits + realistic_log2_memory_bits + attack_repetition - distinguisher_proba, name="realistic raw time bits")
+
+                        if state_size <= 60 :
+                                # Optimal branch : complexity is the real value 2^t, so the memory-access cost is added as a
+                                # 4th phase 2^ceil(realistic_raw_bits) inside the complexity sum (same coefficient pattern).
+                                # The raw exponent is bounded on the order of the state size (the actual time is at most
+                                # the key size, minus distinguisher_proba), so the domain is capped at 5/2*state_size like
+                                # the sub-optimal time complexity. A key-size domain would give 2^256 coefficients that
+                                # are numerically explosive and corrupt the solve.
+                                time_bound_domain = range(0, int(5*state_size//2) + 1)
+                                realistic_raw_ceil = model.addVar(lb=0, ub=max(time_bound_domain), vtype=GRB.INTEGER, name="realistic_raw_ceil")
+                                model.addConstr(realistic_raw_ceil >= realistic_raw_bits, name="realistic raw time ceiling")
+                                realistic_time_select = {k: model.addVar(vtype=GRB.BINARY, name=f"realistic_time_select_{k}") for k in time_bound_domain}
+                                model.addConstr(gp.quicksum(realistic_time_select[k] for k in time_bound_domain) == 1, name="realistic unique time bit value")
+                                model.addConstr(realistic_raw_ceil == gp.quicksum(k * realistic_time_select[k] for k in time_bound_domain), name="realistic time bits value")
+                                realistic_complexity_term = gp.quicksum((2**k) * realistic_time_select[k] for k in time_bound_domain)
+
                 if state_size <=60: # if state <120 we can use optimal function 2^x + 2^y 2^z
                         model.addConstr(time_complexity_up == gp.quicksum(i * binary_time_complexity_up[i] for i in search_domain), name="link between binary and integer complexity up")
                         model.addConstr(time_complexity_down == gp.quicksum(i * binary_time_complexity_down[i] for i in search_domain), name="link between binary and integer complexity down")
                         model.addConstr(time_complexity_match == gp.quicksum(i * binary_time_complexity_match[i] for i in search_domain), name="link between binary and integer complexity match")
-                        model.addConstr(memory_complexity_up == gp.quicksum(i * binary_memory_complexity_up[i] for i in search_domain), name="link between binary and integer complexity match")
-                        model.addConstr(memory_complexity_down == gp.quicksum(i * binary_memory_complexity_down[i] for i in search_domain), name="link between binary and integer complexity match")
+                        model.addConstr(memory_complexity_up == gp.quicksum(i * binary_memory_complexity_up[i] for i in memory_search_domain), name="link between binary and integer complexity match")
+                        model.addConstr(memory_complexity_down == gp.quicksum(i * binary_memory_complexity_down[i] for i in memory_search_domain), name="link between binary and integer complexity match")
 
                         model.addConstr(gp.quicksum(binary_time_complexity_up[i] for i in search_domain)==1, name="unique binary complexity up")
                         model.addConstr(gp.quicksum(binary_time_complexity_down[i] for i in search_domain)==1, name="unique binary complexity down")
                         model.addConstr(gp.quicksum(binary_time_complexity_match[i] for i in search_domain)==1, name="unique binary complexity match")
-                        model.addConstr(gp.quicksum(binary_memory_complexity_up[i] for i in search_domain)==1, name="unique binary complexity match")
-                        model.addConstr(gp.quicksum(binary_memory_complexity_down[i] for i in search_domain)==1, name="unique binary complexity match")
+                        model.addConstr(gp.quicksum(binary_memory_complexity_up[i] for i in memory_search_domain)==1, name="unique binary complexity match")
+                        model.addConstr(gp.quicksum(binary_memory_complexity_down[i] for i in memory_search_domain)==1, name="unique binary complexity match")
 
-                        model.addConstr(complexity == gp.quicksum((2**i)*(binary_time_complexity_up[i] + binary_time_complexity_down[i] + binary_time_complexity_match[i]) for i in search_domain), name="time complexity")
-                        model.addConstr(m_complexity <= gp.quicksum((2**i)*binary_memory_complexity_up[i] for i in search_domain), name="memory complexity up")
-                        model.addConstr(m_complexity <= gp.quicksum((2**i)*binary_memory_complexity_down[i] for i in search_domain), name="memory complexity down")
+                        model.addConstr(complexity == gp.quicksum((2**i)*(binary_time_complexity_up[i] + binary_time_complexity_down[i] + binary_time_complexity_match[i]) for i in search_domain) + realistic_complexity_term, name="time complexity")
+                        model.addConstr(m_complexity <= gp.quicksum((2**i)*binary_memory_complexity_up[i] for i in memory_search_domain), name="memory complexity up")
+                        model.addConstr(m_complexity <= gp.quicksum((2**i)*binary_memory_complexity_down[i] for i in memory_search_domain), name="memory complexity down")
 
 
                 else : #sub optimal model x + y + z
@@ -360,7 +428,11 @@ def differential_Meet_in_the_middle(user_parameters, licence):
                         model.addConstr(memory_complexity_up <= m_complexity, name="suboptimal m_complexity_up")
                         model.addConstr(memory_complexity_down <= m_complexity, name="suboptimal m_complexity down")
 
-                        ### OBJECTIVE 
+                        # Realistic memory model : here complexity is already stored in bits, so the bound is direct.
+                        if non_free_access_model :
+                                model.addConstr(complexity >= realistic_raw_bits, name="realistic memory time complexity lower bound")
+
+                        ### OBJECTIVE
                 model.setObjectiveN(complexity, 0, 10, abstol=1e-9, name='time complexity objective') #Minimize the time complexity
 
                 model.setObjectiveN(m_complexity, 1, 8, abstol=1e-9, name='memory complexity objective') #Minimize the memory complexity
@@ -733,7 +805,8 @@ def differential_Meet_in_the_middle(user_parameters, licence):
                 #---------------------------------------------------------------------------------------------------------------------------------------
                 model.optimize()
 
-                if model.Status != GRB.INFEASIBLE: 
+                if model.SolCount > 0:
+                        # a (possibly non optimal, e.g. time-limited) incumbent is available
                         with open("solution.csv", "w", newline="") as f:
                                 writer = csv.writer(f)
                                 writer.writerow(["Variable", "Value"])
@@ -741,9 +814,13 @@ def differential_Meet_in_the_middle(user_parameters, licence):
                                         writer.writerow([v.VarName, v.X])
                         return 1
 
-                else : 
+                elif model.Status == GRB.INFEASIBLE:
                         model.computeIIS()
                         model.write("model_infeasible.ilp")
+                        return 0
+
+                else :
+                        print("No feasible solution found (e.g. time limit reached before any incumbent).")
                         return 0
 
                         

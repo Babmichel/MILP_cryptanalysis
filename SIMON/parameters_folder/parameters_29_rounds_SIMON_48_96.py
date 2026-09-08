@@ -21,7 +21,8 @@ attack_parameters = {
     "key_schedule_linearity" : 1,
     "state_test" : 1,
     "probabilistic_key_recovery" : 1,
+    "non_free_access_model" : 1,
 
-    "pdf_display" : 1,
-    "pdf_name" : "29_rounds_SIMON_48-96"
+    "pdf_display" : 0,
+    "pdf_name" : "27_rounds_SIMON_48-96"
 }

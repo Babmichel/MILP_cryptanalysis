@@ -46,7 +46,18 @@ def parameters_display(parameters, solution):
         print("complexite match :", solution['time_complexity_match'] + parameters["distinguisher_probability"])
         print("")
         print("number of rounds attacked :", parameters['structure_size'] + parameters['upper_part_size'] + parameters['lower_part_size'] + parameters['distinguisher_size'])
-        print("Final time complexity :", math.log2(pow(2, solution['time_complexity_up'] + parameters["distinguisher_probability"]) + pow(2, solution['time_complexity_down'] + parameters["distinguisher_probability"]) + pow(2, solution['time_complexity_match'] + parameters["distinguisher_probability"])))
+        encryption_time_terms = pow(2, solution['time_complexity_up'] + parameters["distinguisher_probability"]) + pow(2, solution['time_complexity_down'] + parameters["distinguisher_probability"]) + pow(2, solution['time_complexity_match'] + parameters["distinguisher_probability"])
+        print("time of encryption :", math.log2(encryption_time_terms))
+        time_terms = encryption_time_terms
+        if parameters.get("non_free_access_model", 0) and "realistic_raw_ceil" in solution:
+                # realistic memory-access phase (raw bits) shifted to the actual frame like the other phases
+                time_terms += pow(2, solution['realistic_raw_ceil'] + parameters["distinguisher_probability"])
+        print("Final time complexity :", math.log2(time_terms))
+        if parameters.get("non_free_access_model", 0) and "realistic_memory_bits" in solution:
+                # Realistic memory-access cost (actual frame) : 1 + M + log2(M) + repetitions
+                realistic_M = solution['realistic_memory_bits']
+                print("Realistic memory-access cost :", 1 + realistic_M + math.log2(realistic_M) + solution['attack_repetition'])
+                print("Number of attack repetitions :", solution['attack_repetition'])
         print("Final memory complexity :", min(solution['key_quantity_up'] + solution['state_test_up_quantity'] + parameters['block_size'] - solution['structure_fix'], solution['key_quantity_down'] + solution['state_test_down_quantity'] + parameters['block_size'] - solution['structure_fix']))
         print("Final data complexity :", solution['data_complexity'])
         print("")

@@ -21,6 +21,7 @@ attack_parameters = {
     "key_schedule_linearity" : , #boolean, 1 for a linear key schedule, 0 otherwise
     "state_test" : , #boolean, 1 to enable state test, 0 to block them
     "probabilistic_key_recovery" : , #boolean, 1 to enable probabilisitc key recovery, 0 to block them
+    "non_free_access_model" : 0, #boolean, 1 to also lower bound the time complexity by a realistic memory-access cost model, 0 otherwise
 
     "pdf_display" : , #boolean, 1 to generate a pdf picture, 0 otherwise
     "pdf_name" : "" #str
